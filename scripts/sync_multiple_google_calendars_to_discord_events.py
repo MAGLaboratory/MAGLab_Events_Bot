@@ -3,10 +3,10 @@ import requests
 import datetime
 import re
 import html
+import pendulum
 from icalendar import Calendar
 from dateutil.rrule import rrulestr
 from discord.ext import tasks, commands
-import pytz
 
 # Read the Discord token from a file named 'discord_token.txt'
 def get_discord_token():
@@ -26,7 +26,7 @@ SYNC_DAYS = 7
 VERBOSE_MODE = False
 DESCRIPTION_MAX_LENGTH = 1000
 
-LA_TZ = pytz.timezone('America/Los_Angeles')  # Timezone for Los Angeles
+LA_TZ = pendulum.timezone('America/Los_Angeles')  # Timezone for Los Angeles
 
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="!", intents=intents)
@@ -34,14 +34,16 @@ client = commands.Bot(command_prefix="!", intents=intents)
 def normalize_date(dt):
     """Ensure dates are returned as timezone-aware datetime."""
     if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
-        dt = datetime.datetime.combine(dt, datetime.time(0, 0, 0))
-    if dt.tzinfo is None:
-        dt = LA_TZ.localize(dt)  # Assume the event is in LA time if no timezone is provided
+        dt = pendulum.datetime(dt.year, dt.month, dt.day, tz='UTC')
+    elif dt.tzinfo is None:
+        dt = pendulum.instance(dt, tz='UTC')
+    else:
+        dt = pendulum.instance(dt)
     return dt
 
 def adjust_rrule_for_utc(rrule_str, start):
     """Ensure RRULE UNTIL is in UTC if DTSTART is timezone-aware."""
-    if 'UNTIL' in rrule_str and start.tzinfo is not None:
+    if 'UNTIL' in rrule_str and start.timezone is not None:
         rrule_parts = rrule_str.split(';')
         for i, part in enumerate(rrule_parts):
             if part.startswith('UNTIL=') and not part.endswith('Z'):
@@ -63,8 +65,8 @@ def truncate_description(description):
 def fetch_calendar_events():
     """Fetch and return calendar events for the next SYNC_DAYS."""
     events = []
-    now = datetime.datetime.now(pytz.utc)
-    future = now + datetime.timedelta(days=SYNC_DAYS)
+    now = pendulum.now('UTC')
+    future = now.add(days=SYNC_DAYS)
 
     for url in ICS_URLS:
         calendar = Calendar.from_ical(requests.get(url).content)
@@ -72,17 +74,16 @@ def fetch_calendar_events():
             if component.name == "VEVENT":
                 start = normalize_date(component.get('dtstart').dt)
                 end = normalize_date(component.get('dtend').dt)
-
-                # Adjust for timezone and DST if necessary
-                start = start.astimezone(LA_TZ)  # Localize to LA time (handles DST automatically)
-                end = end.astimezone(LA_TZ)
+                timezone = start.timezone if start.timezone else pendulum.timezone('UTC')  # Use local timezone if available
+                start = start.in_tz(timezone)  # Convert to local timezone for BYDAY handling
+                end = end.in_tz(timezone)
 
                 if component.get('rrule'):
                     rrule_str = adjust_rrule_for_utc(component.get('rrule').to_ical().decode('utf-8'), start)
                     try:
                         # Apply recurrence rules in the local timezone
                         rule = rrulestr(rrule_str, dtstart=start)
-                        occurrences = rule.between(now.astimezone(LA_TZ), future.astimezone(LA_TZ))
+                        occurrences = rule.between(now.in_tz(timezone), future.in_tz(timezone))
                     except ValueError as e:
                         print(f"RRULE error in {component.get('summary')}: {e}")
                         continue
@@ -90,16 +91,16 @@ def fetch_calendar_events():
                         events.append({
                             'name': component.get('summary'),
                             'description': truncate_description(component.get('description', 'No description provided')),
-                            'start_time': occ.astimezone(pytz.utc),  # Convert to UTC for Discord
-                            'end_time': (occ + (end - start)).astimezone(pytz.utc),
+                            'start_time': pendulum.instance(occ, tz='UTC'),  # Convert to UTC for Discord
+                            'end_time': pendulum.instance(occ + (end - start), tz='UTC'),
                             'location': component.get('location', 'MAG Laboratory')
                         })
                 elif now <= start <= future:
                     events.append({
                         'name': component.get('summary'),
                         'description': truncate_description(component.get('description', 'No description provided')),
-                        'start_time': start.astimezone(pytz.utc),
-                        'end_time': end.astimezone(pytz.utc),
+                        'start_time': start.in_tz('UTC'),
+                        'end_time': end.in_tz('UTC'),
                         'location': component.get('location', 'MAG Laboratory')
                     })
     return events
@@ -114,10 +115,10 @@ async def sync_discord_events(guild):
         discord_event = next((event for event in existing_events if event.name == cal_event['name']), None)
         start_time = cal_event['start_time']
         end_time = cal_event['end_time']
-        la_time = start_time.astimezone(LA_TZ).strftime('%Y-%m-%d %H:%M:%S')  # Convert to LA time
+        la_time = start_time.in_tz(LA_TZ).to_datetime_string()  # Convert to LA time
 
         if discord_event:
-            if datetime.datetime.now(pytz.utc) < discord_event.start_time:
+            if pendulum.now('UTC') < discord_event.start_time:
                 print(f"Updating Discord event: {cal_event['name']} (LA time: {la_time})")
                 await discord_event.edit(
                     name=cal_event['name'],
