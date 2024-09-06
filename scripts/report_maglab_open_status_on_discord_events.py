@@ -68,21 +68,31 @@ def fetch_lab_status_and_sensors(url):
             cells = row.find_all('td')
             if len(cells) == 4:  # Ensure proper row structure
                 sensor_name = cells[0].get_text(strip=True)
+                status = cells[1].get_text(strip=True)
+                # Only display Fahrenheit for temperatures and replace "No Movement" with "No Motion"
+                status = truncate_status(status)
                 if sensor_name not in ["Page Loaded", "Auto Refresh"]:
                     sensor_data.append({
                         'Sensor': sensor_name,
-                        'Status': cells[1].get_text(strip=True),
-                        'Last Update': calculate_last_update(cells[3].get_text(strip=True))
+                        'Status': status,
+                        'Last Update': format_last_update(cells[3].get_text(strip=True))
                     })
 
     scrape_timestamp = datetime.now().strftime("%Y-%m-%d %I:%M %p %Z")
     return lab_status, sensor_data, scrape_timestamp
 
 
-# Calculate the time since the last update
-def calculate_last_update(timestamp_str):
+# Function to truncate the status to only show Fahrenheit and replace "No Movement" with "No Motion"
+def truncate_status(status):
+    if "°F" in status:
+        return status.split("/")[1].strip()  # Keep only the Fahrenheit value
+    return status.replace("No Movement since", "No Motion")  # Replace "No Movement" with "No Motion"
+
+
+# Format the time since the last update in short form
+def format_last_update(timestamp_str):
     timestamp_str = timestamp_str.rsplit(' ', 1)[0]  # Remove timezone
-    timestamp_format = "%b %d, %Y, %I:%M %p"  # Example: "Sep 4, 2024, 12:04 AM"
+    timestamp_format = "%b %d, %Y, %I:%M %p"
 
     try:
         timestamp = datetime.strptime(timestamp_str, timestamp_format)
@@ -91,11 +101,11 @@ def calculate_last_update(timestamp_str):
         time_diff = datetime.now(pacific) - localized_timestamp
 
         if time_diff < timedelta(minutes=1):
-            return "less than a minute ago"
+            return "Just now"
         elif time_diff < timedelta(hours=1):
-            return f"{int(time_diff.total_seconds() // 60)} minutes ago"
+            return f"{int(time_diff.total_seconds() // 60)} min ago"
         elif time_diff < timedelta(days=1):
-            return f"{int(time_diff.total_seconds() // 3600)} hours ago"
+            return f"{int(time_diff.total_seconds() // 3600)} hr ago"
         else:
             return f"{time_diff.days} days ago"
 
@@ -178,7 +188,7 @@ async def check_for_other_active_events(guild):
     return False
 
 
-# Task to post or update lab status event every 10 minute
+# Task to post or update lab status event every 5 minutes
 @tasks.loop(minutes=5)
 async def post_lab_status():
     url = "https://www.maglaboratory.org/hal"
