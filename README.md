@@ -1,5 +1,6 @@
 # MAGLab_Events_Bot
 For syncing up events and our open status switch to Discord Events.
+![image](https://github.com/user-attachments/assets/d533bfe2-d30d-4550-8d32-40458fe55b72)
 
 Bot Script 1: Takes MAGLab's Open Status Switch (webscraped from: https://www.maglaboratory.org/hal) and updates the Discord Events respectively\
 Bot Script 2: Takes MAGLab Calendar + Curator events and updates the Discord events respectively. [Only reports 7 days into the future]\
