@@ -6,6 +6,16 @@ from datetime import datetime, timedelta
 import pytz
 import pandas as pd
 import os
+import platform
+from PIL import Image
+import base64
+import mimetypes
+
+# Check if the system is Windows and update the PATH environment variable
+if platform.system() == "Windows":
+    os.environ['PATH'] += r';C:\Program Files\UniConvertor-2.0rc5\dlls'
+
+import cairosvg
 
 
 # Read the Discord bot token from discord_token.txt
@@ -29,7 +39,7 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
-# Function to fetch lab status and sensor data from the website
+# Scrape lab status and sensor data from the webpage
 def fetch_lab_status_and_sensors(url):
     try:
         response = requests.get(url)
@@ -69,7 +79,7 @@ def fetch_lab_status_and_sensors(url):
     return lab_status, sensor_data, scrape_timestamp
 
 
-# Function to calculate the time since the last update
+# Calculate the time since the last update
 def calculate_last_update(timestamp_str):
     timestamp_str = timestamp_str.rsplit(' ', 1)[0]  # Remove timezone
     timestamp_format = "%b %d, %Y, %I:%M %p"  # Example: "Sep 4, 2024, 12:04 AM"
@@ -93,7 +103,7 @@ def calculate_last_update(timestamp_str):
         return f"Error parsing timestamp: {e}"
 
 
-# Function to format the scraped sensor data for the event description
+# Format the scraped sensor data for the event description
 def format_sensor_data(lab_status, sensor_data, scrape_timestamp, url):
     df = pd.DataFrame(sensor_data)
     table_string = df.to_string(index=False)
@@ -103,50 +113,100 @@ def format_sensor_data(lab_status, sensor_data, scrape_timestamp, url):
             f"**Sensor Data:**\n```\n{table_string}\n```")
 
 
+# Scrape SVG and save as a scaled PNG image
+def scrape_and_save_svg(url, svg_id, scaled_png_file):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'lxml')
+    svg_element = soup.find('svg', {'id': svg_id})
+
+    if svg_element:
+        svg_content = str(svg_element)
+        save_scaled_png(svg_content, scaled_png_file)
+        return True
+    else:
+        print(f"SVG with ID {svg_id} not found on the page.")
+        return False
+
+
+# Ensure emoji fonts in the SVG content
+def ensure_emoji_font(svg_content):
+    svg_content = svg_content.replace(
+        'font-family:DejaVu Sans, sans-serif;',
+        'font-family:DejaVu Sans, Noto Emoji, sans-serif;'
+    )
+    return svg_content
+
+
+# Save the SVG content as a scaled PNG image
+def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 550), target_width=880, target_height=352):
+    width, height = "1000", "1000"
+    svg_with_size = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">\n{svg_content}</svg>'
+    svg_with_size = ensure_emoji_font(svg_with_size)
+
+    temp_png_file = 'temp_image.png'
+    cairosvg.svg2png(bytestring=svg_with_size.encode('utf-8'), write_to=temp_png_file)
+
+    # Crop and resize the PNG
+    with Image.open(temp_png_file) as img:
+        cropped_img = img.crop(crop_box)
+        resized_img = cropped_img.resize((target_width, target_height))
+        resized_img.save(scaled_png_file)
+
+    os.remove(temp_png_file)  # Remove temp file
+
+
+# Convert image to raw binary data for Discord
+def get_image_as_binary(image_path):
+    with open(image_path, 'rb') as img_file:
+        return img_file.read()
+
+
 # Function to find an existing "We are" event
 async def find_lab_status_event(guild):
-    events = guild.scheduled_events  # Get all scheduled events
-    for event in events:
-        if "We are" in event.name:  # Check for "We are" in the event title
+    for event in guild.scheduled_events:
+        if "We are" in event.name:
             return event
-    return None  # No existing "We are" event found
+    return None
 
 
-# Function to check if there is any other active event that does not have "We are" in the title
+# Check if there's another active event
 async def check_for_other_active_events(guild):
     now = datetime.now().astimezone()
     for event in guild.scheduled_events:
         if event.start_time <= now <= event.end_time and "We are" not in event.name:
-            return True  # Another active event exists
-    return False  # No other active events
+            return True
+    return False
 
 
 # Task to post or update lab status event every 1 minute
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=1)
 async def post_lab_status():
     url = "https://www.maglaboratory.org/hal"
+    svg_id = 'maglab-synoptic-view'
+    scaled_png_file = 'maglab_synoptic_view_scaled.png'
+
+    # Scrape lab status and sensor data
     lab_status, sensor_data, scrape_timestamp = fetch_lab_status_and_sensors(url)
 
+    # Scrape and save the SVG as a PNG
+    scrape_and_save_svg(url, svg_id, scaled_png_file)
+
     if lab_status and sensor_data:
-        # Format the sensor data for the event description
         formatted_message = format_sensor_data(lab_status, sensor_data, scrape_timestamp, url)
 
-        # Get the guild (server)
         guild = bot.get_guild(GUILD_ID)
         if not guild:
             print(f"Guild with ID {GUILD_ID} not found")
             return
 
-        # Check if there's an existing "We are" event
         existing_event = await find_lab_status_event(guild)
         event_title = f"{lab_status}"
         event_description = formatted_message
+        image_binary = get_image_as_binary(scaled_png_file)
 
-        # Check for any other active events that do not have "We are" in the title
         other_active_event = await check_for_other_active_events(guild)
 
         if other_active_event:
-            # If another active event exists, end the "We are" event (if any)
             if existing_event:
                 await existing_event.delete()
                 print(
@@ -154,32 +214,32 @@ async def post_lab_status():
             return
 
         if existing_event:
-            # Update the existing "We are" event
             await existing_event.edit(
                 name=event_title,
                 description=event_description,
-                end_time=datetime.now().astimezone() + timedelta(minutes=10)
+                end_time=datetime.now().astimezone() + timedelta(minutes=5),
+                image=image_binary
             )
             print(f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Updated event: {existing_event.name}")
         else:
-            # Create a new "We are" event if no other event is active
             await guild.create_scheduled_event(
                 name=event_title,
                 description=event_description,
                 start_time=datetime.now().astimezone() + timedelta(seconds=10),
-                end_time=datetime.now().astimezone() + timedelta(minutes=10),
+                end_time=datetime.now().astimezone() + timedelta(minutes=5),
                 entity_type=discord.EntityType.external,
                 location="MAG Laboratory",
-                privacy_level=discord.PrivacyLevel.guild_only
+                privacy_level=discord.PrivacyLevel.guild_only,
+                image=image_binary
             )
             print(f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Created new event: {event_title}")
 
 
-# Event handler for when the bot is ready
+# Bot ready event
 @bot.event
 async def on_ready():
     print(f'Bot {bot.user.name} has connected to Discord')
-    post_lab_status.start()  # Start the loop task
+    post_lab_status.start()
 
 
 # Run the bot
