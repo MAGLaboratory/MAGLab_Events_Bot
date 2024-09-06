@@ -122,7 +122,7 @@ async def check_for_other_active_events(guild):
 
 
 # Task to post or update lab status event every 1 minute
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=5)
 async def post_lab_status():
     url = "https://www.maglaboratory.org/hal"
     lab_status, sensor_data, scrape_timestamp = fetch_lab_status_and_sensors(url)
@@ -158,7 +158,7 @@ async def post_lab_status():
             await existing_event.edit(
                 name=event_title,
                 description=event_description,
-                end_time=datetime.now().astimezone() + timedelta(minutes=5)
+                end_time=datetime.now().astimezone() + timedelta(minutes=10)
             )
             print(f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Updated event: {existing_event.name}")
         else:
@@ -167,7 +167,7 @@ async def post_lab_status():
                 name=event_title,
                 description=event_description,
                 start_time=datetime.now().astimezone() + timedelta(seconds=10),
-                end_time=datetime.now().astimezone() + timedelta(minutes=5),
+                end_time=datetime.now().astimezone() + timedelta(minutes=10),
                 entity_type=discord.EntityType.external,
                 location="MAG Laboratory",
                 privacy_level=discord.PrivacyLevel.guild_only
