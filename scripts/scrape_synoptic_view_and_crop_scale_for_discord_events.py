@@ -54,7 +54,7 @@ def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 550),
         resized_img = cropped_img.resize((target_width, target_height))
         resized_img.save(scaled_png_file)
 
-    print(f"Rescaled PNG image saved as {scaled_png_file}")
+    #print(f"Rescaled PNG image saved as {scaled_png_file}")
 
     # Remove the temporary PNG file
     os.remove(temp_png_file)
