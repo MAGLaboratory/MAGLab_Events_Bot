@@ -200,13 +200,17 @@ async def post_lab_status():
             print(f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Created new event: {event_title}")
     except Exception as e:
         print(f"Error in post_lab_status: {e}")
+    finally:
+        if not post_lab_status.is_running():
+            post_lab_status.restart()  # Ensure loop continues
 
 
 # Bot ready event
 @bot.event
 async def on_ready():
     print(f'Bot {bot.user.name} has connected to Discord')
-    post_lab_status.start()
+    if not post_lab_status.is_running():
+        post_lab_status.start()
 
 
 # Error handler for bot disconnect

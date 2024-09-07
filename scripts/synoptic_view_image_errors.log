@@ -1,0 +1,4 @@
+2024-09-07 08:11:06,780 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-07 08:11:06,780 INFO:logging in using static token
+2024-09-07 08:11:07,428 INFO:Shard ID None has connected to Gateway (Session ID: f8702678ee619f05d890192e97d7692b).
+2024-09-07 08:11:17,374 WARNING:We are being rate limited. PATCH https://discord.com/api/v10/guilds/697971426799517774/scheduled-events/1281994713859358931 responded with 429. Retrying in 2.13 seconds.

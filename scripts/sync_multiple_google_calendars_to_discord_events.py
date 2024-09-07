@@ -191,7 +191,7 @@ async def sync_discord_events(guild):
 
 @tasks.loop(hours=1)
 async def sync_events_task():
-    """Sync events every hour."""
+    """Sync events every hour, ensuring recovery from errors."""
     try:
         guild = discord.utils.get(client.guilds, id=GUILD_ID)
         if guild:
@@ -201,6 +201,9 @@ async def sync_events_task():
     except Exception as e:
         print(f"Error in sync_events_task: {e}")
         traceback.print_exc()
+    finally:
+        # Ensure the task continues running even if there was an error
+        sync_events_task.restart()
 
 @client.event
 async def on_ready():
