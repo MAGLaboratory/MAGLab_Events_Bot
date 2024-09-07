@@ -42,13 +42,20 @@ def normalize_date(dt):
     return dt
 
 def adjust_rrule_for_utc(rrule_str, start):
-    """Ensure RRULE UNTIL is in UTC if DTSTART is timezone-aware."""
+    """Ensure RRULE UNTIL is in UTC if DTSTART is timezone-aware, and avoid invalid 'Z' insertions."""
     if 'UNTIL' in rrule_str and start.timezone is not None:
         rrule_parts = rrule_str.split(';')
         for i, part in enumerate(rrule_parts):
-            if part.startswith('UNTIL=') and not part.endswith('Z'):
-                until_value = part.split('=')[1] + 'Z'
-                rrule_parts[i] = f'UNTIL={until_value}'
+            if part.startswith('UNTIL='):
+                until_value = part.split('=')[1]
+                # If UNTIL is not timezone-aware, don't add 'Z', if it is, ensure it's in UTC
+                try:
+                    until_dt = pendulum.parse(until_value)
+                    if until_dt.timezone is not None:  # If it's timezone-aware
+                        until_value = until_dt.in_tz('UTC').strftime('%Y%m%dT%H%M%SZ')
+                        rrule_parts[i] = f'UNTIL={until_value}'
+                except pendulum.parsing.exceptions.ParserError:
+                    print(f"Error parsing UNTIL value: {until_value}")
         return ';'.join(rrule_parts)
     return rrule_str
 
