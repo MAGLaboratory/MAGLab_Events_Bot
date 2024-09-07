@@ -33,7 +33,7 @@ def ensure_emoji_font(svg_content):
     return svg_content
 
 
-def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 540), target_width=880, target_height=352):
+def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 550), target_width=880, target_height=352):
     # Define default width and height for the SVG
     width = "1000"
     height = "1000"
@@ -60,21 +60,27 @@ def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 540),
     os.remove(temp_png_file)
 
 
-def main():
-    # Provide the URL of the page with the SVG
-    url = 'https://www.maglaboratory.org/hal'
+def generate_scaled_cropped_synoptic_view_image(output_png_file, url='https://www.maglaboratory.org/hal',
+                                                svg_id='maglab-synoptic-view'):
+    """
+    Callable function to generate the scaled PNG file from the given URL and SVG ID.
 
-    # Hardcode the SVG ID
-    svg_id = 'maglab-synoptic-view'
-
+    Args:
+    - output_png_file (str): The path to save the final scaled PNG file.
+    - url (str): The URL to scrape the SVG from (default is MAGLab).
+    - svg_id (str): The SVG ID to target (default is 'maglab-synoptic-view').
+    """
     # Scrape the SVG element from the website
     svg_content = scrape_svg(url, svg_id)
 
     if svg_content:
         # Save only the scaled PNG
-        scaled_png_file = 'maglab_synoptic_view_scaled.png'
-        save_scaled_png(svg_content, scaled_png_file)
+        save_scaled_png(svg_content, output_png_file)
+    else:
+        print("Failed to generate PNG. SVG content not found.")
 
 
+# Example usage as a callable function
 if __name__ == '__main__':
-    main()
+    # Example of how to call the function if running directly
+    generate_scaled_cropped_synoptic_view_image('maglab_synoptic_view_scaled.png')

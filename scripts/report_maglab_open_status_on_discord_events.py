@@ -6,16 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 import pandas as pd
 import os
-import platform
-from PIL import Image
-import base64
-import mimetypes
-
-# Check if the system is Windows and update the PATH environment variable
-if platform.system() == "Windows":
-    os.environ['PATH'] += r';C:\Program Files\UniConvertor-2.0rc5\dlls'
-
-import cairosvg
+from scrape_synoptic_view_and_crop_scale_for_discord_events import generate_scaled_cropped_synoptic_view_image
 
 
 # Read the Discord bot token from discord_token.txt
@@ -86,7 +77,7 @@ def fetch_lab_status_and_sensors(url):
 def truncate_status(status):
     if "°F" in status:
         return status.split("/")[1].strip()  # Keep only the Fahrenheit value
-    return status.replace("No Movement since", "No Motion")  # Replace "No Movement" with "No Motion"
+    return status.replace("No Movement", "No Motion")  # Replace "No Movement" with "No Motion"
 
 
 # Format the time since the last update in short form
@@ -123,48 +114,6 @@ def format_sensor_data(lab_status, sensor_data, scrape_timestamp, url):
             f"**Sensor Data:**\n```\n{table_string}\n```")
 
 
-# Scrape SVG and save as a scaled PNG image
-def scrape_and_save_svg(url, svg_id, scaled_png_file):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'lxml')
-    svg_element = soup.find('svg', {'id': svg_id})
-
-    if svg_element:
-        svg_content = str(svg_element)
-        save_scaled_png(svg_content, scaled_png_file)
-        return True
-    else:
-        print(f"SVG with ID {svg_id} not found on the page.")
-        return False
-
-
-# Ensure emoji fonts in the SVG content
-def ensure_emoji_font(svg_content):
-    svg_content = svg_content.replace(
-        'font-family:DejaVu Sans, sans-serif;',
-        'font-family:DejaVu Sans, Noto Emoji, sans-serif;'
-    )
-    return svg_content
-
-
-# Save the SVG content as a scaled PNG image
-def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 550), target_width=880, target_height=352):
-    width, height = "1000", "1000"
-    svg_with_size = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">\n{svg_content}</svg>'
-    svg_with_size = ensure_emoji_font(svg_with_size)
-
-    temp_png_file = 'temp_image.png'
-    cairosvg.svg2png(bytestring=svg_with_size.encode('utf-8'), write_to=temp_png_file)
-
-    # Crop and resize the PNG
-    with Image.open(temp_png_file) as img:
-        cropped_img = img.crop(crop_box)
-        resized_img = cropped_img.resize((target_width, target_height))
-        resized_img.save(scaled_png_file)
-
-    os.remove(temp_png_file)  # Remove temp file
-
-
 # Convert image to raw binary data for Discord
 def get_image_as_binary(image_path):
     with open(image_path, 'rb') as img_file:
@@ -192,14 +141,13 @@ async def check_for_other_active_events(guild):
 @tasks.loop(minutes=5)
 async def post_lab_status():
     url = "https://www.maglaboratory.org/hal"
-    svg_id = 'maglab-synoptic-view'
     scaled_png_file = 'maglab_synoptic_view_scaled.png'
 
     # Scrape lab status and sensor data
     lab_status, sensor_data, scrape_timestamp = fetch_lab_status_and_sensors(url)
 
-    # Scrape and save the SVG as a PNG
-    scrape_and_save_svg(url, svg_id, scaled_png_file)
+    # Call the generate_scaled_cropped_synoptic_view_image function
+    generate_scaled_cropped_synoptic_view_image(output_png_file=scaled_png_file)
 
     if lab_status and sensor_data:
         formatted_message = format_sensor_data(lab_status, sensor_data, scrape_timestamp, url)
