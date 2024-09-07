@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import os
 import platform
 from PIL import Image
+import logging
+
+
+# Set up logging to log errors for troubleshooting and uptime monitoring
+logging.basicConfig(filename='synoptic_view_image_errors.log', level=logging.ERROR, format='%(asctime)s %(levelname)s:%(message)s')
 
 # Check if the system is Windows and update the PATH environment variable
 if platform.system() == "Windows":
@@ -10,54 +15,67 @@ if platform.system() == "Windows":
 
 import cairosvg
 
-def scrape_svg(url, svg_id):
-    # Fetch the webpage content
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'lxml')
 
-    # Find the SVG element by its ID
-    svg_element = soup.find('svg', {'id': svg_id})
-    if svg_element:
-        return str(svg_element)
-    else:
-        print(f"SVG with ID {svg_id} not found on the page.")
+def scrape_svg(url, svg_id):
+    try:
+        # Fetch the webpage content
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'lxml')
+
+        # Find the SVG element by its ID
+        svg_element = soup.find('svg', {'id': svg_id})
+        if svg_element:
+            return str(svg_element)
+        else:
+            logging.error(f"SVG with ID {svg_id} not found on the page.")
+            return None
+    except Exception as e:
+        logging.error(f"Error while scraping SVG: {e}")
         return None
 
 
 def ensure_emoji_font(svg_content):
-    # Add fallback for emoji-supporting fonts
-    svg_content = svg_content.replace(
-        'font-family:DejaVu Sans, sans-serif;',
-        'font-family:DejaVu Sans, Noto Emoji, sans-serif;'
-    )
-    return svg_content
+    try:
+        # Add fallback for emoji-supporting fonts
+        svg_content = svg_content.replace(
+            'font-family:DejaVu Sans, sans-serif;',
+            'font-family:DejaVu Sans, Noto Emoji, sans-serif;'
+        )
+        return svg_content
+    except Exception as e:
+        logging.error(f"Error while ensuring emoji font: {e}")
+        return svg_content
 
 
-def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 550), target_width=880, target_height=352):
-    # Define default width and height for the SVG
-    width = "1000"
-    height = "1000"
+def save_scaled_png(svg_content, scaled_png_file, crop_box=(180, 72, 1000, 540), target_width=880, target_height=352):
+    try:
+        # Define default width and height for the SVG
+        width = "1000"
+        height = "1000"
 
-    # Add width and height to the SVG content if not present
-    svg_with_size = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">\n' + svg_content + '</svg>'
+        # Add width and height to the SVG content if not present
+        svg_with_size = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">\n' + svg_content + '</svg>'
 
-    # Ensure the emoji font is included
-    svg_with_size = ensure_emoji_font(svg_with_size)
+        # Ensure the emoji font is included
+        svg_with_size = ensure_emoji_font(svg_with_size)
 
-    # Convert SVG to PNG using CairoSVG
-    temp_png_file = 'temp_image.png'
-    cairosvg.svg2png(bytestring=svg_with_size.encode('utf-8'), write_to=temp_png_file)
+        # Convert SVG to PNG using CairoSVG
+        temp_png_file = 'temp_image.png'
+        cairosvg.svg2png(bytestring=svg_with_size.encode('utf-8'), write_to=temp_png_file)
 
-    # Crop and resize the PNG
-    with Image.open(temp_png_file) as img:
-        cropped_img = img.crop(crop_box)
-        resized_img = cropped_img.resize((target_width, target_height))
-        resized_img.save(scaled_png_file)
+        # Crop and resize the PNG
+        with Image.open(temp_png_file) as img:
+            cropped_img = img.crop(crop_box)
+            resized_img = cropped_img.resize((target_width, target_height))
+            resized_img.save(scaled_png_file)
 
-    #print(f"Rescaled PNG image saved as {scaled_png_file}")
+        #print(f"Rescaled PNG image saved as {scaled_png_file}")
 
-    # Remove the temporary PNG file
-    os.remove(temp_png_file)
+        # Remove the temporary PNG file
+        os.remove(temp_png_file)
+
+    except Exception as e:
+        logging.error(f"Error while saving scaled PNG: {e}")
 
 
 def generate_scaled_cropped_synoptic_view_image(output_png_file, url='https://www.maglaboratory.org/hal',
@@ -70,17 +88,23 @@ def generate_scaled_cropped_synoptic_view_image(output_png_file, url='https://ww
     - url (str): The URL to scrape the SVG from (default is MAGLab).
     - svg_id (str): The SVG ID to target (default is 'maglab-synoptic-view').
     """
-    # Scrape the SVG element from the website
-    svg_content = scrape_svg(url, svg_id)
+    try:
+        # Scrape the SVG element from the website
+        svg_content = scrape_svg(url, svg_id)
 
-    if svg_content:
-        # Save only the scaled PNG
-        save_scaled_png(svg_content, output_png_file)
-    else:
-        print("Failed to generate PNG. SVG content not found.")
+        if svg_content:
+            # Save only the scaled PNG
+            save_scaled_png(svg_content, output_png_file)
+        else:
+            logging.error("Failed to generate PNG. SVG content not found.")
+    except Exception as e:
+        logging.error(f"Error in generate_scaled_cropped_synoptic_view_image: {e}")
 
 
 # Example usage as a callable function
 if __name__ == '__main__':
     # Example of how to call the function if running directly
-    generate_scaled_cropped_synoptic_view_image('maglab_synoptic_view_scaled.png')
+    try:
+        generate_scaled_cropped_synoptic_view_image('maglab_synoptic_view_scaled.png')
+    except Exception as e:
+        logging.error(f"Error while running the script: {e}")

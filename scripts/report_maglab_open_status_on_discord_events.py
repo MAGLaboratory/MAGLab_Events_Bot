@@ -122,40 +122,47 @@ def get_image_as_binary(image_path):
 
 # Function to find an existing "We are" event
 async def find_lab_status_event(guild):
-    for event in guild.scheduled_events:
-        if "We are" in event.name:
-            return event
+    try:
+        for event in guild.scheduled_events:
+            if "We are" in event.name:
+                return event
+    except Exception as e:
+        print(f"Error finding event: {e}")
     return None
 
 
 # Check if there's another active event
 async def check_for_other_active_events(guild):
-    now = datetime.now().astimezone()
-    for event in guild.scheduled_events:
-        if event.start_time <= now <= event.end_time and "We are" not in event.name:
-            return True
+    try:
+        now = datetime.now().astimezone()
+        for event in guild.scheduled_events:
+            if event.start_time <= now <= event.end_time and "We are" not in event.name:
+                return True
+    except Exception as e:
+        print(f"Error checking for other active events: {e}")
     return False
 
 
 # Task to post or update lab status event every 5 minutes
 @tasks.loop(minutes=5)
 async def post_lab_status():
-    url = "https://www.maglaboratory.org/hal"
-    scaled_png_file = 'maglab_synoptic_view_scaled.png'
+    try:
+        url = "https://www.maglaboratory.org/hal"
+        scaled_png_file = 'maglab_synoptic_view_scaled.png'
 
-    # Scrape lab status and sensor data
-    lab_status, sensor_data, scrape_timestamp = fetch_lab_status_and_sensors(url)
+        # Scrape lab status and sensor data
+        lab_status, sensor_data, scrape_timestamp = fetch_lab_status_and_sensors(url)
+        if lab_status is None or not sensor_data:
+            raise ValueError("Failed to scrape lab status or sensor data")
 
-    # Call the generate_scaled_cropped_synoptic_view_image function
-    generate_scaled_cropped_synoptic_view_image(output_png_file=scaled_png_file)
+        # Call the generate_scaled_cropped_synoptic_view_image function
+        generate_scaled_cropped_synoptic_view_image(output_png_file=scaled_png_file)
 
-    if lab_status and sensor_data:
         formatted_message = format_sensor_data(lab_status, sensor_data, scrape_timestamp, url)
 
         guild = bot.get_guild(GUILD_ID)
         if not guild:
-            print(f"Guild with ID {GUILD_ID} not found")
-            return
+            raise ValueError(f"Guild with ID {GUILD_ID} not found")
 
         existing_event = await find_lab_status_event(guild)
         event_title = f"{lab_status}"
@@ -191,6 +198,8 @@ async def post_lab_status():
                 image=image_binary
             )
             print(f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Created new event: {event_title}")
+    except Exception as e:
+        print(f"Error in post_lab_status: {e}")
 
 
 # Bot ready event
@@ -200,5 +209,14 @@ async def on_ready():
     post_lab_status.start()
 
 
+# Error handler for bot disconnect
+@bot.event
+async def on_disconnect():
+    print(f'Bot {bot.user.name} has disconnected from Discord, attempting to reconnect...')
+
+
 # Run the bot
-bot.run(TOKEN)
+try:
+    bot.run(TOKEN)
+except Exception as e:
+    print(f"Error running the bot: {e}")
