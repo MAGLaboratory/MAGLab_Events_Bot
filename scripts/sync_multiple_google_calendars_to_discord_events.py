@@ -201,9 +201,6 @@ async def sync_events_task():
     except Exception as e:
         print(f"Error in sync_events_task: {e}")
         traceback.print_exc()
-    finally:
-        # Ensure the task continues running even if there was an error
-        sync_events_task.restart()
 
 @client.event
 async def on_ready():
