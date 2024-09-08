@@ -8,60 +8,53 @@ import pandas as pd
 import os
 from scrape_synoptic_view_and_crop_scale_for_discord_events import generate_scaled_cropped_synoptic_view_image
 
-
-# Read the Discord bot token from discord_token.txt
+# Get the Discord bot token from the 'discord_token.txt' file
 def get_discord_token():
     try:
         with open('discord_token.txt', 'r') as token_file:
-            return token_file.read().strip()  # Read and remove any extra whitespace
+            return token_file.read().strip()
     except FileNotFoundError:
-        print("Error: 'discord_token.txt' not found in the current directory.")
+        print("Error: 'discord_token.txt' not found.")
         return None
 
-
-TOKEN = get_discord_token()  # Get the token from the file
+TOKEN = get_discord_token()
 if not TOKEN:
-    raise SystemExit("Discord token is missing. Please provide a valid token in 'discord_token.txt'.")
+    raise SystemExit("Discord token is missing.")
 
-GUILD_ID = 697971426799517774  # Set to the provided Guild ID
+GUILD_ID = 697971426799517774
 
-# Discord Bot Setup
+# Initialize the Discord bot
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+# Get the current local time as a formatted string
+def current_time_str():
+    return datetime.now().strftime("[%Y-%m-%d %I:%M %p]")
 
-# Scrape lab status and sensor data from the webpage
+# Function to scrape lab status and sensor data from the webpage
 def fetch_lab_status_and_sensors(url):
     try:
         response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching the webpage: {e}")
+        print(f"{current_time_str()} Error fetching the webpage: {e}")
         return None
 
-    # Parse HTML
     soup = BeautifulSoup(response.text, 'html.parser')
     page_text = soup.get_text().lower()
 
-    # Determine the lab status
-    if 'open' in page_text and 'closed' not in page_text:
-        lab_status = "We are OPEN"
-    elif 'closed' in page_text:
-        lab_status = "We are CLOSED"
-    else:
-        lab_status = "Status could not be determined"
+    # Determine lab status
+    lab_status = "We are OPEN" if 'open' in page_text and 'closed' not in page_text else "We are CLOSED"
 
-    # Scrape sensor data
+    # Parse sensor data
     sensor_data = []
     sensor_table = soup.find('table')
     if sensor_table:
         for row in sensor_table.find_all('tr'):
             cells = row.find_all('td')
-            if len(cells) == 4:  # Ensure proper row structure
+            if len(cells) == 4:
                 sensor_name = cells[0].get_text(strip=True)
-                status = cells[1].get_text(strip=True)
-                # Only display Fahrenheit for temperatures and replace "No Movement" with "No Motion"
-                status = truncate_status(status)
+                status = truncate_status(cells[1].get_text(strip=True))
                 if sensor_name not in ["Page Loaded", "Auto Refresh"]:
                     sensor_data.append({
                         'Sensor': sensor_name,
@@ -72,19 +65,16 @@ def fetch_lab_status_and_sensors(url):
     scrape_timestamp = datetime.now().strftime("%Y-%m-%d %I:%M %p %Z")
     return lab_status, sensor_data, scrape_timestamp
 
-
-# Function to truncate the status to only show Fahrenheit and replace "No Movement" with "No Motion"
+# Function to show only Fahrenheit and replace "No Movement" with "No Motion"
 def truncate_status(status):
     if "°F" in status:
-        return status.split("/")[1].strip()  # Keep only the Fahrenheit value
-    return status.replace("No Movement", "No Motion")  # Replace "No Movement" with "No Motion"
+        return status.split("/")[1].strip()
+    return status.replace("No Movement", "No Motion")
 
-
-# Format the time since the last update in short form
+# Format the time since the last update
 def format_last_update(timestamp_str):
-    timestamp_str = timestamp_str.rsplit(' ', 1)[0]  # Remove timezone
+    timestamp_str = timestamp_str.rsplit(' ', 1)[0]
     timestamp_format = "%b %d, %Y, %I:%M %p"
-
     try:
         timestamp = datetime.strptime(timestamp_str, timestamp_format)
         pacific = pytz.timezone('America/Los_Angeles')
@@ -97,39 +87,35 @@ def format_last_update(timestamp_str):
             return f"{int(time_diff.total_seconds() // 60)} min ago"
         elif time_diff < timedelta(days=1):
             return f"{int(time_diff.total_seconds() // 3600)} hr ago"
-        else:
-            return f"{time_diff.days} days ago"
-
+        return f"{time_diff.days} days ago"
     except Exception as e:
         return f"Error parsing timestamp: {e}"
 
-
-# Format the scraped sensor data for the event description
+# Format the scraped sensor data for the Discord event description
 def format_sensor_data(lab_status, sensor_data, scrape_timestamp, url):
     df = pd.DataFrame(sensor_data)
     table_string = df.to_string(index=False)
-    return (f"**Lab Status:** {lab_status}\n"
-            f"**Data Scraped on:** {scrape_timestamp}\n"
-            f"[Source: {url}]\n\n"
-            f"**Sensor Data:**\n```\n{table_string}\n```")
-
+    return (
+        f"**Lab Status:** {lab_status}\n"
+        f"**Data Scraped on:** {scrape_timestamp}\n"
+        f"[Source: {url}]\n\n"
+        f"**Sensor Data:**\n```\n{table_string}\n```"
+    )
 
 # Convert image to raw binary data for Discord
 def get_image_as_binary(image_path):
     with open(image_path, 'rb') as img_file:
         return img_file.read()
 
-
-# Function to find an existing "We are" event
+# Find an existing "We are" event
 async def find_lab_status_event(guild):
     try:
         for event in guild.scheduled_events:
             if "We are" in event.name:
                 return event
     except Exception as e:
-        print(f"Error finding event: {e}")
+        print(f"{current_time_str()} Error finding event: {e}")
     return None
-
 
 # Check if there's another active event
 async def check_for_other_active_events(guild):
@@ -139,9 +125,8 @@ async def check_for_other_active_events(guild):
             if event.start_time <= now <= event.end_time and "We are" not in event.name:
                 return True
     except Exception as e:
-        print(f"Error checking for other active events: {e}")
+        print(f"{current_time_str()} Error checking for other active events: {e}")
     return False
-
 
 # Task to post or update lab status event every 5 minutes
 @tasks.loop(minutes=5)
@@ -155,7 +140,7 @@ async def post_lab_status():
         if lab_status is None or not sensor_data:
             raise ValueError("Failed to scrape lab status or sensor data")
 
-        # Call the generate_scaled_cropped_synoptic_view_image function
+        # Generate and save the scaled and cropped synoptic view image
         generate_scaled_cropped_synoptic_view_image(output_png_file=scaled_png_file)
 
         formatted_message = format_sensor_data(lab_status, sensor_data, scrape_timestamp, url)
@@ -165,31 +150,29 @@ async def post_lab_status():
             raise ValueError(f"Guild with ID {GUILD_ID} not found")
 
         existing_event = await find_lab_status_event(guild)
-        event_title = f"{lab_status}"
-        event_description = formatted_message
         image_binary = get_image_as_binary(scaled_png_file)
 
+        # Handle active events
         other_active_event = await check_for_other_active_events(guild)
-
         if other_active_event:
             if existing_event:
                 await existing_event.delete()
-                print(
-                    f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Ended 'We are' event due to another active event.")
+                print(f"{current_time_str()} Ended 'We are' event due to another active event.")
             return
 
+        # Update or create event
         if existing_event:
             await existing_event.edit(
-                name=event_title,
-                description=event_description,
+                name=lab_status,
+                description=formatted_message,
                 end_time=datetime.now().astimezone() + timedelta(minutes=10),
                 image=image_binary
             )
-            print(f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Updated event: {existing_event.name}")
+            print(f"{current_time_str()} Updated event: {existing_event.name}")
         else:
             await guild.create_scheduled_event(
-                name=event_title,
-                description=event_description,
+                name=lab_status,
+                description=formatted_message,
                 start_time=datetime.now().astimezone() + timedelta(seconds=10),
                 end_time=datetime.now().astimezone() + timedelta(minutes=10),
                 entity_type=discord.EntityType.external,
@@ -197,30 +180,27 @@ async def post_lab_status():
                 privacy_level=discord.PrivacyLevel.guild_only,
                 image=image_binary
             )
-            print(f"[{datetime.now().strftime('%Y-%m-%d %I:%M %p %Z')}] Created new event: {event_title}")
+            print(f"{current_time_str()} Created new event: {lab_status}")
     except Exception as e:
-        print(f"Error in post_lab_status: {e}")
+        print(f"{current_time_str()} Error in post_lab_status: {e}")
     finally:
         if not post_lab_status.is_running():
-            post_lab_status.restart()  # Ensure loop continues
-
+            post_lab_status.restart()
 
 # Bot ready event
 @bot.event
 async def on_ready():
-    print(f'Bot {bot.user.name} has connected to Discord')
+    print(f"{current_time_str()} Bot {bot.user.name} has connected to Discord")
     if not post_lab_status.is_running():
         post_lab_status.start()
-
 
 # Error handler for bot disconnect
 @bot.event
 async def on_disconnect():
-    print(f'Bot {bot.user.name} has disconnected from Discord, attempting to reconnect...')
-
+    print(f"{current_time_str()} Bot {bot.user.name} has disconnected, attempting to reconnect...")
 
 # Run the bot
 try:
     bot.run(TOKEN)
 except Exception as e:
-    print(f"Error running the bot: {e}")
+    print(f"{current_time_str()} Error running the bot: {e}")
