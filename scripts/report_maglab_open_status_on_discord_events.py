@@ -129,7 +129,7 @@ async def check_for_other_active_events(guild):
     return False
 
 # Task to post or update lab status event every 5 minutes
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=5, reconnect=True)
 async def post_lab_status():
     try:
         url = "https://www.maglaboratory.org/hal"
@@ -205,15 +205,21 @@ async def on_resumed():
     if not post_lab_status.is_running():
         post_lab_status.start()
 
-# Handle gateway shard errors
+# Handle gateway shard errors and recover
 @bot.event
 async def on_error(event_method, *args, **kwargs):
     print(f"{current_time_str()} Error in {event_method}: {args}, {kwargs}")
     if not post_lab_status.is_running():
         post_lab_status.restart()
 
-# Run the bot
-try:
-    bot.run(TOKEN)
-except Exception as e:
-    print(f"{current_time_str()} Error running the bot: {e}")
+# Run the bot with automatic reconnection logic
+def run_bot():
+    try:
+        bot.run(TOKEN, reconnect=True)
+    except Exception as e:
+        print(f"{current_time_str()} Error running the bot: {e}")
+        print(f"{current_time_str()} Attempting to restart bot...")
+        run_bot()  # Restart the bot on failure
+
+# Start the bot
+run_bot()

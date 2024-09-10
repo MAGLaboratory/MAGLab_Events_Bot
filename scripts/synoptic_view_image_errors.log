@@ -252,3 +252,17 @@ Loop thread traceback (most recent call last):
 2024-09-09 20:55:13,729 WARNING:Privileged message content intent is missing, commands may not work as expected.
 2024-09-09 20:55:13,729 INFO:logging in using static token
 2024-09-09 20:55:14,413 INFO:Shard ID None has connected to Gateway (Session ID: 453d4efe043d7e2cb5e4a1bfb7cef004).
+2024-09-09 21:35:53,023 ERROR:Attempting a reconnect in 1.53s
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\client.py", line 667, in connect
+    await self.ws.poll_event()
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\gateway.py", line 648, in poll_event
+    raise ConnectionClosed(self.socket, shard_id=self.shard_id, code=code) from None
+discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1000
+2024-09-09 21:35:54,786 INFO:Shard ID None has successfully RESUMED session 453d4efe043d7e2cb5e4a1bfb7cef004.
+2024-09-09 21:51:19,334 INFO:Shard ID None has successfully RESUMED session 453d4efe043d7e2cb5e4a1bfb7cef004.
+2024-09-09 22:37:25,304 INFO:Shard ID None has successfully RESUMED session 453d4efe043d7e2cb5e4a1bfb7cef004.
+2024-09-09 23:03:48,774 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-10 09:10:30,747 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-10 09:10:30,747 INFO:logging in using static token
+2024-09-10 09:10:31,363 INFO:Shard ID None has connected to Gateway (Session ID: c876305accf2dd5e6a45b551f5fdcbf2).
