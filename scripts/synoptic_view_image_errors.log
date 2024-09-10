@@ -54,3 +54,201 @@ aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host gateway-u
 2024-09-07 17:55:49,026 WARNING:Privileged message content intent is missing, commands may not work as expected.
 2024-09-07 17:55:49,026 INFO:logging in using static token
 2024-09-07 17:55:50,030 INFO:Shard ID None has connected to Gateway (Session ID: ee444a563fe3838f9bc3d46c5448a5b7).
+2024-09-07 19:59:53,633 INFO:Shard ID None has successfully RESUMED session ee444a563fe3838f9bc3d46c5448a5b7.
+2024-09-07 22:00:48,570 INFO:Shard ID None has successfully RESUMED session ee444a563fe3838f9bc3d46c5448a5b7.
+2024-09-07 23:31:17,194 WARNING:Shard ID None heartbeat blocked for more than 10 seconds.
+Loop thread traceback (most recent call last):
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 204, in <module>
+    bot.run(TOKEN)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\client.py", line 869, in run
+    asyncio.run(runner())
+  File "C:\ProgramData\Anaconda3\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 634, in run_until_complete
+    self.run_forever()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 321, in run_forever
+    super().run_forever()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 601, in run_forever
+    self._run_once()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 1905, in _run_once
+    handle._run()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 144, in post_lab_status
+    generate_scaled_cropped_synoptic_view_image(output_png_file=scaled_png_file)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\scrape_synoptic_view_and_crop_scale_for_discord_events.py", line 93, in generate_scaled_cropped_synoptic_view_image
+    svg_content = scrape_svg(url, svg_id)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\scrape_synoptic_view_and_crop_scale_for_discord_events.py", line 22, in scrape_svg
+    response = requests.get(url)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\api.py", line 75, in get
+    return request('get', url, params=params, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\adapters.py", line 439, in send
+    resp = conn.urlopen(
+  File "C:\ProgramData\Anaconda3\lib\site-packages\urllib3\connectionpool.py", line 699, in urlopen
+    httplib_response = self._make_request(
+  File "C:\ProgramData\Anaconda3\lib\site-packages\urllib3\connectionpool.py", line 440, in _make_request
+    httplib_response = conn.getresponse()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 1377, in getresponse
+    response.begin()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 320, in begin
+    version, status, reason = self._read_status()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 281, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "C:\ProgramData\Anaconda3\lib\socket.py", line 704, in readinto
+    return self._sock.recv_into(b)
+  File "C:\ProgramData\Anaconda3\lib\ssl.py", line 1275, in recv_into
+    return self.read(nbytes, buffer)
+  File "C:\ProgramData\Anaconda3\lib\ssl.py", line 1133, in read
+    return self._sslobj.read(len, buffer)
+
+2024-09-07 23:31:27,206 WARNING:Shard ID None heartbeat blocked for more than 20 seconds.
+Loop thread traceback (most recent call last):
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 204, in <module>
+    bot.run(TOKEN)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\client.py", line 869, in run
+    asyncio.run(runner())
+  File "C:\ProgramData\Anaconda3\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 634, in run_until_complete
+    self.run_forever()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 321, in run_forever
+    super().run_forever()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 601, in run_forever
+    self._run_once()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 1905, in _run_once
+    handle._run()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 144, in post_lab_status
+    generate_scaled_cropped_synoptic_view_image(output_png_file=scaled_png_file)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\scrape_synoptic_view_and_crop_scale_for_discord_events.py", line 93, in generate_scaled_cropped_synoptic_view_image
+    svg_content = scrape_svg(url, svg_id)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\scrape_synoptic_view_and_crop_scale_for_discord_events.py", line 22, in scrape_svg
+    response = requests.get(url)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\api.py", line 75, in get
+    return request('get', url, params=params, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\adapters.py", line 439, in send
+    resp = conn.urlopen(
+  File "C:\ProgramData\Anaconda3\lib\site-packages\urllib3\connectionpool.py", line 699, in urlopen
+    httplib_response = self._make_request(
+  File "C:\ProgramData\Anaconda3\lib\site-packages\urllib3\connectionpool.py", line 440, in _make_request
+    httplib_response = conn.getresponse()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 1377, in getresponse
+    response.begin()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 320, in begin
+    version, status, reason = self._read_status()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 281, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "C:\ProgramData\Anaconda3\lib\socket.py", line 704, in readinto
+    return self._sock.recv_into(b)
+  File "C:\ProgramData\Anaconda3\lib\ssl.py", line 1275, in recv_into
+    return self.read(nbytes, buffer)
+  File "C:\ProgramData\Anaconda3\lib\ssl.py", line 1133, in read
+    return self._sslobj.read(len, buffer)
+
+2024-09-07 23:31:37,217 WARNING:Shard ID None heartbeat blocked for more than 30 seconds.
+Loop thread traceback (most recent call last):
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 204, in <module>
+    bot.run(TOKEN)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\client.py", line 869, in run
+    asyncio.run(runner())
+  File "C:\ProgramData\Anaconda3\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 634, in run_until_complete
+    self.run_forever()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 321, in run_forever
+    super().run_forever()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 601, in run_forever
+    self._run_once()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\base_events.py", line 1905, in _run_once
+    handle._run()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 144, in post_lab_status
+    generate_scaled_cropped_synoptic_view_image(output_png_file=scaled_png_file)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\scrape_synoptic_view_and_crop_scale_for_discord_events.py", line 93, in generate_scaled_cropped_synoptic_view_image
+    svg_content = scrape_svg(url, svg_id)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\scrape_synoptic_view_and_crop_scale_for_discord_events.py", line 22, in scrape_svg
+    response = requests.get(url)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\api.py", line 75, in get
+    return request('get', url, params=params, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\ProgramData\Anaconda3\lib\site-packages\requests\adapters.py", line 439, in send
+    resp = conn.urlopen(
+  File "C:\ProgramData\Anaconda3\lib\site-packages\urllib3\connectionpool.py", line 699, in urlopen
+    httplib_response = self._make_request(
+  File "C:\ProgramData\Anaconda3\lib\site-packages\urllib3\connectionpool.py", line 440, in _make_request
+    httplib_response = conn.getresponse()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 1377, in getresponse
+    response.begin()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 320, in begin
+    version, status, reason = self._read_status()
+  File "C:\ProgramData\Anaconda3\lib\http\client.py", line 281, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "C:\ProgramData\Anaconda3\lib\socket.py", line 704, in readinto
+    return self._sock.recv_into(b)
+  File "C:\ProgramData\Anaconda3\lib\ssl.py", line 1275, in recv_into
+    return self.read(nbytes, buffer)
+  File "C:\ProgramData\Anaconda3\lib\ssl.py", line 1133, in read
+    return self._sslobj.read(len, buffer)
+
+2024-09-07 23:31:42,168 INFO:Shard ID None has successfully RESUMED session ee444a563fe3838f9bc3d46c5448a5b7.
+2024-09-08 01:09:27,283 INFO:Shard ID None has successfully RESUMED session ee444a563fe3838f9bc3d46c5448a5b7.
+2024-09-08 08:26:14,964 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 08:26:32,162 INFO:Shard ID None session has been invalidated.
+2024-09-08 08:26:37,500 INFO:Shard ID None has connected to Gateway (Session ID: ab24a69f1d168db3665627bce7f16080).
+2024-09-08 09:33:57,561 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 09:34:05,838 INFO:Shard ID None session has been invalidated.
+2024-09-08 09:34:18,750 INFO:Shard ID None has connected to Gateway (Session ID: 11f0f360461a0df2c06b2244579651db).
+2024-09-08 12:12:58,027 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 12:13:13,760 INFO:Shard ID None session has been invalidated.
+2024-09-08 12:13:19,095 INFO:Shard ID None has connected to Gateway (Session ID: cd4057d9d537bf4c8ff721fd7a21af5d).
+2024-09-08 12:35:28,351 INFO:Shard ID None has successfully RESUMED session cd4057d9d537bf4c8ff721fd7a21af5d.
+2024-09-08 13:16:35,176 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 13:16:43,051 INFO:Shard ID None has successfully RESUMED session cd4057d9d537bf4c8ff721fd7a21af5d.
+2024-09-08 13:39:29,663 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 13:39:47,222 INFO:Shard ID None session has been invalidated.
+2024-09-08 13:39:52,683 INFO:Shard ID None has connected to Gateway (Session ID: aa6ce5ff436a15985d99a28b66303dd4).
+2024-09-08 14:00:51,143 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 14:01:01,201 INFO:Shard ID None session has been invalidated.
+2024-09-08 14:01:15,439 INFO:Shard ID None has connected to Gateway (Session ID: f22ef4c797c1a2b96cb73cdd0b9bed84).
+2024-09-08 14:41:57,714 INFO:Shard ID None has successfully RESUMED session f22ef4c797c1a2b96cb73cdd0b9bed84.
+2024-09-08 15:52:00,086 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 15:52:15,675 INFO:Shard ID None session has been invalidated.
+2024-09-08 15:52:15,800 WARNING:We are being rate limited. PATCH https://discord.com/api/v10/guilds/697971426799517774/scheduled-events/1282446880801820765 responded with 429. Retrying in 1.80 seconds.
+2024-09-08 15:52:21,008 INFO:Shard ID None has connected to Gateway (Session ID: 3ce1b30c09116eba797db1f39e38ef0c).
+2024-09-08 18:08:17,736 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-08 18:08:28,199 INFO:Shard ID None session has been invalidated.
+2024-09-08 18:08:46,229 INFO:Shard ID None has connected to Gateway (Session ID: 744b05582194f6141f89a7c285e69a31).
+2024-09-08 19:59:20,245 INFO:Shard ID None has successfully RESUMED session 744b05582194f6141f89a7c285e69a31.
+2024-09-09 08:00:31,934 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-09 08:00:58,104 INFO:Shard ID None session has been invalidated.
+2024-09-09 08:00:58,227 WARNING:We are being rate limited. PATCH https://discord.com/api/v10/guilds/697971426799517774/scheduled-events/1282508002687057920 responded with 429. Retrying in 1.72 seconds.
+2024-09-09 08:01:03,552 INFO:Shard ID None has connected to Gateway (Session ID: f072fc97bf022859eff020d0bcbb85b0).
+2024-09-09 20:14:43,480 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-09 20:55:13,729 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-09 20:55:13,729 INFO:logging in using static token
+2024-09-09 20:55:14,413 INFO:Shard ID None has connected to Gateway (Session ID: 453d4efe043d7e2cb5e4a1bfb7cef004).

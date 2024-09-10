@@ -194,10 +194,23 @@ async def on_ready():
     if not post_lab_status.is_running():
         post_lab_status.start()
 
-# Error handler for bot disconnect
+# Handle bot disconnects and reconnections
 @bot.event
 async def on_disconnect():
     print(f"{current_time_str()} Bot {bot.user.name} has disconnected, attempting to reconnect...")
+
+@bot.event
+async def on_resumed():
+    print(f"{current_time_str()} Bot {bot.user.name} has reconnected to Discord")
+    if not post_lab_status.is_running():
+        post_lab_status.start()
+
+# Handle gateway shard errors
+@bot.event
+async def on_error(event_method, *args, **kwargs):
+    print(f"{current_time_str()} Error in {event_method}: {args}, {kwargs}")
+    if not post_lab_status.is_running():
+        post_lab_status.restart()
 
 # Run the bot
 try:
