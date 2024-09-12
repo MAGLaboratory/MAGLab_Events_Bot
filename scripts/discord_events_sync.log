@@ -1,0 +1,32 @@
+2024-09-11 05:52 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 05:52 PM - INFO - logging in using static token
+2024-09-11 05:52 PM - INFO - Shard ID None has connected to Gateway (Session ID: 0b27381d020afa38f891787562c61664).
+2024-09-11 05:52 PM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-11 05:52 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-12 17:00:00)
+2024-09-11 05:52 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-17 17:00:00)
+2024-09-11 05:52 PM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-18 17:00:00)
+2024-09-11 05:52 PM - INFO - Updating Discord event: Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00)
+2024-09-11 05:52 PM - INFO - Updating Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
+2024-09-11 05:52 PM - WARNING - We are being rate limited. PATCH https://discord.com/api/v10/guilds/697971426799517774/scheduled-events/1281801041544740886 responded with 429. Retrying in 2.10 seconds.
+2024-09-11 05:53 PM - INFO - Updating Discord event: Open House Party! (LA time: 2024-09-14 18:00:00)
+2024-09-11 05:55 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 05:55 PM - INFO - logging in using static token
+2024-09-11 05:55 PM - INFO - Shard ID None has connected to Gateway (Session ID: 0b68d09eab480032096e7c3dde5f85f9).
+2024-09-11 05:55 PM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-11 05:55 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-12 17:00:00)
+2024-09-11 05:55 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-17 17:00:00)
+2024-09-11 05:55 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-18 17:00:00)
+2024-09-11 05:55 PM - INFO - Updating Discord event: Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00)
+2024-09-11 05:55 PM - INFO - Updating Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
+2024-09-11 05:55 PM - INFO - Updating Discord event: Open House Party! (LA time: 2024-09-14 18:00:00)
+2024-09-11 06:02 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 06:02 PM - INFO - logging in using static token
+2024-09-11 06:02 PM - INFO - Shard ID None has connected to Gateway (Session ID: 2143bc6bdfb026dabe36576c90c6264a).
+2024-09-11 06:02 PM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-11 06:02 PM - ERROR - Error fetching events from https://calendar.google.com/calendar/ical/c_3keov3j3lc5qscq754mb4n38b4%40group.calendar.google.com/public/basic.ics: 'datetime.datetime' object has no attribute 'datetime'
+2024-09-11 06:02 PM - ERROR - Error fetching events from https://calendar.google.com/calendar/ical/bjpkvaeg1rjq9u3c6utecq1jos%40group.calendar.google.com/public/basic.ics: 'datetime.datetime' object has no attribute 'datetime'
+2024-09-11 06:02 PM - INFO - Removing Discord event: Curator Hours: Brandon (Not found in calendar)
+2024-09-11 06:02 PM - INFO - Removing Discord event: Curator Hours: Brandon (Not found in calendar)
+2024-09-11 06:02 PM - INFO - Removing Discord event: Open Project Night (Not found in calendar)
+2024-09-11 06:02 PM - INFO - Removing Discord event: Open House Party! (Not found in calendar)
+2024-09-11 06:02 PM - INFO - Removing Discord event: Curator Hours: Brandon (Not found in calendar)

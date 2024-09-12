@@ -8,6 +8,19 @@ from icalendar import Calendar
 from dateutil.rrule import rrulestr
 from discord.ext import tasks, commands
 import traceback
+import logging
+
+# Setup logging to file and console
+logging.basicConfig(filename='discord_events_sync.log',
+                    level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %I:%M %p')
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %I:%M %p')
+console.setFormatter(formatter)
+logging.getLogger().addHandler(console)
 
 # Read the Discord token from a file named 'discord_token.txt'
 def get_discord_token():
@@ -59,7 +72,7 @@ def adjust_rrule_for_utc(rrule_str, start):
                         until_value = until_dt.in_tz('UTC').strftime('%Y%m%dT%H%M%SZ')
                         rrule_parts[i] = f'UNTIL={until_value}'
                 except pendulum.parsing.exceptions.ParserError:
-                    print(f"{get_timestamp()} Error parsing UNTIL value: {until_value}")
+                    logging.error(f"Error parsing UNTIL value: {until_value}")
         return ';'.join(rrule_parts)
     return rrule_str
 
@@ -97,7 +110,7 @@ def fetch_calendar_events():
                                 rule = rrulestr(rrule_str, dtstart=start)
                                 occurrences = rule.between(now.in_tz(timezone), future.in_tz(timezone))
                             except ValueError as e:
-                                print(f"{get_timestamp()} RRULE error in {component.get('summary')}: {e}")
+                                logging.error(f"RRULE error in {component.get('summary')}: {e}")
                                 continue
                             for occ in occurrences:
                                 events.append({
@@ -116,10 +129,10 @@ def fetch_calendar_events():
                                 'location': component.get('location', 'MAG Laboratory')
                             })
             except Exception as e:
-                print(f"{get_timestamp()} Error fetching events from {url}: {e}")
+                logging.error(f"Error fetching events from {url}: {e}")
                 traceback.print_exc()
     except Exception as e:
-        print(f"{get_timestamp()} Error in fetch_calendar_events: {e}")
+        logging.error(f"Error in fetch_calendar_events: {e}")
         traceback.print_exc()
     return events
 
@@ -130,7 +143,7 @@ def find_matching_discord_event(discord_events, cal_event):
             if event.name == cal_event['name'] and event.start_time == cal_event['start_time']:
                 return event
     except Exception as e:
-        print(f"{get_timestamp()} Error finding matching event: {e}")
+        logging.error(f"Error finding matching event: {e}")
         traceback.print_exc()
     return None
 
@@ -150,7 +163,7 @@ async def sync_discord_events(guild):
             try:
                 if discord_event:
                     if pendulum.now('UTC') < discord_event.start_time:
-                        print(f"{get_timestamp()} Updating Discord event: {cal_event['name']} (LA time: {la_time})")
+                        logging.info(f"Updating Discord event: {cal_event['name']} (LA time: {la_time})")
                         await discord_event.edit(
                             name=cal_event['name'],
                             description=cal_event['description'],
@@ -159,7 +172,7 @@ async def sync_discord_events(guild):
                             location=cal_event['location']
                         )
                     else:
-                        print(f"{get_timestamp()} Updating ongoing Discord event (except start time): {cal_event['name']} (LA time: {la_time})")
+                        logging.info(f"Updating ongoing Discord event (except start time): {cal_event['name']} (LA time: {la_time})")
                         await discord_event.edit(
                             name=cal_event['name'],
                             description=cal_event['description'],
@@ -167,7 +180,7 @@ async def sync_discord_events(guild):
                             location=cal_event['location']
                         )
                 else:
-                    print(f"{get_timestamp()} Creating new Discord event: {cal_event['name']} (LA time: {la_time})")
+                    logging.info(f"Creating new Discord event: {cal_event['name']} (LA time: {la_time})")
                     await guild.create_scheduled_event(
                         name=cal_event['name'],
                         description=cal_event['description'],
@@ -178,19 +191,19 @@ async def sync_discord_events(guild):
                         privacy_level=discord.PrivacyLevel.guild_only
                     )
             except Exception as e:
-                print(f"{get_timestamp()} Error syncing event {cal_event['name']}: {e}")
+                logging.error(f"Error syncing event {cal_event['name']}: {e}")
                 traceback.print_exc()
 
         for discord_event in existing_events:
             try:
                 if discord_event.name not in calendar_event_names and "We are" not in discord_event.name:
-                    print(f"{get_timestamp()} Removing Discord event: {discord_event.name} (Not found in calendar)")
+                    logging.info(f"Removing Discord event: {discord_event.name} (Not found in calendar)")
                     await discord_event.delete()
             except Exception as e:
-                print(f"{get_timestamp()} Error removing Discord event {discord_event.name}: {e}")
+                logging.error(f"Error removing Discord event {discord_event.name}: {e}")
                 traceback.print_exc()
     except Exception as e:
-        print(f"{get_timestamp()} Error in sync_discord_events: {e}")
+        logging.error(f"Error in sync_discord_events: {e}")
         traceback.print_exc()
 
 @tasks.loop(hours=1)
@@ -201,19 +214,19 @@ async def sync_events_task():
         if guild:
             await sync_discord_events(guild)
         else:
-            print(f"{get_timestamp()} Guild not found!")
+            logging.info("Guild not found!")
     except Exception as e:
-        print(f"{get_timestamp()} Error in sync_events_task: {e}")
+        logging.error(f"Error in sync_events_task: {e}")
         traceback.print_exc()
 
 @client.event
 async def on_ready():
     """Start syncing once the bot is ready."""
-    print(f'{get_timestamp()} Logged in as {client.user}')
+    logging.info(f'Logged in as {client.user}')
     sync_events_task.start()
 
 try:
     client.run(DISCORD_TOKEN)
 except Exception as e:
-    print(f"{get_timestamp()} Error running Discord client: {e}")
-    traceback.print_exc
+    logging.error(f"Error running Discord client: {e}")
+    traceback.print_exc()

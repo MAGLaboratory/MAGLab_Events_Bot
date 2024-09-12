@@ -266,3 +266,20 @@ discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1000
 2024-09-10 09:10:30,747 WARNING:Privileged message content intent is missing, commands may not work as expected.
 2024-09-10 09:10:30,747 INFO:logging in using static token
 2024-09-10 09:10:31,363 INFO:Shard ID None has connected to Gateway (Session ID: c876305accf2dd5e6a45b551f5fdcbf2).
+2024-09-10 09:27:10,329 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-10 09:27:23,393 INFO:Shard ID None session has been invalidated.
+2024-09-10 09:27:28,732 INFO:Shard ID None has connected to Gateway (Session ID: 86b8f5f5c35d0c8ee5c19bb24a49df6b).
+2024-09-10 21:27:33,490 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-10 21:27:41,465 INFO:Shard ID None session has been invalidated.
+2024-09-10 21:28:02,590 INFO:Shard ID None has connected to Gateway (Session ID: b124160d31de065018fe79a3eb8996e2).
+2024-09-10 21:30:25,719 WARNING:We are being rate limited. PATCH https://discord.com/api/v10/guilds/697971426799517774/scheduled-events/1283283389159575603 responded with 429. Retrying in 0.30 seconds.
+2024-09-11 04:29:46,996 WARNING:Shard ID None has stopped responding to the gateway. Closing and restarting.
+2024-09-11 04:29:54,941 INFO:Shard ID None session has been invalidated.
+2024-09-11 04:30:00,271 INFO:Shard ID None has connected to Gateway (Session ID: b8c1bdea09c2f748b360a895049b9067).
+2024-09-11 04:30:35,613 WARNING:We are being rate limited. PATCH https://discord.com/api/v10/guilds/697971426799517774/scheduled-events/1283389161960767498 responded with 429. Retrying in 1.25 seconds.
+2024-09-11 17:33:52,676 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 17:33:52,676 INFO:logging in using static token
+2024-09-11 17:33:53,339 INFO:Shard ID None has connected to Gateway (Session ID: cf3576965411df877116ba621f9a7b79).
+2024-09-11 17:55:14,504 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 17:55:14,505 INFO:logging in using static token
+2024-09-11 17:55:15,083 INFO:Shard ID None has connected to Gateway (Session ID: effcf1f8db730ed4c0a243206ff70515).

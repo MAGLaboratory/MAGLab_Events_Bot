@@ -6,7 +6,25 @@ from datetime import datetime, timedelta
 import pytz
 import pandas as pd
 import os
+import asyncio
+import logging
 from scrape_synoptic_view_and_crop_scale_for_discord_events import generate_scaled_cropped_synoptic_view_image
+
+# Configure logging
+logging.basicConfig(
+    filename='bot_activity.log',  # Log file
+    filemode='a',  # Append to the file
+    format='[%(asctime)s] %(levelname)s: %(message)s',
+    datefmt='%Y-%m-%d %I:%M %p',
+    level=logging.INFO
+)
+
+# Log to both console and file
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %I:%M %p')
+console.setFormatter(formatter)
+logging.getLogger().addHandler(console)
 
 # Get the Discord bot token from the 'discord_token.txt' file
 def get_discord_token():
@@ -14,7 +32,7 @@ def get_discord_token():
         with open('discord_token.txt', 'r') as token_file:
             return token_file.read().strip()
     except FileNotFoundError:
-        print("Error: 'discord_token.txt' not found.")
+        logging.error("Error: 'discord_token.txt' not found.")
         return None
 
 TOKEN = get_discord_token()
@@ -27,17 +45,13 @@ GUILD_ID = 697971426799517774
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Get the current local time as a formatted string
-def current_time_str():
-    return datetime.now().strftime("[%Y-%m-%d %I:%M %p]")
-
 # Function to scrape lab status and sensor data from the webpage
 def fetch_lab_status_and_sensors(url):
     try:
         response = requests.get(url)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        print(f"{current_time_str()} Error fetching the webpage: {e}")
+        logging.error(f"Error fetching the webpage: {e}")
         return None
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -89,6 +103,7 @@ def format_last_update(timestamp_str):
             return f"{int(time_diff.total_seconds() // 3600)} hr ago"
         return f"{time_diff.days} days ago"
     except Exception as e:
+        logging.error(f"Error parsing timestamp: {e}")
         return f"Error parsing timestamp: {e}"
 
 # Format the scraped sensor data for the Discord event description
@@ -114,7 +129,7 @@ async def find_lab_status_event(guild):
             if "We are" in event.name:
                 return event
     except Exception as e:
-        print(f"{current_time_str()} Error finding event: {e}")
+        logging.error(f"Error finding event: {e}")
     return None
 
 # Check if there's another active event
@@ -125,11 +140,11 @@ async def check_for_other_active_events(guild):
             if event.start_time <= now <= event.end_time and "We are" not in event.name:
                 return True
     except Exception as e:
-        print(f"{current_time_str()} Error checking for other active events: {e}")
+        logging.error(f"Error checking for other active events: {e}")
     return False
 
 # Task to post or update lab status event every 5 minutes
-@tasks.loop(minutes=5, reconnect=True)
+@tasks.loop(minutes=5)
 async def post_lab_status():
     try:
         url = "https://www.maglaboratory.org/hal"
@@ -157,7 +172,7 @@ async def post_lab_status():
         if other_active_event:
             if existing_event:
                 await existing_event.delete()
-                print(f"{current_time_str()} Ended 'We are' event due to another active event.")
+                logging.info(f"Ended 'We are' event due to another active event.")
             return
 
         # Update or create event
@@ -168,7 +183,7 @@ async def post_lab_status():
                 end_time=datetime.now().astimezone() + timedelta(minutes=10),
                 image=image_binary
             )
-            print(f"{current_time_str()} Updated event: {existing_event.name}")
+            logging.info(f"Updated event: {existing_event.name}")
         else:
             await guild.create_scheduled_event(
                 name=lab_status,
@@ -180,35 +195,34 @@ async def post_lab_status():
                 privacy_level=discord.PrivacyLevel.guild_only,
                 image=image_binary
             )
-            print(f"{current_time_str()} Created new event: {lab_status}")
+            logging.info(f"Created new event: {lab_status}")
     except Exception as e:
-        print(f"{current_time_str()} Error in post_lab_status: {e}")
+        logging.error(f"Error in post_lab_status: {e}")
     finally:
-        if not post_lab_status.is_running():
-            post_lab_status.restart()
+        await asyncio.sleep(300)  # Ensure the task respects the 5-minute interval
 
 # Bot ready event
 @bot.event
 async def on_ready():
-    print(f"{current_time_str()} Bot {bot.user.name} has connected to Discord")
+    logging.info(f"Bot {bot.user.name} has connected to Discord")
     if not post_lab_status.is_running():
         post_lab_status.start()
 
 # Handle bot disconnects and reconnections
 @bot.event
 async def on_disconnect():
-    print(f"{current_time_str()} Bot {bot.user.name} has disconnected, attempting to reconnect...")
+    logging.warning(f"Bot {bot.user.name} has disconnected, attempting to reconnect...")
 
 @bot.event
 async def on_resumed():
-    print(f"{current_time_str()} Bot {bot.user.name} has reconnected to Discord")
+    logging.info(f"Bot {bot.user.name} has reconnected to Discord")
     if not post_lab_status.is_running():
         post_lab_status.start()
 
 # Handle gateway shard errors and recover
 @bot.event
 async def on_error(event_method, *args, **kwargs):
-    print(f"{current_time_str()} Error in {event_method}: {args}, {kwargs}")
+    logging.error(f"Error in {event_method}: {args}, {kwargs}")
     if not post_lab_status.is_running():
         post_lab_status.restart()
 
@@ -217,8 +231,8 @@ def run_bot():
     try:
         bot.run(TOKEN, reconnect=True)
     except Exception as e:
-        print(f"{current_time_str()} Error running the bot: {e}")
-        print(f"{current_time_str()} Attempting to restart bot...")
+        logging.error(f"Error running the bot: {e}")
+        logging.info("Attempting to restart bot...")
         run_bot()  # Restart the bot on failure
 
 # Start the bot
