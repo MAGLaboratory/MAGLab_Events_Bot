@@ -30,3 +30,44 @@
 2024-09-11 06:02 PM - INFO - Removing Discord event: Open Project Night (Not found in calendar)
 2024-09-11 06:02 PM - INFO - Removing Discord event: Open House Party! (Not found in calendar)
 2024-09-11 06:02 PM - INFO - Removing Discord event: Curator Hours: Brandon (Not found in calendar)
+2024-09-11 06:12 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 06:12 PM - INFO - logging in using static token
+2024-09-11 06:12 PM - INFO - Shard ID None has connected to Gateway (Session ID: 372fc94b7654880481530cab003f475d).
+2024-09-11 06:12 PM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-11 06:12 PM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-12 17:00:00)
+2024-09-11 06:12 PM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-17 17:00:00)
+2024-09-11 06:12 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
+2024-09-11 06:12 PM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
+2024-09-11 06:12 PM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
+2024-09-11 06:12 PM - INFO - Creating new Discord event: Open House Party! (LA time: 2024-09-14 18:00:00)
+2024-09-11 06:27 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 06:27 PM - INFO - logging in using static token
+2024-09-11 06:27 PM - INFO - Shard ID None has connected to Gateway (Session ID: f8b85f78d84f573436838d9243fa0b49).
+2024-09-11 06:27 PM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-11 06:27 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-12 17:00:00). No new event created.
+2024-09-11 06:27 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
+2024-09-11 06:27 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
+2024-09-11 06:27 PM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
+2024-09-11 06:27 PM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
+2024-09-11 06:27 PM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
+2024-09-11 06:37 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-11 06:37 PM - INFO - logging in using static token
+2024-09-11 06:37 PM - INFO - Shard ID None has connected to Gateway (Session ID: d3a3bc52e94b81ed17a7929cde0c90c3).
+2024-09-11 06:37 PM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-11 06:37 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-12 17:00:00). No new event created.
+2024-09-11 06:37 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
+2024-09-11 06:37 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
+2024-09-11 06:37 PM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
+2024-09-11 06:37 PM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
+2024-09-11 06:37 PM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
+2024-09-13 08:27 AM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:27 AM - INFO - logging in using static token
+2024-09-13 08:27 AM - INFO - Shard ID None has connected to Gateway (Session ID: 74fe8b0e0a8561ca3f60dcbe08db8f4d).
+2024-09-13 08:27 AM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-13 08:27 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
+2024-09-13 08:27 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
+2024-09-13 08:27 AM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-19 17:00:00)
+2024-09-13 08:27 AM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
+2024-09-13 08:27 AM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
+2024-09-13 08:27 AM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
+2024-09-13 08:27 AM - INFO - Removing Discord event: Open Project Night (Not found in calendar)

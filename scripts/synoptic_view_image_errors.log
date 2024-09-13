@@ -283,3 +283,40 @@ discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1000
 2024-09-11 17:55:14,504 WARNING:Privileged message content intent is missing, commands may not work as expected.
 2024-09-11 17:55:14,505 INFO:logging in using static token
 2024-09-11 17:55:15,083 INFO:Shard ID None has connected to Gateway (Session ID: effcf1f8db730ed4c0a243206ff70515).
+2024-09-13 08:05:05,815 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:05:05,815 INFO:logging in using static token
+2024-09-13 08:05:06,968 INFO:Shard ID None has connected to Gateway (Session ID: a9d636929ed7e5757f41e761cf909b80).
+2024-09-13 08:06:21,851 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:06:21,851 INFO:logging in using static token
+2024-09-13 08:06:22,609 INFO:Shard ID None has connected to Gateway (Session ID: b62aaea9087c38f3786553608c034263).
+2024-09-13 08:32:42,954 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:32:42,955 INFO:logging in using static token
+2024-09-13 08:32:43,843 INFO:Shard ID None has connected to Gateway (Session ID: 3d5d6ba4b3147c36aad6e2d1a7b41a43).
+2024-09-13 08:34:07,383 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:34:07,383 INFO:logging in using static token
+2024-09-13 08:34:08,093 INFO:Shard ID None has connected to Gateway (Session ID: 2a1180ab383faf68cb58a7a7d252fefd).
+2024-09-13 08:34:10,108 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 08:34:10,109 ERROR:Unhandled exception in internal background task 'post_lab_status'.
+Traceback (most recent call last):
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 178, in post_lab_status
+    await asyncio.wait_for(_post_lab_status_task(), timeout=MAX_RUNTIME_SECONDS)
+NameError: name 'asyncio' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\Ben Cheng\Documents\GitHub\MAGLab_Events_Bot\scripts\report_maglab_open_status_on_discord_events.py", line 179, in post_lab_status
+    except asyncio.TimeoutError:
+NameError: name 'asyncio' is not defined
+2024-09-13 08:39:23,633 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:39:23,633 INFO:logging in using static token
+2024-09-13 08:39:24,378 INFO:Shard ID None has connected to Gateway (Session ID: 13daef5c8f1c1c0780265e3212a94763).
+2024-09-13 08:39:26,394 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 08:39:35,173 INFO:Updated event: We are CLOSED
+2024-09-13 08:40:26,262 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:40:26,262 INFO:logging in using static token
+2024-09-13 08:40:27,042 INFO:Shard ID None has connected to Gateway (Session ID: aad068a97b7c1a2aa0ad2ccd1432024a).
+2024-09-13 08:40:29,062 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 08:40:37,446 INFO:Updated event: We are CLOSED
