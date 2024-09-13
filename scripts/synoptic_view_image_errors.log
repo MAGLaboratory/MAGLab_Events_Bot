@@ -328,3 +328,173 @@ NameError: name 'asyncio' is not defined
 2024-09-13 08:50:46,632 INFO:Updated event: We are CLOSED
 2024-09-13 08:55:45,438 INFO:Updated event: We are CLOSED
 2024-09-13 09:00:48,795 INFO:Updated event: We are CLOSED
+2024-09-13 09:05:45,502 INFO:Updated event: We are CLOSED
+2024-09-13 09:10:45,927 INFO:Updated event: We are CLOSED
+2024-09-13 09:15:45,614 INFO:Updated event: We are CLOSED
+2024-09-13 09:17:58,246 WARNING:Bot MAGLab Event Bot has disconnected, attempting to reconnect...
+2024-09-13 09:17:58,492 INFO:Shard ID None has successfully RESUMED session 3c0eda7ccb979df4c29e04d723a7f58b.
+2024-09-13 09:17:58,492 INFO:Bot MAGLab Event Bot has reconnected to Discord.
+2024-09-13 09:20:45,539 INFO:Updated event: We are CLOSED
+2024-09-13 09:25:45,421 INFO:Updated event: We are CLOSED
+2024-09-13 09:30:45,820 INFO:Updated event: We are CLOSED
+2024-09-13 09:35:45,561 INFO:Updated event: We are CLOSED
+2024-09-13 09:40:45,140 INFO:Updated event: We are CLOSED
+2024-09-13 09:45:46,009 INFO:Updated event: We are CLOSED
+2024-09-13 09:50:45,982 INFO:Updated event: We are CLOSED
+2024-09-13 09:55:45,736 INFO:Updated event: We are CLOSED
+2024-09-13 10:00:48,435 INFO:Updated event: We are CLOSED
+2024-09-13 10:05:45,898 INFO:Updated event: We are CLOSED
+2024-09-13 10:10:46,201 INFO:Updated event: We are CLOSED
+2024-09-13 10:15:46,227 INFO:Updated event: We are CLOSED
+2024-09-13 10:20:45,919 INFO:Updated event: We are CLOSED
+2024-09-13 10:25:45,690 INFO:Updated event: We are CLOSED
+2024-09-13 10:30:46,419 INFO:Updated event: We are CLOSED
+2024-09-13 10:35:44,987 INFO:Updated event: We are CLOSED
+2024-09-13 10:40:47,886 INFO:Updated event: We are CLOSED
+2024-09-13 10:45:45,128 INFO:Updated event: We are CLOSED
+2024-09-13 10:50:45,211 INFO:Updated event: We are CLOSED
+2024-09-13 10:55:45,638 INFO:Updated event: We are CLOSED
+2024-09-13 11:00:48,755 INFO:Updated event: We are CLOSED
+2024-09-13 11:05:45,849 INFO:Updated event: We are CLOSED
+2024-09-13 11:10:45,907 INFO:Updated event: We are CLOSED
+2024-09-13 11:15:45,500 INFO:Updated event: We are CLOSED
+2024-09-13 11:20:45,453 INFO:Updated event: We are CLOSED
+2024-09-13 11:25:45,287 INFO:Updated event: We are CLOSED
+2024-09-13 11:30:45,458 INFO:Updated event: We are CLOSED
+2024-09-13 11:35:45,734 INFO:Updated event: We are CLOSED
+2024-09-13 11:40:45,517 INFO:Updated event: We are CLOSED
+2024-09-13 11:45:45,860 INFO:Updated event: We are CLOSED
+2024-09-13 11:47:30,853 WARNING:Bot MAGLab Event Bot has disconnected, attempting to reconnect...
+2024-09-13 11:47:31,089 INFO:Shard ID None has successfully RESUMED session 3c0eda7ccb979df4c29e04d723a7f58b.
+2024-09-13 11:47:31,089 INFO:Bot MAGLab Event Bot has reconnected to Discord.
+2024-09-13 11:55:04,016 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 11:55:04,017 INFO:logging in using static token
+2024-09-13 11:55:04,882 INFO:Shard ID None has connected to Gateway (Session ID: a4c1d4f3a9cf1cf15f05b1ad84e2538e).
+2024-09-13 11:55:06,891 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 11:55:15,370 INFO:Updated event: We are CLOSED
+2024-09-13 12:00:21,973 INFO:Updated event: We are CLOSED
+2024-09-13 12:05:16,046 INFO:Updated event: We are CLOSED
+2024-09-13 12:05:43,615 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 12:05:43,615 INFO:logging in using static token
+2024-09-13 12:05:44,367 INFO:Shard ID None has connected to Gateway (Session ID: 1e9f1652bf887727713e9b800052f0b7).
+2024-09-13 12:05:46,380 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 12:05:55,675 INFO:Updated event: We are CLOSED
+2024-09-13 12:06:30,668 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 12:06:30,668 INFO:logging in using static token
+2024-09-13 12:06:31,482 INFO:Shard ID None has connected to Gateway (Session ID: 7888fab05811efb48219dd994d5b659b).
+2024-09-13 12:06:33,496 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 12:23:17,167 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 12:23:17,168 INFO:logging in using static token
+2024-09-13 12:23:17,797 INFO:Shard ID None has connected to Gateway (Session ID: 62001c76d03abe4434a9a32bb6b06c75).
+2024-09-13 12:23:19,808 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 12:23:28,687 INFO:Created new event: We are CLOSED
+2024-09-13 12:28:27,736 INFO:Updated event: We are CLOSED
+2024-09-13 12:33:27,852 INFO:Updated event: We are CLOSED
+2024-09-13 12:38:28,804 INFO:Updated event: We are CLOSED
+2024-09-13 12:43:28,612 INFO:Updated event: We are CLOSED
+2024-09-13 12:46:54,403 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 12:46:54,403 INFO:logging in using static token
+2024-09-13 12:46:55,109 INFO:Shard ID None has connected to Gateway (Session ID: 47b13ed5b5be7000ee1a6c276bfa869b).
+2024-09-13 12:46:57,118 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 12:53:56,745 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 12:53:56,746 INFO:logging in using static token
+2024-09-13 12:53:57,764 INFO:Shard ID None has connected to Gateway (Session ID: f8fc9844e2c3758eb78c23abc1cada49).
+2024-09-13 12:53:59,770 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 12:54:06,180 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 12:54:06,180 INFO:logging in using static token
+2024-09-13 12:54:06,943 INFO:Shard ID None has connected to Gateway (Session ID: afd174ea27e8fab4bad17bcd20ec5431).
+2024-09-13 12:54:08,968 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 12:54:13,517 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 12:54:13,517 INFO:logging in using static token
+2024-09-13 12:54:14,361 INFO:Shard ID None has connected to Gateway (Session ID: ad93de675d9d4d1b258cc2a20f03c3fb).
+2024-09-13 12:54:16,364 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 12:54:24,496 INFO:Created new event: We are CLOSED
+2024-09-13 12:59:25,146 INFO:Updated event: We are CLOSED
+2024-09-13 13:04:25,198 INFO:Updated event: We are CLOSED
+2024-09-13 13:04:58,071 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:04:58,071 INFO:logging in using static token
+2024-09-13 13:04:58,736 INFO:Shard ID None has connected to Gateway (Session ID: 67d53adeff05b66638a2ea9db22d65b8).
+2024-09-13 13:05:00,743 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:05:08,592 INFO:Updated event: We are CLOSED
+2024-09-13 13:10:09,278 INFO:Updated event: We are CLOSED
+2024-09-13 13:13:00,106 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:13:00,106 INFO:logging in using static token
+2024-09-13 13:13:00,821 INFO:Shard ID None has connected to Gateway (Session ID: 7f4ca34ef394d5ec20e3234dd21719e5).
+2024-09-13 13:13:02,825 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:13:10,809 INFO:Updated event: We are CLOSED
+2024-09-13 13:18:10,739 INFO:Updated event: We are CLOSED
+2024-09-13 13:18:22,856 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:18:22,856 INFO:logging in using static token
+2024-09-13 13:18:23,572 INFO:Shard ID None has connected to Gateway (Session ID: ba3c1970f7d99ced165131502e4c5ef9).
+2024-09-13 13:18:25,579 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:18:33,280 INFO:Updated event: We are CLOSED
+2024-09-13 13:21:34,782 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:21:34,783 INFO:logging in using static token
+2024-09-13 13:21:35,418 INFO:Shard ID None has connected to Gateway (Session ID: 1b444301d19fdb1c80d3149ee8c9e07c).
+2024-09-13 13:21:37,433 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:21:46,651 INFO:Updated event: We are CLOSED
+2024-09-13 13:22:57,136 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:22:57,137 INFO:logging in using static token
+2024-09-13 13:22:57,817 INFO:Shard ID None has connected to Gateway (Session ID: 6f9bed542342149ac8f41b01e5c28c33).
+2024-09-13 13:22:59,824 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:23:08,008 INFO:Updated event: We are CLOSED
+2024-09-13 13:29:19,562 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:29:19,562 INFO:logging in using static token
+2024-09-13 13:29:20,261 INFO:Shard ID None has connected to Gateway (Session ID: 24530f8bd29dbdddc12271222bcc7ed3).
+2024-09-13 13:29:22,270 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:29:32,111 INFO:Updated event: We are CLOSED
+2024-09-13 13:32:18,052 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:32:18,052 INFO:logging in using static token
+2024-09-13 13:32:18,806 INFO:Shard ID None has connected to Gateway (Session ID: 489d53e2b67d79bc4074853196905378).
+2024-09-13 13:32:20,823 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:32:28,788 INFO:Updated event: We are CLOSED
+2024-09-13 13:33:39,877 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:33:39,877 INFO:logging in using static token
+2024-09-13 13:33:40,578 INFO:Shard ID None has connected to Gateway (Session ID: 101523018fed60066e10b248b4d25af2).
+2024-09-13 13:33:42,585 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:33:50,273 INFO:Updated event: We are CLOSED
+2024-09-13 13:38:51,111 INFO:Updated event: We are CLOSED
+2024-09-13 13:49:25,794 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:49:25,794 INFO:logging in using static token
+2024-09-13 13:49:26,543 INFO:Shard ID None has connected to Gateway (Session ID: b0c1cef3140bdc8e9660e0150e0e4609).
+2024-09-13 13:49:53,262 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:49:53,262 INFO:logging in using static token
+2024-09-13 13:49:53,961 INFO:Shard ID None has connected to Gateway (Session ID: a20c8eb90563fa96738ebe3e036f35c2).
+2024-09-13 13:49:55,966 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:50:04,286 INFO:Created new event: We are CLOSED
+2024-09-13 13:50:11,715 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:50:11,715 INFO:logging in using static token
+2024-09-13 13:50:12,343 INFO:Shard ID None has connected to Gateway (Session ID: d0a2b1f334dfd5c5a1e7a47bd00ac40b).
+2024-09-13 13:50:14,346 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:50:22,942 INFO:Updated event: We are CLOSED
+2024-09-13 13:50:30,897 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:50:30,898 INFO:logging in using static token
+2024-09-13 13:50:31,744 INFO:Shard ID None has connected to Gateway (Session ID: f82a67f5503f663c3f1fea3d17cd961f).
+2024-09-13 13:50:33,749 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:53:49,215 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 13:53:49,216 INFO:logging in using static token
+2024-09-13 13:53:49,858 INFO:Shard ID None has connected to Gateway (Session ID: 7d70b842c2cc5495edc42417a8013a42).
+2024-09-13 13:53:51,861 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 13:54:00,063 INFO:Updated event: We are CLOSED
+2024-09-13 14:06:38,829 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 14:06:38,829 INFO:logging in using static token
+2024-09-13 14:06:39,642 INFO:Shard ID None has connected to Gateway (Session ID: 848141236bb1efb918c833831b985919).
+2024-09-13 14:06:41,650 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 14:06:49,840 INFO:Created new event: We are CLOSED
+2024-09-13 14:09:02,135 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 14:09:02,135 INFO:logging in using static token
+2024-09-13 14:09:02,828 INFO:Shard ID None has connected to Gateway (Session ID: 8920651c9fb612a7062fae4ef549714a).
+2024-09-13 14:09:04,839 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 14:09:13,310 INFO:Updated event: We are CLOSED
+2024-09-13 14:14:12,919 INFO:Updated event: We are CLOSED
+2024-09-13 14:18:25,351 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 14:18:25,351 INFO:logging in using static token
+2024-09-13 14:18:26,033 INFO:Shard ID None has connected to Gateway (Session ID: d73b2297caa6d600db50848e9834676a).
+2024-09-13 14:18:28,038 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 14:18:35,886 INFO:Updated event: We are CLOSED
+2024-09-13 14:19:40,055 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 14:19:40,055 INFO:logging in using static token
+2024-09-13 14:19:40,775 INFO:Shard ID None has connected to Gateway (Session ID: 75fae3033125fad1534b409a9f1747d9).
+2024-09-13 14:19:42,793 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 14:19:50,579 INFO:Updated event: We are CLOSED
+2024-09-13 14:24:50,848 INFO:Updated event: We are CLOSED

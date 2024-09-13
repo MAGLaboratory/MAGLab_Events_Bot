@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "maglab_events_bot"
+version = "0.1.0"
+description = ""
+authors = ["Ben Cheng"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+beautifulsoup4 = "4.12.3"
+cairosvg = "2.7.1"
+discord-py = "2.4.0"
+icalendar = "5.0.13"
+pandas = "2.2.2"
+pendulum = "3.0.0"
+pillow = "10.4.0"
+python-dateutil = "2.9.0.post0"
+pytz = "2024.2"
+requests = "2.32.3"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
