@@ -1,5 +1,6 @@
 import os
 import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta
 
 import discord
@@ -8,7 +9,6 @@ import requests
 from bs4 import BeautifulSoup
 import pytz
 import pandas as pd
-from logging.handlers import RotatingFileHandler
 
 from scrape_synoptic_view_and_crop_scale_for_discord_events import generate_scaled_cropped_synoptic_view_image
 
@@ -31,8 +31,8 @@ console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(formatter)
 
 # Create file handler with rotation, set level to DEBUG
-file_handler = logging.handlers.RotatingFileHandler(
-    'open_status_bot.log', maxBytes=5*1024*1024, backupCount=5
+file_handler = RotatingFileHandler(
+    'bot.log', maxBytes=5*1024*1024, backupCount=5
 )
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
@@ -231,22 +231,35 @@ async def post_lab_status():
                 )
             return
 
+        now = datetime.now().astimezone()
+        event_end_time = now + timedelta(minutes=10)
+
         # Update or create event
         if existing_event:
-            await existing_event.edit(
-                name=lab_status,
-                description=formatted_message,
-                end_time=datetime.now().astimezone() + timedelta(minutes=10),
-                image=image_binary,
-            )
-            logger.info(f"Updated event: {existing_event.name}")
-        else:
+            # Check if the existing event is ongoing
+            if existing_event.end_time > now:
+                try:
+                    await existing_event.edit(
+                        name=lab_status,
+                        description=formatted_message,
+                        end_time=event_end_time,
+                        image=image_binary,
+                    )
+                    logger.info(f"Updated event: {existing_event.name}")
+                except discord.errors.Forbidden as e:
+                    logger.error(f"Cannot update event: {e}")
+                    # Since the event cannot be updated, create a new one
+                    existing_event = None
+            else:
+                # The existing event has finished
+                existing_event = None
+
+        if not existing_event:
             await guild.create_scheduled_event(
                 name=lab_status,
                 description=formatted_message,
-                start_time=datetime.now().astimezone()
-                + timedelta(seconds=10),
-                end_time=datetime.now().astimezone() + timedelta(minutes=10),
+                start_time=now + timedelta(seconds=10),
+                end_time=event_end_time,
                 entity_type=discord.EntityType.external,
                 location="MAG Laboratory",
                 privacy_level=discord.PrivacyLevel.guild_only,
