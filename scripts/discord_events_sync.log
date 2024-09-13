@@ -1,73 +1,471 @@
-2024-09-11 05:52 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
-2024-09-11 05:52 PM - INFO - logging in using static token
-2024-09-11 05:52 PM - INFO - Shard ID None has connected to Gateway (Session ID: 0b27381d020afa38f891787562c61664).
-2024-09-11 05:52 PM - INFO - Logged in as MAGLab Event Bot#0364
-2024-09-11 05:52 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-12 17:00:00)
-2024-09-11 05:52 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-17 17:00:00)
-2024-09-11 05:52 PM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-18 17:00:00)
-2024-09-11 05:52 PM - INFO - Updating Discord event: Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00)
-2024-09-11 05:52 PM - INFO - Updating Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
-2024-09-11 05:52 PM - WARNING - We are being rate limited. PATCH https://discord.com/api/v10/guilds/697971426799517774/scheduled-events/1281801041544740886 responded with 429. Retrying in 2.10 seconds.
-2024-09-11 05:53 PM - INFO - Updating Discord event: Open House Party! (LA time: 2024-09-14 18:00:00)
-2024-09-11 05:55 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
-2024-09-11 05:55 PM - INFO - logging in using static token
-2024-09-11 05:55 PM - INFO - Shard ID None has connected to Gateway (Session ID: 0b68d09eab480032096e7c3dde5f85f9).
-2024-09-11 05:55 PM - INFO - Logged in as MAGLab Event Bot#0364
-2024-09-11 05:55 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-12 17:00:00)
-2024-09-11 05:55 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-17 17:00:00)
-2024-09-11 05:55 PM - INFO - Updating Discord event: Curator Hours: Brandon (LA time: 2024-09-18 17:00:00)
-2024-09-11 05:55 PM - INFO - Updating Discord event: Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00)
-2024-09-11 05:55 PM - INFO - Updating Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
-2024-09-11 05:55 PM - INFO - Updating Discord event: Open House Party! (LA time: 2024-09-14 18:00:00)
-2024-09-11 06:02 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
-2024-09-11 06:02 PM - INFO - logging in using static token
-2024-09-11 06:02 PM - INFO - Shard ID None has connected to Gateway (Session ID: 2143bc6bdfb026dabe36576c90c6264a).
-2024-09-11 06:02 PM - INFO - Logged in as MAGLab Event Bot#0364
-2024-09-11 06:02 PM - ERROR - Error fetching events from https://calendar.google.com/calendar/ical/c_3keov3j3lc5qscq754mb4n38b4%40group.calendar.google.com/public/basic.ics: 'datetime.datetime' object has no attribute 'datetime'
-2024-09-11 06:02 PM - ERROR - Error fetching events from https://calendar.google.com/calendar/ical/bjpkvaeg1rjq9u3c6utecq1jos%40group.calendar.google.com/public/basic.ics: 'datetime.datetime' object has no attribute 'datetime'
-2024-09-11 06:02 PM - INFO - Removing Discord event: Curator Hours: Brandon (Not found in calendar)
-2024-09-11 06:02 PM - INFO - Removing Discord event: Curator Hours: Brandon (Not found in calendar)
-2024-09-11 06:02 PM - INFO - Removing Discord event: Open Project Night (Not found in calendar)
-2024-09-11 06:02 PM - INFO - Removing Discord event: Open House Party! (Not found in calendar)
-2024-09-11 06:02 PM - INFO - Removing Discord event: Curator Hours: Brandon (Not found in calendar)
-2024-09-11 06:12 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
-2024-09-11 06:12 PM - INFO - logging in using static token
-2024-09-11 06:12 PM - INFO - Shard ID None has connected to Gateway (Session ID: 372fc94b7654880481530cab003f475d).
-2024-09-11 06:12 PM - INFO - Logged in as MAGLab Event Bot#0364
-2024-09-11 06:12 PM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-12 17:00:00)
-2024-09-11 06:12 PM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-17 17:00:00)
-2024-09-11 06:12 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
-2024-09-11 06:12 PM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
-2024-09-11 06:12 PM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
-2024-09-11 06:12 PM - INFO - Creating new Discord event: Open House Party! (LA time: 2024-09-14 18:00:00)
-2024-09-11 06:27 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
-2024-09-11 06:27 PM - INFO - logging in using static token
-2024-09-11 06:27 PM - INFO - Shard ID None has connected to Gateway (Session ID: f8b85f78d84f573436838d9243fa0b49).
-2024-09-11 06:27 PM - INFO - Logged in as MAGLab Event Bot#0364
-2024-09-11 06:27 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-12 17:00:00). No new event created.
-2024-09-11 06:27 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
-2024-09-11 06:27 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
-2024-09-11 06:27 PM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
-2024-09-11 06:27 PM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
-2024-09-11 06:27 PM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
-2024-09-11 06:37 PM - WARNING - Privileged message content intent is missing, commands may not work as expected.
-2024-09-11 06:37 PM - INFO - logging in using static token
-2024-09-11 06:37 PM - INFO - Shard ID None has connected to Gateway (Session ID: d3a3bc52e94b81ed17a7929cde0c90c3).
-2024-09-11 06:37 PM - INFO - Logged in as MAGLab Event Bot#0364
-2024-09-11 06:37 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-12 17:00:00). No new event created.
-2024-09-11 06:37 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
-2024-09-11 06:37 PM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
-2024-09-11 06:37 PM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
-2024-09-11 06:37 PM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
-2024-09-11 06:37 PM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
-2024-09-13 08:27 AM - WARNING - Privileged message content intent is missing, commands may not work as expected.
-2024-09-13 08:27 AM - INFO - logging in using static token
-2024-09-13 08:27 AM - INFO - Shard ID None has connected to Gateway (Session ID: 74fe8b0e0a8561ca3f60dcbe08db8f4d).
-2024-09-13 08:27 AM - INFO - Logged in as MAGLab Event Bot#0364
-2024-09-13 08:27 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
-2024-09-13 08:27 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
-2024-09-13 08:27 AM - INFO - Creating new Discord event: Curator Hours: Brandon (LA time: 2024-09-19 17:00:00)
-2024-09-13 08:27 AM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
-2024-09-13 08:27 AM - INFO - Creating new Discord event: Open Project Night (LA time: 2024-09-13 18:30:00)
-2024-09-13 08:27 AM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
-2024-09-13 08:27 AM - INFO - Removing Discord event: Open Project Night (Not found in calendar)
+2024-09-13 08:57 AM - DEBUG - on_ready has successfully been registered as an event
+2024-09-13 08:57 AM - DEBUG - on_disconnect has successfully been registered as an event
+2024-09-13 08:57 AM - DEBUG - on_resumed has successfully been registered as an event
+2024-09-13 08:57 AM - DEBUG - on_error has successfully been registered as an event
+2024-09-13 08:57 AM - DEBUG - Using proactor: IocpProactor
+2024-09-13 08:57 AM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:57 AM - INFO - logging in using static token
+2024-09-13 08:57 AM - INFO - Shard ID None has connected to Gateway (Session ID: 092289f2ef73123aed387db76f1b7222).
+2024-09-13 08:57 AM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-13 08:57 AM - DEBUG - Starting new HTTPS connection (1): calendar.google.com:443
+2024-09-13 08:57 AM - DEBUG - https://calendar.google.com:443 "GET /calendar/ical/c_3keov3j3lc5qscq754mb4n38b4%40group.calendar.google.com/public/basic.ics HTTP/1.1" 200 None
+2024-09-13 08:57 AM - DEBUG - Starting new HTTPS connection (1): calendar.google.com:443
+2024-09-13 08:57 AM - DEBUG - https://calendar.google.com:443 "GET /calendar/ical/bjpkvaeg1rjq9u3c6utecq1jos%40group.calendar.google.com/public/basic.ics HTTP/1.1" 200 None
+2024-09-13 08:57 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:57 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
+2024-09-13 08:57 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:57 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
+2024-09-13 08:57 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='We are CLOSED', Start='2024-09-13 15:05:00+00:00', End='2024-09-13 16:05:00+00:00', Description='**Lab Status:** We are CLOSED
+**Data Scraped on:** 2024-09-13 08:55 AM 
+[Source: https://www.maglaboratory.org/hal]
+
+**Sensor Data:**
+```
+       Sensor          Status Last Update
+  Open Switch     Flipped OFF  2 days ago
+   Front Door          Closed   4 min ago
+ Pod Bay Door          Closed   12 hr ago
+Office Motion No Motion since    Just now
+  Shop Motion          Moving    Just now
+ConfRm Motion          Moving    Just now
+ElecRm Motion No Motion since    1 hr ago
+ ShopB Motion          Moving    Just now
+     Bay Temp        74.86 °F    Just now
+ Outdoor Temp        69.24 °F    Just now
+   ShopB Temp        77.11 °F    Just now
+  ConfRm Temp        79.14 °F    Just now
+  ElecRm Temp        79.93 °F    Just now
+```', Location='MAG Laboratory'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:57 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-19 17:00:00). No new event created.
+2024-09-13 08:57 AM - DEBUG - Comparing Calendar Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:57 AM - DEBUG - Match found for event 'Online Only: Public Business Meeting'
+2024-09-13 08:57 AM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
+2024-09-13 08:57 AM - DEBUG - Comparing Calendar Event: Name='Open Project Night', Start='2024-09-14 01:30:00+00:00', End='2024-09-14 04:00:00+00:00', Description='Open project nights are for members to get together and work on projects together and  anyone to come by to see what MAG Laboratory is all about.Non-members are welcome to visit, work on their own project and see what we are all about!*We are still mindful of COVID safety practices. Masks are optional. If there is a large attendance, then some of the event will held right outside the Pod Bay Door.', Location='3960 E Valley Blvd. Unit G, Walnut, CA 91789'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='We are CLOSED', Start='2024-09-13 15:05:00+00:00', End='2024-09-13 16:05:00+00:00', Description='**Lab Status:** We are CLOSED
+**Data Scraped on:** 2024-09-13 08:55 AM 
+[Source: https://www.maglaboratory.org/hal]
+
+**Sensor Data:**
+```
+       Sensor          Status Last Update
+  Open Switch     Flipped OFF  2 days ago
+   Front Door          Closed   4 min ago
+ Pod Bay Door          Closed   12 hr ago
+Office Motion No Motion since    Just now
+  Shop Motion          Moving    Just now
+ConfRm Motion          Moving    Just now
+ElecRm Motion No Motion since    1 hr ago
+ ShopB Motion          Moving    Just now
+     Bay Temp        74.86 °F    Just now
+ Outdoor Temp        69.24 °F    Just now
+   ShopB Temp        77.11 °F    Just now
+  ConfRm Temp        79.14 °F    Just now
+  ElecRm Temp        79.93 °F    Just now
+```', Location='MAG Laboratory'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Open Project Night', Start='2024-09-14 01:30:00+00:00', End='2024-09-14 04:00:00+00:00', Description='Open project nights are for members to get together and work on projects together and  anyone to come by to see what MAG Laboratory is all about.Non-members are welcome to visit, work on their own project and see what we are all about!*We are still mindful of COVID safety practices. Masks are optional. If there is a large attendance, then some of the event will held right outside the Pod Bay Door.', Location='3960 E Valley Blvd. Unit G, Walnut, CA 91789'
+2024-09-13 08:57 AM - DEBUG - Match found for event 'Open Project Night'
+2024-09-13 08:57 AM - INFO - Exact duplicate found for Open Project Night (LA time: 2024-09-13 18:30:00). No new event created.
+2024-09-13 08:57 AM - DEBUG - Comparing Calendar Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:57 AM - DEBUG - Match found for event 'Open House Party!'
+2024-09-13 08:57 AM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
+2024-09-13 08:58 AM - DEBUG - on_ready has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - on_disconnect has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - on_resumed has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - on_error has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - Using proactor: IocpProactor
+2024-09-13 08:58 AM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:58 AM - INFO - logging in using static token
+2024-09-13 08:58 AM - INFO - Shard ID None has connected to Gateway (Session ID: e2a0ef27b43ae6c5057eceb943f119e4).
+2024-09-13 08:58 AM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-13 08:58 AM - DEBUG - Starting new HTTPS connection (1): calendar.google.com:443
+2024-09-13 08:58 AM - DEBUG - https://calendar.google.com:443 "GET /calendar/ical/c_3keov3j3lc5qscq754mb4n38b4%40group.calendar.google.com/public/basic.ics HTTP/1.1" 200 None
+2024-09-13 08:58 AM - DEBUG - Starting new HTTPS connection (1): calendar.google.com:443
+2024-09-13 08:58 AM - DEBUG - https://calendar.google.com:443 "GET /calendar/ical/bjpkvaeg1rjq9u3c6utecq1jos%40group.calendar.google.com/public/basic.ics HTTP/1.1" 200 None
+2024-09-13 08:58 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:58 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
+2024-09-13 08:58 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:58 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
+2024-09-13 08:58 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='We are CLOSED', Start='2024-09-13 15:05:00+00:00', End='2024-09-13 16:05:00+00:00', Description='**Lab Status:** We are CLOSED
+**Data Scraped on:** 2024-09-13 08:55 AM 
+[Source: https://www.maglaboratory.org/hal]
+
+**Sensor Data:**
+```
+       Sensor          Status Last Update
+  Open Switch     Flipped OFF  2 days ago
+   Front Door          Closed   4 min ago
+ Pod Bay Door          Closed   12 hr ago
+Office Motion No Motion since    Just now
+  Shop Motion          Moving    Just now
+ConfRm Motion          Moving    Just now
+ElecRm Motion No Motion since    1 hr ago
+ ShopB Motion          Moving    Just now
+     Bay Temp        74.86 °F    Just now
+ Outdoor Temp        69.24 °F    Just now
+   ShopB Temp        77.11 °F    Just now
+  ConfRm Temp        79.14 °F    Just now
+  ElecRm Temp        79.93 °F    Just now
+```', Location='MAG Laboratory'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:58 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-19 17:00:00). No new event created.
+2024-09-13 08:58 AM - DEBUG - Comparing Calendar Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:58 AM - DEBUG - Match found for event 'Online Only: Public Business Meeting'
+2024-09-13 08:58 AM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
+2024-09-13 08:58 AM - DEBUG - Comparing Calendar Event: Name='Open Project Night', Start='2024-09-14 01:30:00+00:00', End='2024-09-14 04:00:00+00:00', Description='Open project nights are for members to get together and work on projects together and  anyone to come by to see what MAG Laboratory is all about.Non-members are welcome to visit, work on their own project and see what we are all about!*We are still mindful of COVID safety practices. Masks are optional. If there is a large attendance, then some of the event will held right outside the Pod Bay Door.', Location='3960 E Valley Blvd. Unit G, Walnut, CA 91789'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='We are CLOSED', Start='2024-09-13 15:05:00+00:00', End='2024-09-13 16:05:00+00:00', Description='**Lab Status:** We are CLOSED
+**Data Scraped on:** 2024-09-13 08:55 AM 
+[Source: https://www.maglaboratory.org/hal]
+
+**Sensor Data:**
+```
+       Sensor          Status Last Update
+  Open Switch     Flipped OFF  2 days ago
+   Front Door          Closed   4 min ago
+ Pod Bay Door          Closed   12 hr ago
+Office Motion No Motion since    Just now
+  Shop Motion          Moving    Just now
+ConfRm Motion          Moving    Just now
+ElecRm Motion No Motion since    1 hr ago
+ ShopB Motion          Moving    Just now
+     Bay Temp        74.86 °F    Just now
+ Outdoor Temp        69.24 °F    Just now
+   ShopB Temp        77.11 °F    Just now
+  ConfRm Temp        79.14 °F    Just now
+  ElecRm Temp        79.93 °F    Just now
+```', Location='MAG Laboratory'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Open Project Night', Start='2024-09-14 01:30:00+00:00', End='2024-09-14 04:00:00+00:00', Description='Open project nights are for members to get together and work on projects together and  anyone to come by to see what MAG Laboratory is all about.Non-members are welcome to visit, work on their own project and see what we are all about!*We are still mindful of COVID safety practices. Masks are optional. If there is a large attendance, then some of the event will held right outside the Pod Bay Door.', Location='3960 E Valley Blvd. Unit G, Walnut, CA 91789'
+2024-09-13 08:58 AM - DEBUG - Match found for event 'Open Project Night'
+2024-09-13 08:58 AM - INFO - Exact duplicate found for Open Project Night (LA time: 2024-09-13 18:30:00). No new event created.
+2024-09-13 08:58 AM - DEBUG - Comparing Calendar Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:58 AM - DEBUG - Match found for event 'Open House Party!'
+2024-09-13 08:58 AM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.
+2024-09-13 08:58 AM - DEBUG - on_ready has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - on_disconnect has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - on_resumed has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - on_error has successfully been registered as an event
+2024-09-13 08:58 AM - DEBUG - Using proactor: IocpProactor
+2024-09-13 08:58 AM - WARNING - Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:58 AM - INFO - logging in using static token
+2024-09-13 08:58 AM - INFO - Shard ID None has connected to Gateway (Session ID: 3a6bc4c65a9b6d0950272e5f64851512).
+2024-09-13 08:58 AM - INFO - Logged in as MAGLab Event Bot#0364
+2024-09-13 08:59 AM - DEBUG - Starting new HTTPS connection (1): calendar.google.com:443
+2024-09-13 08:59 AM - DEBUG - https://calendar.google.com:443 "GET /calendar/ical/c_3keov3j3lc5qscq754mb4n38b4%40group.calendar.google.com/public/basic.ics HTTP/1.1" 200 None
+2024-09-13 08:59 AM - DEBUG - Starting new HTTPS connection (1): calendar.google.com:443
+2024-09-13 08:59 AM - DEBUG - https://calendar.google.com:443 "GET /calendar/ical/bjpkvaeg1rjq9u3c6utecq1jos%40group.calendar.google.com/public/basic.ics HTTP/1.1" 200 None
+2024-09-13 08:59 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:59 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-17 17:00:00). No new event created.
+2024-09-13 08:59 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:59 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-18 17:00:00). No new event created.
+2024-09-13 08:59 AM - DEBUG - Comparing Calendar Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='We are CLOSED', Start='2024-09-13 15:05:00+00:00', End='2024-09-13 16:05:00+00:00', Description='**Lab Status:** We are CLOSED
+**Data Scraped on:** 2024-09-13 08:55 AM 
+[Source: https://www.maglaboratory.org/hal]
+
+**Sensor Data:**
+```
+       Sensor          Status Last Update
+  Open Switch     Flipped OFF  2 days ago
+   Front Door          Closed   4 min ago
+ Pod Bay Door          Closed   12 hr ago
+Office Motion No Motion since    Just now
+  Shop Motion          Moving    Just now
+ConfRm Motion          Moving    Just now
+ElecRm Motion No Motion since    1 hr ago
+ ShopB Motion          Moving    Just now
+     Bay Temp        74.86 °F    Just now
+ Outdoor Temp        69.24 °F    Just now
+   ShopB Temp        77.11 °F    Just now
+  ConfRm Temp        79.14 °F    Just now
+  ElecRm Temp        79.93 °F    Just now
+```', Location='MAG Laboratory'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Match found for event 'Curator Hours: Brandon'
+2024-09-13 08:59 AM - INFO - Exact duplicate found for Curator Hours: Brandon (LA time: 2024-09-19 17:00:00). No new event created.
+2024-09-13 08:59 AM - DEBUG - Comparing Calendar Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:59 AM - DEBUG - Match found for event 'Online Only: Public Business Meeting'
+2024-09-13 08:59 AM - INFO - Exact duplicate found for Online Only: Public Business Meeting (LA time: 2024-09-17 20:30:00). No new event created.
+2024-09-13 08:59 AM - DEBUG - Comparing Calendar Event: Name='Open Project Night', Start='2024-09-14 01:30:00+00:00', End='2024-09-14 04:00:00+00:00', Description='Open project nights are for members to get together and work on projects together and  anyone to come by to see what MAG Laboratory is all about.Non-members are welcome to visit, work on their own project and see what we are all about!*We are still mindful of COVID safety practices. Masks are optional. If there is a large attendance, then some of the event will held right outside the Pod Bay Door.', Location='3960 E Valley Blvd. Unit G, Walnut, CA 91789'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='We are CLOSED', Start='2024-09-13 15:05:00+00:00', End='2024-09-13 16:05:00+00:00', Description='**Lab Status:** We are CLOSED
+**Data Scraped on:** 2024-09-13 08:55 AM 
+[Source: https://www.maglaboratory.org/hal]
+
+**Sensor Data:**
+```
+       Sensor          Status Last Update
+  Open Switch     Flipped OFF  2 days ago
+   Front Door          Closed   4 min ago
+ Pod Bay Door          Closed   12 hr ago
+Office Motion No Motion since    Just now
+  Shop Motion          Moving    Just now
+ConfRm Motion          Moving    Just now
+ElecRm Motion No Motion since    1 hr ago
+ ShopB Motion          Moving    Just now
+     Bay Temp        74.86 °F    Just now
+ Outdoor Temp        69.24 °F    Just now
+   ShopB Temp        77.11 °F    Just now
+  ConfRm Temp        79.14 °F    Just now
+  ElecRm Temp        79.93 °F    Just now
+```', Location='MAG Laboratory'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-20 00:00:00+00:00', End='2024-09-20 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Open Project Night', Start='2024-09-14 01:30:00+00:00', End='2024-09-14 04:00:00+00:00', Description='Open project nights are for members to get together and work on projects together and  anyone to come by to see what MAG Laboratory is all about.Non-members are welcome to visit, work on their own project and see what we are all about!*We are still mindful of COVID safety practices. Masks are optional. If there is a large attendance, then some of the event will held right outside the Pod Bay Door.', Location='3960 E Valley Blvd. Unit G, Walnut, CA 91789'
+2024-09-13 08:59 AM - DEBUG - Match found for event 'Open Project Night'
+2024-09-13 08:59 AM - INFO - Exact duplicate found for Open Project Night (LA time: 2024-09-13 18:30:00). No new event created.
+2024-09-13 08:59 AM - DEBUG - Comparing Calendar Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Online Only: Public Business Meeting', Start='2024-09-18 03:30:00+00:00', End='2024-09-18 04:30:00+00:00', Description='Get to know other members while we also work on some of the less glamorous aspects of organizing a community workshop. These meetings are primarily for organizing for future events, discussing what members expect from the makerspace, and orchestrating the logistics for group projects. Before and afterwards we talk about our projects and life in general.It's also a great chance for people to get to know more about the group and what we have going on. These meetings are completely open to the public, and we love to meet other makers! Please note that if we have fewer than 3 members and no guests by 9 pm, we may end the meeting and close the Google Hangout at 9.Click on this link: meet.google.com/puc-mxkm-qay to join.To join by phone, dial the following number:(\u202aUS\u202c) \u202a+1 940-222-5685\u202cPIN: \u202a486 798 869#\u202c 
+
+Join with Google Meet: https://meet.google.com/puc-mxkm-qay
+Or dial: (US) +1 940-222-5685 PIN: 486798869#
+
+Learn more about Meet at: https://support.google.com/a/users/answer/9282720', Location='https://meet.google.com/puc-mxkm-qay'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-19 00:00:00+00:00', End='2024-09-19 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Curator Hours: Brandon', Start='2024-09-18 00:00:00+00:00', End='2024-09-18 03:00:00+00:00', Description='Brandon's Curator Hours
+
+Be sure to ring the door bell.  Brandon may be busy.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Against Discord Event: Name='Open House Party!', Start='2024-09-15 01:00:00+00:00', End='2024-09-15 05:00:00+00:00', Description='Join us for MAGLab's Monthly Open House.Show off that project you’ve been working on. Share *in-person* conversations about Making and problem-solving. You might learn something! You might teach something!*Please follow the latest LA County Covid Safety Guidelines.', Location='MAG Laboratory, 3960 Valley Blvd Unit G, Walnut, CA 91789, USA'
+2024-09-13 08:59 AM - DEBUG - Match found for event 'Open House Party!'
+2024-09-13 08:59 AM - INFO - Exact duplicate found for Open House Party! (LA time: 2024-09-14 18:00:00). No new event created.

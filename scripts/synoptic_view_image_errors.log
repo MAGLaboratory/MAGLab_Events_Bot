@@ -320,3 +320,11 @@ NameError: name 'asyncio' is not defined
 2024-09-13 08:40:27,042 INFO:Shard ID None has connected to Gateway (Session ID: aad068a97b7c1a2aa0ad2ccd1432024a).
 2024-09-13 08:40:29,062 INFO:Bot MAGLab Event Bot has connected to Discord.
 2024-09-13 08:40:37,446 INFO:Updated event: We are CLOSED
+2024-09-13 08:45:34,516 WARNING:Privileged message content intent is missing, commands may not work as expected.
+2024-09-13 08:45:34,516 INFO:logging in using static token
+2024-09-13 08:45:35,295 INFO:Shard ID None has connected to Gateway (Session ID: 3c0eda7ccb979df4c29e04d723a7f58b).
+2024-09-13 08:45:37,320 INFO:Bot MAGLab Event Bot has connected to Discord.
+2024-09-13 08:45:45,696 INFO:Updated event: We are CLOSED
+2024-09-13 08:50:46,632 INFO:Updated event: We are CLOSED
+2024-09-13 08:55:45,438 INFO:Updated event: We are CLOSED
+2024-09-13 09:00:48,795 INFO:Updated event: We are CLOSED
