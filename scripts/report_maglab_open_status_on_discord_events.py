@@ -14,13 +14,13 @@ from scrape_synoptic_view_and_crop_scale_for_discord_events import generate_scal
 
 # Constants
 TOKEN_FILE = 'discord_token.txt'
-GUILD_ID = 697971426799517774  # Replace with your actual Guild ID
+GUILD_ID = 697971426799517774
 LAB_URL = "https://www.maglaboratory.org/hal"
 SCALED_PNG_FILE = 'maglab_synoptic_view_scaled.png'
 
 # Configure logging
 logger = logging.getLogger('discord_bot')
-logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all levels
+logger.setLevel(logging.INFO)
 
 # Create formatter
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -43,7 +43,6 @@ logger.addHandler(file_handler)
 
 # Initialize the Discord bot
 intents = discord.Intents.default()
-intents.guilds = True  # Ensure guild-related intents are enabled
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
@@ -166,45 +165,29 @@ def get_image_as_binary(image_path):
 
 async def find_lab_status_events(guild):
     """Find all existing 'We are' events."""
+    events = []
     try:
-        we_are_events = [
-            event for event in guild.scheduled_events if "We are" in event.name
-        ]
-        return we_are_events
+        for event in guild.scheduled_events:
+            if "We are" in event.name:
+                events.append(event)
     except Exception as e:
         logger.error(f"Error finding events: {e}")
-        return []
+    return events
 
 
-async def ensure_single_we_are_event(guild):
-    """
-    Ensure that there is only one 'We are' event.
-    If multiple are found, retain the most recent or active one and delete the others.
-    Returns the single event to be managed.
-    """
-    we_are_events = await find_lab_status_events(guild)
-    if len(we_are_events) <= 1:
-        return we_are_events[0] if we_are_events else None
-
-    # Sort events by end_time descending to retain the latest one
-    we_are_events_sorted = sorted(
-        we_are_events, key=lambda event: event.end_time, reverse=True
-    )
-
-    # Retain the first event and delete the rest
-    primary_event = we_are_events_sorted[0]
-    events_to_delete = we_are_events_sorted[1:]
-
-    for event in events_to_delete:
-        try:
-            await event.delete(reason="Cleanup duplicate 'We are' events.")
-            logger.info(f"Deleted duplicate event: {event.name} (ID: {event.id})")
-        except discord.errors.Forbidden:
-            logger.error(f"Forbidden: Cannot delete event {event.name} (ID: {event.id})")
-        except Exception as e:
-            logger.error(f"Error deleting event {event.name} (ID: {event.id}): {e}")
-
-    return primary_event
+async def check_for_other_active_events(guild):
+    """Check if there's another active event."""
+    try:
+        now = datetime.now().astimezone()
+        for event in guild.scheduled_events:
+            if (
+                event.start_time <= now <= event.end_time
+                and "We are" not in event.name
+            ):
+                return True
+    except Exception as e:
+        logger.error(f"Error checking for other active events: {e}")
+    return False
 
 
 @tasks.loop(minutes=5)
@@ -233,18 +216,36 @@ async def post_lab_status():
             logger.error(f"Guild with ID {GUILD_ID} not found.")
             return
 
-        # Ensure only one 'We are' event exists
-        existing_event = await ensure_single_we_are_event(guild)
         image_binary = get_image_as_binary(SCALED_PNG_FILE)
         if image_binary is None:
             logger.error("Image binary data is None. Skipping event update.")
             return
 
+        # Handle active events
+        other_active_event = await check_for_other_active_events(guild)
+        if other_active_event:
+            # Delete all "We are" events if any other event is active
+            we_are_events = await find_lab_status_events(guild)
+            for event in we_are_events:
+                await event.delete()
+                logger.info(f"Deleted 'We are' event due to other active event.")
+            return
+
         now = datetime.now().astimezone()
         event_end_time = now + timedelta(minutes=10)
 
-        if existing_event:
-            # Check if the existing event is still active
+        # Ensure only one "We are" event exists
+        we_are_events = await find_lab_status_events(guild)
+        existing_event = None
+
+        if we_are_events:
+            # If multiple "We are" events exist, keep one and delete the rest
+            existing_event = we_are_events[0]
+            for event in we_are_events[1:]:
+                await event.delete()
+                logger.info(f"Deleted duplicate 'We are' event: {event.name}")
+
+            # Check if the existing event is ongoing
             if existing_event.end_time > now:
                 try:
                     await existing_event.edit(
@@ -253,48 +254,30 @@ async def post_lab_status():
                         end_time=event_end_time,
                         image=image_binary,
                     )
-                    logger.info(f"Updated event: {existing_event.name} (ID: {existing_event.id})")
+                    logger.info(f"Updated event: {existing_event.name}")
                 except discord.errors.Forbidden as e:
                     logger.error(f"Cannot update event: {e}")
-                    # Since the event cannot be updated, do not create a new one as per user instruction
-                except Exception as e:
-                    logger.error(f"Error updating event: {e}", exc_info=True)
+                    # Since the event cannot be updated, delete it and create a new one
+                    await existing_event.delete()
+                    existing_event = None
             else:
-                # Event has ended, create a new one
-                try:
-                    new_event = await guild.create_scheduled_event(
-                        name=lab_status,
-                        description=formatted_message,
-                        start_time=now + timedelta(seconds=10),
-                        end_time=event_end_time,
-                        entity_type=discord.EntityType.external,
-                        location="MAG Laboratory",
-                        privacy_level=discord.PrivacyLevel.guild_only,
-                        image=image_binary,
-                    )
-                    logger.info(f"Created new event: {lab_status} (ID: {new_event.id})")
-                except discord.errors.Forbidden as e:
-                    logger.error(f"Cannot create event: {e}")
-                except Exception as e:
-                    logger.error(f"Error creating event: {e}", exc_info=True)
-        else:
-            # No existing event, create a new one
-            try:
-                new_event = await guild.create_scheduled_event(
-                    name=lab_status,
-                    description=formatted_message,
-                    start_time=now + timedelta(seconds=10),
-                    end_time=event_end_time,
-                    entity_type=discord.EntityType.external,
-                    location="MAG Laboratory",
-                    privacy_level=discord.PrivacyLevel.guild_only,
-                    image=image_binary,
-                )
-                logger.info(f"Created new event: {lab_status} (ID: {new_event.id})")
-            except discord.errors.Forbidden as e:
-                logger.error(f"Cannot create event: {e}")
-            except Exception as e:
-                logger.error(f"Error creating event: {e}", exc_info=True)
+                # The existing event has finished, delete it
+                await existing_event.delete()
+                existing_event = None
+
+        if not existing_event:
+            # Create a new event
+            await guild.create_scheduled_event(
+                name=lab_status,
+                description=formatted_message,
+                start_time=now + timedelta(seconds=10),
+                end_time=event_end_time,
+                entity_type=discord.EntityType.external,
+                location="MAG Laboratory",
+                privacy_level=discord.PrivacyLevel.guild_only,
+                image=image_binary,
+            )
+            logger.info(f"Created new event: {lab_status}")
 
     except Exception as e:
         logger.error(f"Error in post_lab_status: {e}", exc_info=True)
