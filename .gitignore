@@ -6,3 +6,4 @@ scripts/.idea/.name
 scripts/.idea/inspectionProfiles/profiles_settings.xml
 scripts/.idea/inspectionProfiles/Project_Default.xml
 scripts/.idea/MAGLAB Events Bot.iml
+*.log
