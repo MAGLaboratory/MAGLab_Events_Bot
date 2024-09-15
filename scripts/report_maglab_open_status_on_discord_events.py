@@ -32,7 +32,7 @@ console_handler.setFormatter(formatter)
 
 # Create file handler with rotation, set level to DEBUG
 file_handler = RotatingFileHandler(
-    'bot.log', maxBytes=5*1024*1024, backupCount=5
+    'open_status_switch.log', maxBytes=5*1024*1024, backupCount=5
 )
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
@@ -163,16 +163,88 @@ def get_image_as_binary(image_path):
         return None
 
 
-async def find_lab_status_events(guild):
-    """Find all existing 'We are' events."""
-    events = []
+async def manage_lab_status_event(guild, lab_status, formatted_message, image_binary):
+    """Manage the 'We are' event: update, create, or delete as necessary."""
     try:
-        for event in guild.scheduled_events:
-            if "We are" in event.name:
-                events.append(event)
+        now = datetime.now().astimezone()
+        event_end_time = now + timedelta(minutes=10)
+
+        # Find all existing 'We are' events
+        existing_events = [
+            event for event in guild.scheduled_events if "We are" in event.name
+        ]
+
+        # Delete extra 'We are' events if more than one exists
+        if len(existing_events) > 1:
+            for event in existing_events[1:]:
+                await event.delete()
+                logger.info(
+                    f"Deleted extra 'We are' event: {event.name}, Start Time: {event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                )
+            existing_event = existing_events[0]
+        elif existing_events:
+            existing_event = existing_events[0]
+        else:
+            existing_event = None
+
+        # Check for other active events
+        other_active_event = await check_for_other_active_events(guild)
+        if other_active_event:
+            # Delete 'We are' event if it exists
+            if existing_event:
+                await existing_event.delete()
+                logger.info(
+                    f"Deleted 'We are' event due to another active event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                )
+            logger.info("Another event is active. Not creating 'We are' event.")
+            return
+
+        # Update or create 'We are' event
+        if existing_event and existing_event.end_time > now:
+            try:
+                await existing_event.edit(
+                    name=lab_status,
+                    description=formatted_message,
+                    end_time=event_end_time,
+                    image=image_binary,
+                )
+                logger.info(
+                    f"Updated event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                )
+            except discord.errors.Forbidden as e:
+                logger.error(f"Cannot update event: {e}")
+                # Since the event cannot be updated, delete it and create a new one
+                await existing_event.delete()
+                logger.info(
+                    f"Deleted non-updatable 'We are' event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                )
+                existing_event = None
+        else:
+            # Delete the finished event if it exists
+            if existing_event:
+                await existing_event.delete()
+                logger.info(
+                    f"Deleted finished 'We are' event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                )
+            existing_event = None
+
+        if not existing_event:
+            new_event = await guild.create_scheduled_event(
+                name=lab_status,
+                description=formatted_message,
+                start_time=now + timedelta(seconds=10),
+                end_time=event_end_time,
+                entity_type=discord.EntityType.external,
+                location="MAG Laboratory",
+                privacy_level=discord.PrivacyLevel.guild_only,
+                image=image_binary,
+            )
+            logger.info(
+                f"Created new event: {new_event.name}, Start Time: {new_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+            )
+
     except Exception as e:
-        logger.error(f"Error finding events: {e}")
-    return events
+        logger.error(f"Error managing 'We are' event: {e}", exc_info=True)
 
 
 async def check_for_other_active_events(guild):
@@ -184,10 +256,14 @@ async def check_for_other_active_events(guild):
                 event.start_time <= now <= event.end_time
                 and "We are" not in event.name
             ):
+                logger.info(
+                    f"Another active event detected: {event.name}, Start Time: {event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                )
                 return True
+        return False
     except Exception as e:
         logger.error(f"Error checking for other active events: {e}")
-    return False
+        return False
 
 
 @tasks.loop(minutes=5)
@@ -221,63 +297,10 @@ async def post_lab_status():
             logger.error("Image binary data is None. Skipping event update.")
             return
 
-        # Handle active events
-        other_active_event = await check_for_other_active_events(guild)
-        if other_active_event:
-            # Delete all "We are" events if any other event is active
-            we_are_events = await find_lab_status_events(guild)
-            for event in we_are_events:
-                await event.delete()
-                logger.info(f"Deleted 'We are' event due to other active event.")
-            return
-
-        now = datetime.now().astimezone()
-        event_end_time = now + timedelta(minutes=10)
-
-        # Ensure only one "We are" event exists
-        we_are_events = await find_lab_status_events(guild)
-        existing_event = None
-
-        if we_are_events:
-            # If multiple "We are" events exist, keep one and delete the rest
-            existing_event = we_are_events[0]
-            for event in we_are_events[1:]:
-                await event.delete()
-                logger.info(f"Deleted duplicate 'We are' event: {event.name}")
-
-            # Check if the existing event is ongoing
-            if existing_event.end_time > now:
-                try:
-                    await existing_event.edit(
-                        name=lab_status,
-                        description=formatted_message,
-                        end_time=event_end_time,
-                        image=image_binary,
-                    )
-                    logger.info(f"Updated event: {existing_event.name}")
-                except discord.errors.Forbidden as e:
-                    logger.error(f"Cannot update event: {e}")
-                    # Since the event cannot be updated, delete it and create a new one
-                    await existing_event.delete()
-                    existing_event = None
-            else:
-                # The existing event has finished, delete it
-                await existing_event.delete()
-                existing_event = None
-
-        if not existing_event:
-            # Create a new event
-            await guild.create_scheduled_event(
-                name=lab_status,
-                description=formatted_message,
-                start_time=now + timedelta(seconds=10),
-                end_time=event_end_time,
-                entity_type=discord.EntityType.external,
-                location="MAG Laboratory",
-                privacy_level=discord.PrivacyLevel.guild_only,
-                image=image_binary,
-            )
-            logger.info(f"Created new event: {lab_status}")
+        # Manage the 'We are' event
+        await manage_lab_status_event(
+            guild, lab_status, formatted_message, image_binary
+        )
 
     except Exception as e:
         logger.error(f"Error in post_lab_status: {e}", exc_info=True)

@@ -13,13 +13,13 @@ import logging
 # Setup logging to file and console
 logging.basicConfig(
     filename='discord_events_sync.log',
-    level=logging.DEBUG,  # Set to DEBUG for detailed logs during troubleshooting
+    level=logging.INFO,  # Set to INFO for cleaner logs
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %I:%M %p'
 )
 
 console = logging.StreamHandler()
-console.setLevel(logging.INFO)  # Keep console at INFO to reduce verbosity
+console.setLevel(logging.INFO)
 formatter = logging.Formatter(
     '%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %I:%M %p')
 console.setFormatter(formatter)
@@ -40,17 +40,12 @@ ICS_URLS = [
 ]
 
 SYNC_DAYS = 7
-VERBOSE_MODE = False
 DESCRIPTION_MAX_LENGTH = 1000
 
 LA_TZ = pendulum.timezone('America/Los_Angeles')  # Timezone for Los Angeles
 
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="!", intents=intents)
-
-def get_timestamp():
-    """Get the current local time in the format '[YYYY-MM-DD HH:MM AM/PM]'."""
-    return f"[{pendulum.now(LA_TZ).format('YYYY-MM-DD hh:mm A')}]"
 
 def normalize_date(dt):
     """Ensure dates are returned as timezone-aware datetime."""
@@ -127,7 +122,7 @@ def fetch_calendar_events():
                                     'end_time': pendulum.instance(occ + (end - start), tz='UTC').replace(microsecond=0, second=0),
                                     'location': component.get('location', 'MAG Laboratory').strip()
                                 })
-                        elif now <= start <= future:
+                        elif now <= end <= future:
                             events.append({
                                 'name': component.get('summary').strip(),
                                 'description': truncate_description(component.get('description', 'No description provided').strip()),
@@ -149,20 +144,20 @@ def fetch_calendar_events():
 def find_matching_discord_event(discord_events, cal_event):
     """Find a matching Discord event by name, description, start_time, end_time, and location."""
     try:
-        cal_start_time = cal_event['start_time'].in_timezone('UTC').replace(microsecond=0, second=0)
-        cal_end_time = cal_event['end_time'].in_timezone('UTC').replace(microsecond=0, second=0)
+        cal_start_time = cal_event['start_time']
+        cal_end_time = cal_event['end_time']
         cal_description = cal_event.get('description', '').strip()
         cal_location = cal_event.get('location', 'MAG Laboratory').strip()
 
-        logging.debug(f"Comparing Calendar Event: Name='{cal_event['name']}', Start='{cal_start_time}', End='{cal_end_time}', Description='{cal_description}', Location='{cal_location}'")
-
         for event in discord_events:
+            # Skip events that have already ended
+            if event.status == discord.EventStatus.completed:
+                continue
+
             event_start_time = pendulum.instance(event.start_time).in_timezone('UTC').replace(microsecond=0, second=0)
             event_end_time = pendulum.instance(event.end_time).in_timezone('UTC').replace(microsecond=0, second=0)
             event_description = (event.description or '').strip()
             event_location = (event.location or 'MAG Laboratory').strip()
-
-            logging.debug(f"Against Discord Event: Name='{event.name}', Start='{event_start_time}', End='{event_end_time}', Description='{event_description}', Location='{event_location}'")
 
             if (
                 event.name.strip() == cal_event['name'] and
@@ -171,7 +166,6 @@ def find_matching_discord_event(discord_events, cal_event):
                 event_end_time == cal_end_time and
                 event_location == cal_location
             ):
-                logging.debug(f"Match found for event '{cal_event['name']}'")
                 return event
     except Exception as e:
         logging.error(f"Error finding matching event: {e}")
@@ -181,7 +175,7 @@ def find_matching_discord_event(discord_events, cal_event):
 async def sync_discord_events(guild):
     """Sync calendar events with Discord events."""
     try:
-        existing_events = await guild.fetch_scheduled_events()  # Fetch fresh list of scheduled events
+        existing_events = await guild.fetch_scheduled_events()
         calendar_events = fetch_calendar_events()
 
         # Create a set of event keys from calendar events for easy lookup
@@ -208,9 +202,29 @@ async def sync_discord_events(guild):
                     logging.info(
                         f"Exact duplicate found for {cal_event['name']} (LA time: {la_time}). No new event created."
                     )
+                    # Check if the event has ended prematurely
+                    if discord_event.status == discord.EventStatus.completed and end_time > pendulum.now('UTC'):
+                        # Create a new event with start_time adjusted by +10 seconds
+                        adjusted_start_time = pendulum.now('UTC').add(seconds=10)
+                        logging.info(
+                            f"Existing event '{cal_event['name']}' has ended prematurely. Creating new event with adjusted start time: {adjusted_start_time.in_tz(LA_TZ).to_datetime_string()}"
+                        )
+                        await guild.create_scheduled_event(
+                            name=cal_event['name'],
+                            description=cal_event['description'],
+                            start_time=adjusted_start_time,
+                            end_time=end_time,
+                            entity_type=discord.EntityType.external,
+                            location=cal_event['location'],
+                            privacy_level=discord.PrivacyLevel.guild_only
+                        )
+                    else:
+                        # Event exists and is ongoing or upcoming
+                        continue
                 else:
+                    # Create new event
                     logging.info(
-                        f"Creating new Discord event: {cal_event['name']} (LA time: {la_time})"
+                        f"Creating new event '{cal_event['name']}' at {la_time}"
                     )
                     await guild.create_scheduled_event(
                         name=cal_event['name'],
@@ -225,28 +239,38 @@ async def sync_discord_events(guild):
                 logging.error(f"Error syncing event '{cal_event['name']}': {e}")
                 traceback.print_exc()
 
-        # Remove events not in the calendar
+        # Remove events not in the calendar and not currently occurring
+        now = pendulum.now('UTC')
         for discord_event in existing_events:
             try:
-                event_start_time = pendulum.instance(discord_event.start_time).in_timezone('UTC').replace(microsecond=0, second=0)
-                event_end_time = pendulum.instance(discord_event.end_time).in_timezone('UTC').replace(microsecond=0, second=0)
+                # Skip events that are currently occurring
+                event_start_time = pendulum.instance(discord_event.start_time).in_timezone('UTC')
+                event_end_time = pendulum.instance(discord_event.end_time).in_timezone('UTC')
+
+                if event_start_time <= now <= event_end_time:
+                    continue  # Do not delete ongoing events
+
                 event_description = (discord_event.description or '').strip()
                 event_location = (discord_event.location or 'MAG Laboratory').strip()
                 event_key = (
                     discord_event.name.strip(),
                     event_description,
-                    event_start_time,
-                    event_end_time,
+                    event_start_time.replace(microsecond=0, second=0),
+                    event_end_time.replace(microsecond=0, second=0),
                     event_location
                 )
                 if event_key not in calendar_event_keys and "We are" not in discord_event.name:
-                    la_event_time = pendulum.instance(discord_event.start_time).in_timezone('America/Los_Angeles').to_datetime_string()
+                    la_event_time = event_start_time.in_tz(LA_TZ).to_datetime_string()
                     logging.info(
-                        f"Removing Discord event: {discord_event.name} (LA time: {la_event_time})"
+                        f"Removing event '{discord_event.name}' scheduled at {la_event_time}"
                     )
-                    await discord_event.delete()
+                    try:
+                        await discord_event.delete()
+                    except discord.errors.HTTPException as e:
+                        logging.error(f"Error deleting event '{discord_event.name}': {e}")
+                        traceback.print_exc()
             except Exception as e:
-                logging.error(f"Error removing Discord event '{discord_event.name}': {e}")
+                logging.error(f"Error processing event '{discord_event.name}': {e}")
                 traceback.print_exc()
     except Exception as e:
         logging.error(f"Error in sync_discord_events: {e}")
