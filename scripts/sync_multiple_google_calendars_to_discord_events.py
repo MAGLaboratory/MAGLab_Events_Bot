@@ -4,7 +4,7 @@ import datetime
 import re
 import html
 import pendulum
-from icalendar import Calendar
+from icalendar import Calendar, Event
 from dateutil.rrule import rrulestr
 from discord.ext import tasks, commands
 import traceback
@@ -31,7 +31,7 @@ def get_discord_token():
         return file.read().strip()
 
 DISCORD_TOKEN = get_discord_token()
-GUILD_ID = 697971426799517774  # Guild ID set to 697971426799517774
+GUILD_ID = 697971426799517774  # Replace with your actual Guild ID
 
 # Updated ICS URLs
 ICS_URLS = [
@@ -45,6 +45,8 @@ DESCRIPTION_MAX_LENGTH = 1000
 LA_TZ = pendulum.timezone('America/Los_Angeles')  # Timezone for Los Angeles
 
 intents = discord.Intents.default()
+intents.guilds = True
+#intents.scheduled_events = True  # Ensure the bot has access to scheduled events
 client = commands.Bot(command_prefix="!", intents=intents)
 
 def normalize_date(dt):
@@ -58,7 +60,7 @@ def normalize_date(dt):
     return dt
 
 def adjust_rrule_for_utc(rrule_str, start):
-    """Ensure RRULE UNTIL is in UTC if DTSTART is timezone-aware, and avoid invalid 'Z' insertions."""
+    """Ensure RRULE UNTIL is in UTC if DTSTART is timezone-aware."""
     if 'UNTIL' in rrule_str and start.timezone is not None:
         rrule_parts = rrule_str.split(';')
         for i, part in enumerate(rrule_parts):
@@ -85,8 +87,9 @@ def truncate_description(description):
     return clean_desc[:DESCRIPTION_MAX_LENGTH] if len(clean_desc) > DESCRIPTION_MAX_LENGTH else clean_desc
 
 def fetch_calendar_events():
-    """Fetch and return calendar events for the next SYNC_DAYS."""
+    """Fetch and return calendar events and canceled events for the next SYNC_DAYS."""
     events = []
+    canceled_events = []
     try:
         now = pendulum.now('UTC')
         future = now.add(days=SYNC_DAYS)
@@ -94,41 +97,140 @@ def fetch_calendar_events():
         for url in ICS_URLS:
             try:
                 response = requests.get(url)
-                response.raise_for_status()  # Raise an error for bad status codes
+                response.raise_for_status()
                 calendar = Calendar.from_ical(response.content)
+
+                # Dictionaries to hold exceptions and cancellations
+                exceptions = {}
+                cancellations = {}
+
                 for component in calendar.walk():
                     if component.name == "VEVENT":
-                        start = normalize_date(component.get('dtstart').dt)
-                        end = normalize_date(component.get('dtend').dt)
-                        timezone = start.timezone if start.timezone else pendulum.timezone('UTC')
-                        start = start.in_tz(timezone)
-                        end = end.in_tz(timezone)
+                        status = str(component.get('status', '')).upper()
+                        uid = str(component.get('uid'))
+                        recurrence_id = component.get('recurrence-id')
+                        if recurrence_id:
+                            # This is an exception or cancellation of a recurring event
+                            rec_id = normalize_date(recurrence_id.dt)
+                            if status == 'CANCELLED':
+                                cancellations.setdefault(uid, set()).add(rec_id)
+                            else:
+                                exceptions.setdefault(uid, []).append(component)
+                            continue
+                        elif status == 'CANCELLED':
+                            # Entire event is cancelled
+                            cancellations[uid] = 'ALL'
+                            continue
 
-                        if component.get('rrule'):
-                            rrule_str = adjust_rrule_for_utc(
-                                component.get('rrule').to_ical().decode('utf-8'), start)
-                            try:
-                                rule = rrulestr(rrule_str, dtstart=start)
-                                occurrences = rule.between(
-                                    now.in_tz(timezone), future.in_tz(timezone))
-                            except ValueError as e:
-                                logging.error(f"RRULE error in {component.get('summary')}: {e}")
-                                continue
-                            for occ in occurrences:
-                                events.append({
-                                    'name': component.get('summary').strip(),
-                                    'description': truncate_description(component.get('description', 'No description provided').strip()),
-                                    'start_time': pendulum.instance(occ, tz='UTC').replace(microsecond=0, second=0),
-                                    'end_time': pendulum.instance(occ + (end - start), tz='UTC').replace(microsecond=0, second=0),
-                                    'location': component.get('location', 'MAG Laboratory').strip()
+                for component in calendar.walk():
+                    if component.name != "VEVENT":
+                        continue  # Skip non-VEVENT components
+
+                    uid = str(component.get('uid'))
+                    status = str(component.get('status', '')).upper()
+
+                    # Skip entirely canceled events
+                    if uid in cancellations and cancellations[uid] == 'ALL':
+                        continue
+
+                    start = normalize_date(component.get('dtstart').dt)
+                    end = normalize_date(component.get('dtend').dt)
+                    timezone = start.timezone if start.timezone else pendulum.timezone('UTC')
+                    start = start.in_tz(timezone)
+                    end = end.in_tz(timezone)
+
+                    summary = component.get('summary').strip()
+                    description = truncate_description(component.get('description', 'No description provided').strip())
+                    location = component.get('location', 'MAG Laboratory').strip()
+
+                    if component.get('rrule'):
+                        # Handle recurring events
+                        rrule_str = adjust_rrule_for_utc(
+                            component.get('rrule').to_ical().decode('utf-8'), start)
+                        try:
+                            rule = rrulestr(rrule_str, dtstart=start)
+                            occurrences = rule.between(
+                                now.in_tz(timezone), future.in_tz(timezone))
+                        except ValueError as e:
+                            logging.error(f"RRULE error in {summary}: {e}")
+                            continue
+                        for occ in occurrences:
+                            occ_start = pendulum.instance(occ, tz=timezone).replace(microsecond=0, second=0)
+                            occ_end = occ_start + (end - start)
+                            rec_id = occ_start
+
+                            # Check for cancellations
+                            if uid in cancellations and rec_id in cancellations[uid]:
+                                canceled_events.append({
+                                    'uid': uid,
+                                    'name': summary,
+                                    'description': description,
+                                    'start_time': occ_start.in_tz('UTC'),
+                                    'end_time': occ_end.in_tz('UTC'),
+                                    'location': location
                                 })
-                        elif now <= end <= future:
+                                continue  # Skip this occurrence as it's cancelled
+
+                            # Apply exceptions
+                            if uid in exceptions:
+                                for ex in exceptions[uid]:
+                                    ex_recurrence_id = normalize_date(ex.get('recurrence-id').dt)
+                                    if ex_recurrence_id == occ_start:
+                                        # Override with exception event
+                                        ex_summary = ex.get('summary', summary).strip()
+                                        ex_description = truncate_description(ex.get('description', description).strip())
+                                        ex_location = ex.get('location', location).strip()
+                                        # Append exception event
+                                        events.append({
+                                            'uid': uid,
+                                            'name': ex_summary,
+                                            'description': ex_description,
+                                            'start_time': occ_start.in_tz('UTC'),
+                                            'end_time': (pendulum.instance(ex.get('dtend').dt, tz=timezone)).in_tz('UTC').replace(microsecond=0, second=0),
+                                            'location': ex_location
+                                        })
+                                        break
+                                else:
+                                    # No exception matches, use original
+                                    events.append({
+                                        'uid': uid,
+                                        'name': summary,
+                                        'description': description,
+                                        'start_time': occ_start.in_tz('UTC'),
+                                        'end_time': occ_end.in_tz('UTC'),
+                                        'location': location
+                                    })
+                            else:
+                                # No exceptions, add event as is
+                                events.append({
+                                    'uid': uid,
+                                    'name': summary,
+                                    'description': description,
+                                    'start_time': occ_start.in_tz('UTC'),
+                                    'end_time': occ_end.in_tz('UTC'),
+                                    'location': location
+                                })
+                    else:
+                        # Non-recurring event
+                        if now <= end <= future:
+                            if status == 'CANCELLED':
+                                canceled_events.append({
+                                    'uid': uid,
+                                    'name': summary,
+                                    'description': description,
+                                    'start_time': start.in_tz('UTC'),
+                                    'end_time': end.in_tz('UTC'),
+                                    'location': location
+                                })
+                                continue  # Skip as it's cancelled
+
                             events.append({
-                                'name': component.get('summary').strip(),
-                                'description': truncate_description(component.get('description', 'No description provided').strip()),
-                                'start_time': start.in_tz('UTC').replace(microsecond=0, second=0),
-                                'end_time': end.in_tz('UTC').replace(microsecond=0, second=0),
-                                'location': component.get('location', 'MAG Laboratory').strip()
+                                'uid': uid,
+                                'name': summary,
+                                'description': description,
+                                'start_time': start.in_tz('UTC'),
+                                'end_time': end.in_tz('UTC'),
+                                'location': location
                             })
             except requests.RequestException as e:
                 logging.error(f"HTTP error fetching events from {url}: {e}")
@@ -139,15 +241,14 @@ def fetch_calendar_events():
     except Exception as e:
         logging.error(f"Error in fetch_calendar_events: {e}")
         traceback.print_exc()
-    return events
+    return events, canceled_events
 
 def find_matching_discord_event(discord_events, cal_event):
-    """Find a matching Discord event by name, description, start_time, end_time, and location."""
+    """Find a matching Discord event by name, start_time, and location."""
     try:
         cal_start_time = cal_event['start_time']
-        cal_end_time = cal_event['end_time']
-        cal_description = cal_event.get('description', '').strip()
-        cal_location = cal_event.get('location', 'MAG Laboratory').strip()
+        cal_name = cal_event['name']
+        cal_location = cal_event.get('location', 'MAG Laboratory')
 
         for event in discord_events:
             # Skip events that have already ended
@@ -155,15 +256,12 @@ def find_matching_discord_event(discord_events, cal_event):
                 continue
 
             event_start_time = pendulum.instance(event.start_time).in_timezone('UTC').replace(microsecond=0, second=0)
-            event_end_time = pendulum.instance(event.end_time).in_timezone('UTC').replace(microsecond=0, second=0)
-            event_description = (event.description or '').strip()
+            event_name = event.name
             event_location = (event.location or 'MAG Laboratory').strip()
 
             if (
-                event.name.strip() == cal_event['name'] and
-                event_description == cal_description and
+                event_name == cal_name and
                 event_start_time == cal_start_time and
-                event_end_time == cal_end_time and
                 event_location == cal_location
             ):
                 return event
@@ -176,16 +274,14 @@ async def sync_discord_events(guild):
     """Sync calendar events with Discord events."""
     try:
         existing_events = await guild.fetch_scheduled_events()
-        calendar_events = fetch_calendar_events()
+        calendar_events, canceled_events = fetch_calendar_events()
 
         # Create a set of event keys from calendar events for easy lookup
         calendar_event_keys = set()
         for cal_event in calendar_events:
             key = (
                 cal_event['name'],
-                cal_event.get('description', ''),
                 cal_event['start_time'],
-                cal_event['end_time'],
                 cal_event.get('location', 'MAG Laboratory')
             )
             calendar_event_keys.add(key)
@@ -194,43 +290,25 @@ async def sync_discord_events(guild):
         for cal_event in calendar_events:
             discord_event = find_matching_discord_event(existing_events, cal_event)
             start_time = cal_event['start_time']
-            end_time = cal_event['end_time']
             la_time = start_time.in_tz(LA_TZ).to_datetime_string()
 
             try:
                 if discord_event:
+                    # Exact duplicate found; log and do not create a new event
                     logging.info(
-                        f"Exact duplicate found for {cal_event['name']} (LA time: {la_time}). No new event created."
+                        f"Exact duplicate found for '{cal_event['name']}' (Start Time: {la_time}). No new event created."
                     )
-                    # Check if the event has ended prematurely
-                    if discord_event.status == discord.EventStatus.completed and end_time > pendulum.now('UTC'):
-                        # Create a new event with start_time adjusted by +10 seconds
-                        adjusted_start_time = pendulum.now('UTC').add(seconds=10)
-                        logging.info(
-                            f"Existing event '{cal_event['name']}' has ended prematurely. Creating new event with adjusted start time: {adjusted_start_time.in_tz(LA_TZ).to_datetime_string()}"
-                        )
-                        await guild.create_scheduled_event(
-                            name=cal_event['name'],
-                            description=cal_event['description'],
-                            start_time=adjusted_start_time,
-                            end_time=end_time,
-                            entity_type=discord.EntityType.external,
-                            location=cal_event['location'],
-                            privacy_level=discord.PrivacyLevel.guild_only
-                        )
-                    else:
-                        # Event exists and is ongoing or upcoming
-                        continue
+                    continue  # Skip creating a new event
                 else:
                     # Create new event
                     logging.info(
-                        f"Creating new event '{cal_event['name']}' at {la_time}"
+                        f"Creating event '{cal_event['name']}' at {la_time}"
                     )
                     await guild.create_scheduled_event(
                         name=cal_event['name'],
                         description=cal_event['description'],
                         start_time=start_time,
-                        end_time=end_time,
+                        end_time=cal_event['end_time'],
                         entity_type=discord.EntityType.external,
                         location=cal_event['location'],
                         privacy_level=discord.PrivacyLevel.guild_only
@@ -238,6 +316,21 @@ async def sync_discord_events(guild):
             except Exception as e:
                 logging.error(f"Error syncing event '{cal_event['name']}': {e}")
                 traceback.print_exc()
+
+        # Remove canceled events
+        for cal_event in canceled_events:
+            discord_event = find_matching_discord_event(existing_events, cal_event)
+            if discord_event:
+                start_time = cal_event['start_time']
+                la_time = start_time.in_tz(LA_TZ).to_datetime_string()
+                try:
+                    logging.info(
+                        f"Removing canceled event '{cal_event['name']}' scheduled at {la_time}"
+                    )
+                    await discord_event.delete()
+                except Exception as e:
+                    logging.error(f"Error deleting event '{cal_event['name']}': {e}")
+                    traceback.print_exc()
 
         # Remove events not in the calendar and not currently occurring
         now = pendulum.now('UTC')
@@ -250,24 +343,22 @@ async def sync_discord_events(guild):
                 if event_start_time <= now <= event_end_time:
                     continue  # Do not delete ongoing events
 
-                event_description = (discord_event.description or '').strip()
+                event_name = discord_event.name
                 event_location = (discord_event.location or 'MAG Laboratory').strip()
                 event_key = (
-                    discord_event.name.strip(),
-                    event_description,
+                    event_name,
                     event_start_time.replace(microsecond=0, second=0),
-                    event_end_time.replace(microsecond=0, second=0),
                     event_location
                 )
-                if event_key not in calendar_event_keys and "We are" not in discord_event.name:
+                if event_key not in calendar_event_keys and "We are" not in event_name:
                     la_event_time = event_start_time.in_tz(LA_TZ).to_datetime_string()
                     logging.info(
-                        f"Removing event '{discord_event.name}' scheduled at {la_event_time}"
+                        f"Removing event '{event_name}' scheduled at {la_event_time} not found in calendar"
                     )
                     try:
                         await discord_event.delete()
                     except discord.errors.HTTPException as e:
-                        logging.error(f"Error deleting event '{discord_event.name}': {e}")
+                        logging.error(f"Error deleting event '{event_name}': {e}")
                         traceback.print_exc()
             except Exception as e:
                 logging.error(f"Error processing event '{discord_event.name}': {e}")
