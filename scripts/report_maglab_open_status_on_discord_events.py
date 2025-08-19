@@ -2,6 +2,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta
+from typing import List, Optional
 
 import discord
 from discord.ext import tasks, commands
@@ -10,34 +11,42 @@ from bs4 import BeautifulSoup
 import pytz
 import pandas as pd
 
-from scrape_synoptic_view_and_crop_scale_for_discord_events import generate_scaled_cropped_synoptic_view_image
+from scrape_synoptic_view_and_crop_scale_for_discord_events import (
+    generate_scaled_cropped_synoptic_view_image,
+)
+
+"""
+MAGLAB Open-Status Bot (OPEN-only) — Single Synoptic Image Policy
+-----------------------------------------------------------------
+- Only reports when the shop is OPEN.
+- **Single-image policy**: Ensure there is exactly one event carrying the
+  synoptic status image — the current event if any, otherwise the next
+  upcoming event. Runs every 5 minutes.
+- Robust status parsing, timestamp fixes, shard handlers retained.
+"""
 
 # Constants
 TOKEN_FILE = 'discord_token.txt'
 GUILD_ID = 697971426799517774
 LAB_URL = "https://www.maglaboratory.org/hal"
 SCALED_PNG_FILE = 'maglab_synoptic_view_scaled.png'
+PACIFIC_TZ = pytz.timezone('America/Los_Angeles')
 
 # Configure logging
 logger = logging.getLogger('discord_bot')
 logger.setLevel(logging.INFO)
-
-# Create formatter
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-# Create console handler and set level to INFO
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(formatter)
 
-# Create file handler with rotation, set level to DEBUG
 file_handler = RotatingFileHandler(
-    'open_status_switch.log', maxBytes=5*1024*1024, backupCount=5
+    'open_status_switch.log', maxBytes=5 * 1024 * 1024, backupCount=5
 )
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 
-# Add handlers to the logger
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
@@ -46,8 +55,7 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
-def get_discord_token():
-    """Retrieve the Discord bot token from a file."""
+def get_discord_token() -> Optional[str]:
     try:
         with open(TOKEN_FILE, 'r') as token_file:
             return token_file.read().strip()
@@ -62,13 +70,7 @@ if not TOKEN:
     raise SystemExit("Discord token is missing.")
 
 
-def current_time_str():
-    """Get the current local time as a formatted string."""
-    return datetime.now().strftime("[%Y-%m-%d %I:%M %p]")
-
-
-def fetch_lab_status_and_sensors(url):
-    """Scrape lab status and sensor data from the webpage."""
+def fetch_lab_status_and_sensors(url: str):
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -77,16 +79,15 @@ def fetch_lab_status_and_sensors(url):
         return None, None, None
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    page_text = soup.get_text().lower()
+    page_text_lower = soup.get_text().lower()
 
-    # Determine lab status
-    lab_status = (
-        "We are OPEN"
-        if 'open' in page_text and 'closed' not in page_text
-        else "We are CLOSED"
-    )
+    if 'we are open' in page_text_lower:
+        lab_status = 'We are OPEN'
+    elif 'we are closed' in page_text_lower:
+        lab_status = 'We are CLOSED'
+    else:
+        lab_status = 'We are OPEN' if ('open' in page_text_lower and 'closed' not in page_text_lower) else 'We are CLOSED'
 
-    # Parse sensor data
     sensor_data = []
     sensor_table = soup.find('table')
     if sensor_table:
@@ -106,12 +107,11 @@ def fetch_lab_status_and_sensors(url):
                         }
                     )
 
-    scrape_timestamp = datetime.now().strftime("%Y-%m-%d %I:%M %p %Z")
+    scrape_timestamp = datetime.now(PACIFIC_TZ).strftime("%Y-%m-%d %I:%M %p %Z")
     return lab_status, sensor_data, scrape_timestamp
 
 
-def truncate_status(status):
-    """Show only Fahrenheit and replace 'No Movement' with 'No Motion'."""
+def truncate_status(status: str) -> str:
     if "°F" in status:
         parts = status.split("/")
         if len(parts) > 1:
@@ -119,15 +119,13 @@ def truncate_status(status):
     return status.replace("No Movement", "No Motion")
 
 
-def format_last_update(timestamp_str):
-    """Format the time since the last update."""
+def format_last_update(timestamp_str: str) -> str:
     timestamp_str = timestamp_str.rsplit(' ', 1)[0]
     timestamp_format = "%b %d, %Y, %I:%M %p"
     try:
         timestamp = datetime.strptime(timestamp_str, timestamp_format)
-        pacific = pytz.timezone('America/Los_Angeles')
-        localized_timestamp = pacific.localize(timestamp)
-        time_diff = datetime.now(pacific) - localized_timestamp
+        localized_timestamp = PACIFIC_TZ.localize(timestamp)
+        time_diff = datetime.now(PACIFIC_TZ) - localized_timestamp
 
         if time_diff < timedelta(minutes=1):
             return "Just now"
@@ -141,8 +139,7 @@ def format_last_update(timestamp_str):
         return "Unknown"
 
 
-def format_sensor_data(lab_status, sensor_data, scrape_timestamp, url):
-    """Format the scraped sensor data for the Discord event description."""
+def format_sensor_data(lab_status: str, sensor_data: List[dict], scrape_timestamp: str, url: str) -> str:
     df = pd.DataFrame(sensor_data)
     table_string = df.to_string(index=False)
     return (
@@ -153,8 +150,7 @@ def format_sensor_data(lab_status, sensor_data, scrape_timestamp, url):
     )
 
 
-def get_image_as_binary(image_path):
-    """Convert image to raw binary data for Discord."""
+def get_image_as_binary(image_path: str) -> Optional[bytes]:
     try:
         with open(image_path, 'rb') as img_file:
             return img_file.read()
@@ -163,99 +159,150 @@ def get_image_as_binary(image_path):
         return None
 
 
-async def manage_lab_status_event(guild, lab_status, formatted_message, image_binary):
-    """Manage the 'We are' event: update, create, or delete as necessary."""
+async def delete_all_we_are_events(guild: discord.Guild) -> None:
+    try:
+        existing_events = await guild.fetch_scheduled_events()
+        to_delete = [e for e in existing_events if 'We are' in (e.name or '')]
+        for event in to_delete:
+            try:
+                await event.delete()
+                logger.info(
+                    f"Deleted 'We are' event: {event.name}, Start Time: {event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                )
+            except Exception as e:
+                logger.error(f"Error deleting 'We are' event '{event.name}': {e}")
+    except Exception as e:
+        logger.error(f"Error while listing/deleting 'We are' events: {e}")
+
+
+async def manage_lab_status_event(
+    guild: discord.Guild,
+    lab_status: str,
+    formatted_message: str,
+) -> None:
+    """Create/update the short 'We are OPEN' event window (no image here)."""
     try:
         now = datetime.now().astimezone()
         event_end_time = now + timedelta(minutes=10)
 
-        # Find all existing 'We are' events
-        existing_events = [
-            event for event in guild.scheduled_events if "We are" in event.name
-        ]
+        existing_events = await guild.fetch_scheduled_events()
+        we_are_events = [e for e in existing_events if 'We are' in (e.name or '')]
 
-        # Delete extra 'We are' events if more than one exists
-        if len(existing_events) > 1:
-            for event in existing_events[1:]:
+        if len(we_are_events) > 1:
+            for event in we_are_events[1:]:
                 await event.delete()
                 logger.info(
                     f"Deleted extra 'We are' event: {event.name}, Start Time: {event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
                 )
-            existing_event = existing_events[0]
-        elif existing_events:
-            existing_event = existing_events[0]
-        else:
-            existing_event = None
+        existing_event = we_are_events[0] if we_are_events else None
 
-        # Check for other active events
-        other_active_event = await check_for_other_active_events(guild)
-        if other_active_event:
-            # Delete 'We are' event if it exists
-            if existing_event:
-                await existing_event.delete()
-                logger.info(
-                    f"Deleted 'We are' event due to another active event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
-                )
-            logger.info("Another event is active. Not creating 'We are' event.")
-            return
-
-        # Update or create 'We are' event
         if existing_event and existing_event.end_time > now:
             try:
                 await existing_event.edit(
                     name=lab_status,
                     description=formatted_message,
                     end_time=event_end_time,
-                    image=image_binary,
                 )
                 logger.info(
                     f"Updated event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
                 )
+                return
             except discord.errors.Forbidden as e:
                 logger.error(f"Cannot update event: {e}")
-                # Since the event cannot be updated, delete it and create a new one
-                await existing_event.delete()
-                logger.info(
-                    f"Deleted non-updatable 'We are' event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
-                )
+                try:
+                    await existing_event.delete()
+                    logger.info(
+                        f"Deleted non-updatable 'We are' event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                    )
+                except Exception as de:
+                    logger.error(f"Error deleting non-updatable event: {de}")
                 existing_event = None
         else:
-            # Delete the finished event if it exists
             if existing_event:
-                await existing_event.delete()
-                logger.info(
-                    f"Deleted finished 'We are' event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
-                )
-            existing_event = None
+                try:
+                    await existing_event.delete()
+                    logger.info(
+                        f"Deleted finished 'We are' event: {existing_event.name}, Start Time: {existing_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+                    )
+                except Exception as de:
+                    logger.error(f"Error deleting finished event: {de}")
+                existing_event = None
 
-        if not existing_event:
-            new_event = await guild.create_scheduled_event(
-                name=lab_status,
-                description=formatted_message,
-                start_time=now + timedelta(seconds=10),
-                end_time=event_end_time,
-                entity_type=discord.EntityType.external,
-                location="MAG Laboratory",
-                privacy_level=discord.PrivacyLevel.guild_only,
-                image=image_binary,
-            )
-            logger.info(
-                f"Created new event: {new_event.name}, Start Time: {new_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
-            )
+        new_event = await guild.create_scheduled_event(
+            name=lab_status,
+            description=formatted_message,
+            start_time=now + timedelta(seconds=10),
+            end_time=event_end_time,
+            entity_type=discord.EntityType.external,
+            location="MAG Laboratory",
+            privacy_level=discord.PrivacyLevel.guild_only,
+        )
+        logger.info(
+            f"Created new event: {new_event.name}, Start Time: {new_event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
+        )
 
     except Exception as e:
         logger.error(f"Error managing 'We are' event: {e}", exc_info=True)
 
 
-async def check_for_other_active_events(guild):
-    """Check if there's another active event."""
+async def pick_target_event_for_synoptic(guild: discord.Guild) -> Optional[discord.ScheduledEvent]:
+    """Priority: current non-'We are' ➜ current 'We are' ➜ next upcoming."""
     try:
         now = datetime.now().astimezone()
-        for event in guild.scheduled_events:
-            if (
-                event.start_time <= now <= event.end_time
-                and "We are" not in event.name
-            ):
+        events = await guild.fetch_scheduled_events()
+        events = [e for e in events if e.status != discord.EventStatus.completed]
+
+        active_non_we = [e for e in events if 'We are' not in (e.name or '') and e.start_time <= now <= e.end_time]
+        if active_non_we:
+            active_non_we.sort(key=lambda e: e.end_time)
+            return active_non_we[0]
+
+        active_we = [e for e in events if 'We are' in (e.name or '') and e.start_time <= now <= e.end_time]
+        if active_we:
+            active_we.sort(key=lambda e: e.end_time)
+            return active_we[0]
+
+        future = [e for e in events if e.start_time > now]
+        if future:
+            future.sort(key=lambda e: e.start_time)
+            return future[0]
+    except Exception as e:
+        logger.error(f"Error picking target event for synoptic: {e}")
+    return None
+
+
+async def enforce_single_synoptic_image(guild: discord.Guild) -> None:
+    try:
+        generate_scaled_cropped_synoptic_view_image(output_png_file=SCALED_PNG_FILE)
+        image_binary = get_image_as_binary(SCALED_PNG_FILE)
+        if image_binary is None:
+            logger.warning("Synoptic image not available; skipping image enforcement.")
+            return
+
+        target = await pick_target_event_for_synoptic(guild)
+        events = await guild.fetch_scheduled_events()
+
+        for e in events:
+            if e.status == discord.EventStatus.completed:
+                continue
+            try:
+                if target and e.id == target.id:
+                    await e.edit(image=image_binary)
+                    logger.info(f"Synoptic image set on: {e.name}, Start Time: {e.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}")
+                else:
+                    await e.edit(image=None)
+            except Exception as ie:
+                logger.error(f"Error editing image on '{e.name}': {ie}")
+    except Exception as e:
+        logger.error(f"Error enforcing single synoptic image: {e}")
+
+
+async def check_for_other_active_events(guild: discord.Guild) -> bool:
+    try:
+        now = datetime.now().astimezone()
+        events = await guild.fetch_scheduled_events()
+        for event in events:
+            if event.start_time <= now <= event.end_time and 'We are' not in (event.name or ''):
                 logger.info(
                     f"Another active event detected: {event.name}, Start Time: {event.start_time.astimezone().strftime('%Y-%m-%d %I:%M %p')}"
                 )
@@ -267,40 +314,38 @@ async def check_for_other_active_events(guild):
 
 
 @tasks.loop(minutes=5)
-async def post_lab_status():
-    """Task to post or update lab status event every 5 minutes."""
+async def post_lab_status() -> None:
     try:
-        # Scrape lab status and sensor data
-        lab_status, sensor_data, scrape_timestamp = fetch_lab_status_and_sensors(
-            LAB_URL
-        )
-        if lab_status is None or not sensor_data:
-            logger.warning("Failed to scrape lab status or sensor data.")
+        lab_status, sensor_data, scrape_timestamp = fetch_lab_status_and_sensors(LAB_URL)
+        if lab_status is None:
+            logger.warning("Failed to scrape lab status (None returned).")
             return
-
-        # Generate and save the scaled and cropped synoptic view image
-        generate_scaled_cropped_synoptic_view_image(
-            output_png_file=SCALED_PNG_FILE
-        )
-
-        formatted_message = format_sensor_data(
-            lab_status, sensor_data, scrape_timestamp, LAB_URL
-        )
 
         guild = bot.get_guild(GUILD_ID)
         if not guild:
             logger.error(f"Guild with ID {GUILD_ID} not found.")
             return
 
-        image_binary = get_image_as_binary(SCALED_PNG_FILE)
-        if image_binary is None:
-            logger.error("Image binary data is None. Skipping event update.")
+        if lab_status != 'We are OPEN':
+            await delete_all_we_are_events(guild)
+            await enforce_single_synoptic_image(guild)
+            logger.info("Shop is CLOSED — not reporting. Enforced single synoptic image.")
             return
 
-        # Manage the 'We are' event
-        await manage_lab_status_event(
-            guild, lab_status, formatted_message, image_binary
-        )
+        if not sensor_data:
+            logger.warning("Sensor data empty; skipping update.")
+            await enforce_single_synoptic_image(guild)
+            return
+
+        if await check_for_other_active_events(guild):
+            await delete_all_we_are_events(guild)
+            await enforce_single_synoptic_image(guild)
+            logger.info("Another event is active. Not creating 'We are' event. Image enforced.")
+            return
+
+        formatted_message = format_sensor_data(lab_status, sensor_data, scrape_timestamp, LAB_URL)
+        await manage_lab_status_event(guild, lab_status, formatted_message)
+        await enforce_single_synoptic_image(guild)
 
     except Exception as e:
         logger.error(f"Error in post_lab_status: {e}", exc_info=True)
@@ -308,13 +353,11 @@ async def post_lab_status():
 
 @post_lab_status.before_loop
 async def before_post_lab_status():
-    """Wait until the bot is ready before starting the loop."""
     await bot.wait_until_ready()
 
 
 @bot.event
 async def on_ready():
-    """Event handler when the bot is ready."""
     logger.info(f"Bot {bot.user.name} has connected to Discord.")
     if not post_lab_status.is_running():
         post_lab_status.start()
@@ -322,15 +365,11 @@ async def on_ready():
 
 @bot.event
 async def on_disconnect():
-    """Event handler when the bot disconnects."""
-    logger.warning(
-        f"Bot {bot.user.name} has disconnected, attempting to reconnect..."
-    )
+    logger.warning(f"Bot {bot.user.name} has disconnected, attempting to reconnect...")
 
 
 @bot.event
 async def on_resumed():
-    """Event handler when the bot resumes after a disconnect."""
     logger.info(f"Bot {bot.user.name} has reconnected to Discord.")
     if not post_lab_status.is_running():
         post_lab_status.start()
@@ -338,13 +377,11 @@ async def on_resumed():
 
 @bot.event
 async def on_shard_disconnect(shard_id):
-    """Event handler for shard disconnections."""
     logger.warning(f"Shard {shard_id} disconnected.")
 
 
 @bot.event
 async def on_shard_connect(shard_id):
-    """Event handler for shard reconnections."""
     logger.info(f"Shard {shard_id} reconnected.")
     if not post_lab_status.is_running():
         post_lab_status.start()
@@ -352,13 +389,9 @@ async def on_shard_connect(shard_id):
 
 @bot.event
 async def on_error(event_method, *args, **kwargs):
-    """Global error handler."""
-    logger.error(
-        f"Error in {event_method}: {args}, {kwargs}", exc_info=True
-    )
+    logger.error(f"Error in {event_method}: {args}, {kwargs}", exc_info=True)
 
 
-# Run the bot
 try:
     bot.run(TOKEN)
 except Exception as e:
