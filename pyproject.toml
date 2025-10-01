@@ -3,6 +3,9 @@ name = "maglab_events_bot"
 version = "0.1.0"
 description = ""
 authors = ["Ben Cheng"]
+packages = [
+    { include = "maglab_events_bot", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -10,14 +13,63 @@ beautifulsoup4 = "4.12.3"
 cairosvg = "2.7.1"
 discord-py = "2.4.0"
 icalendar = "5.0.13"
+lxml = "5.3.0"
 pandas = "2.2.2"
 pendulum = "3.0.0"
 pillow = "10.4.0"
+pydantic = "2.9.2"
+pydantic-settings = "2.5.2"
 python-dateutil = "2.9.0.post0"
 pytz = "2024.2"
 requests = "2.32.3"
 
 [tool.poetry.dev-dependencies]
+nox = "2024.4.15"
+pytest = "8.3.2"
+ruff = "0.6.8"
+mypy = "1.11.2"
+types-requests = "2.32.0.20240905"
+types-python-dateutil = "2.9.0.20240821"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py310"
+src = ["src", "tests"]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "W",
+    "B",
+    "C4",
+    "N",
+]
+ignore = [
+    "E501",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+packages = ["maglab_events_bot"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+show_error_codes = true
+pretty = true
+
+
+[tool.poetry.scripts]
+maglab-events-bot = "maglab_events_bot.cli:main"
+maglab-run-bot = "maglab_events_bot.bot:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

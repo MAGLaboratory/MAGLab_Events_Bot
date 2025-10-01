@@ -1,14 +1,57 @@
-# MAGLab_Events_Bot
-For syncing up events and our open status switch to Discord Events.
+# MAGLab Events Bot
+
+Unified Discord bot that keeps MAG Laboratory's scheduled events aligned with real-world status:
+- Mirrors Google Calendar events into Discord scheduled events with cancellation handling.
+- Publishes the lab's HAL open/closed status as a rolling "We are" event.
+- Enforces a single synoptic status image across all scheduled events.
+
 ![image](https://github.com/user-attachments/assets/d533bfe2-d30d-4550-8d32-40458fe55b72)
 
-Bot Script 1: Takes MAGLab's Open Status Switch (webscraped from: https://www.maglaboratory.org/hal) and updates the Discord Events respectively\
-Bot Script 2: Takes MAGLab Calendar + Curator events and updates the Discord events respectively. [Only reports 7 days into the future]\
+## Getting Started
+1. Install dependencies with Poetry: `poetry install` (generate `requirements.txt` later with `poetry export` if another environment needs pip).
+2. Copy `.env.example` to `.env` and populate the Discord token plus any overrides.
+3. Run the bot: `poetry run maglab-run-bot` (or `python -m maglab_events_bot`).
 
-Benefit 1: People don't need to check hal to see if the space is open. Opening discord is way more natural. Good for general members.\
-Benefit 2: No need to check google calendar to see if event or curator stuff is going on.\
-Benefit 3: Good reminder to flip the open switch.
+## Project Layout
+```
+src/maglab_events_bot/
+├── bot.py                  # Discord bot wiring and startup
+├── cli.py                  # Command-line utilities (run bot, generate synoptic image)
+├── cogs/
+│   ├── calendar_sync.py    # Google Calendar → Discord events sync loop
+│   └── open_status.py      # HAL status polling loop
+├── config.py               # Centralized settings via environment variables
+├── logging.py              # Logging configuration helpers
+├── models/                 # Dataclasses for HAL and calendar data
+├── services/
+│   ├── calendar.py         # ICS ingestion and normalization
+│   ├── discord_api.py      # Scheduled-event helpers
+│   ├── hal.py              # HAL scraping and parsing
+│   └── synoptic.py         # Synoptic image rendering
+├── tasks/                  # Shared background-task helpers
+└── utils/                  # Formatting and HTTP utilities
+```
 
-If there's an event is cancelled or removed from the google calendar, then it'll remove it from the Discord (at the current specified 1 hour refresh rate).\
-If a event is currently active, then the "We are Open/Closed" event will be removed, to let the main event shine.\
-The "Open/Closed event" ends 5 minutes into the future (rolling), and webscrapes hal at 1 minute intervals. If we get a power outage, then the event will just disappear in 5 minutes.
+Supporting resources live in `docs/` (architecture, operations, calendar mapping) and `tests/` for automated coverage scaffolding. Legacy scripts in `scripts/` now delegate to the package entry points for compatibility.
+
+## Configuration
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DISCORD_TOKEN` | Bot token with permission to manage scheduled events | required |
+| `GUILD_ID` | Discord guild/server ID | `697971426799517774` |
+| `HAL_STATUS_URL` | Source of HAL open/closed status | `https://www.maglaboratory.org/hal` |
+| `OPEN_STATUS_INTERVAL_MINUTES` | HAL polling frequency | `5` |
+| `ICS_URLS` | Comma-separated Google Calendar ICS feeds | default public calendars |
+| `SYNC_DAYS` | Number of future days to sync | `7` |
+| `CALENDAR_SYNC_INTERVAL_HOURS` | Calendar sync cadence | `1` |
+| `TIMEZONE` | Display timezone | `America/Los_Angeles` |
+
+## Development
+- Run all checks: `poetry run nox`
+- Individual tasks: `poetry run nox -s lint`, `poetry run nox -s typecheck`, `poetry run nox -s tests`
+- Logs are written to `logs/maglab_events_bot.log`
+
+## Deployment Notes
+- Ensure the bot has `Manage Events` permission in the target guild.
+- For containerized deployments, mount a writable `logs/` directory.
+- Rotate tokens and update `.env` when credentials change.

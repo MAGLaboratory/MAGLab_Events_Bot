@@ -1,9 +1,47 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+discord_token.txt
 scripts/discord_token.txt
-scripts/.idea/modules.xml
-scripts/.idea/misc.xml
-scripts/.idea/.name
-scripts/.idea/inspectionProfiles/profiles_settings.xml
-scripts/.idea/inspectionProfiles/Project_Default.xml
-scripts/.idea/MAGLAB Events Bot.iml
+
+# Logs and runtime output
+logs/
 *.log
+
+# IDE/editor files
+.idea/
+scripts/.idea/
+.vscode/
+*.iml
+*.swp
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# Temporary images
+*.tmp.png
