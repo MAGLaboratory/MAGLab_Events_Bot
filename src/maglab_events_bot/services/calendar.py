@@ -122,6 +122,10 @@ class CalendarFetcher:
             if uid in full_cancellations:
                 continue
 
+            if status == "CANCELLED" and component.get("recurrence-id"):
+                # Already tracked in recurrence_cancellations during the first pass
+                continue
+
             start, end = self._extract_start_end(component, tz)
             event_duration = end - start
 

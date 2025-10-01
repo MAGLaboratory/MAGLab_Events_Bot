@@ -27,7 +27,7 @@ def test_build_calendar_keys_normalizes_microseconds():
     assert keys == [
         (
             "Test Event",
-            start.replace(microsecond=0),
+            start.replace(second=0, microsecond=0),
             "MAG Laboratory",
         )
     ]

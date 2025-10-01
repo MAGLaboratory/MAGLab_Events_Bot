@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from maglab_events_bot.cogs.open_status import OpenStatusCog
@@ -17,12 +19,11 @@ def _ensure_discord_token(monkeypatch):
     yield
 
 
-@pytest.mark.asyncio
-async def test_cog_unload_closes_session(monkeypatch):
+def test_cog_unload_closes_session(monkeypatch):
     cog = OpenStatusCog(bot=object())
     dummy_session = DummySession()
     cog._session = dummy_session  # type: ignore[attr-defined]
 
-    await cog.cog_unload()
+    asyncio.run(cog.cog_unload())
 
     assert dummy_session.closed

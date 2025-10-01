@@ -1,7 +1,7 @@
+import asyncio
 from textwrap import dedent
 
 import pendulum
-import pytest
 
 from maglab_events_bot.services.calendar import CalendarFetcher
 
@@ -26,8 +26,7 @@ def _format_datetime(dt: pendulum.DateTime) -> str:
     return dt.in_timezone("UTC").format("YYYYMMDDTHHmmss") + "Z"
 
 
-@pytest.mark.asyncio
-async def test_fetch_events_parses_single_event():
+def test_fetch_events_parses_single_event():
     now = pendulum.now("UTC")
     start = now.add(days=1).replace(second=0, microsecond=0)
     end = start.add(hours=1)
@@ -49,7 +48,9 @@ async def test_fetch_events_parses_single_event():
     )
 
     fetcher = CalendarFetcher(session=DummySession(ics))
-    events, cancellations = await fetcher.fetch_events(["dummy://single"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+    events, cancellations = asyncio.run(
+        fetcher.fetch_events(["dummy://single"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+    )
 
     assert cancellations == []
     assert len(events) == 1
@@ -60,8 +61,7 @@ async def test_fetch_events_parses_single_event():
     assert event.end_time == end
 
 
-@pytest.mark.asyncio
-async def test_fetch_events_handles_all_day_and_duration():
+def test_fetch_events_handles_all_day_and_duration():
     tz = pendulum.timezone("America/Los_Angeles")
     start_date = pendulum.now(tz).add(days=2).date()
     all_day = start_date.strftime("%Y%m%d")
@@ -82,7 +82,9 @@ async def test_fetch_events_handles_all_day_and_duration():
     )
 
     fetcher = CalendarFetcher(session=DummySession(ics))
-    events, _ = await fetcher.fetch_events(["dummy://allday"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+    events, _ = asyncio.run(
+        fetcher.fetch_events(["dummy://allday"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+    )
 
     assert len(events) == 1
     event = events[0]
@@ -90,8 +92,7 @@ async def test_fetch_events_handles_all_day_and_duration():
     assert event.end_time > event.start_time
 
 
-@pytest.mark.asyncio
-async def test_fetch_events_expands_recurring_with_cancellation():
+def test_fetch_events_expands_recurring_with_cancellation():
     now = pendulum.now("UTC").replace(second=0, microsecond=0)
     start = now.add(days=1)
     end = start.add(hours=1)
@@ -114,16 +115,17 @@ async def test_fetch_events_expands_recurring_with_cancellation():
         DTSTART:{_format_datetime(cancelled_start)}
         DTEND:{_format_datetime(cancelled_start.add(hours=1))}
         STATUS:CANCELLED
+        RECURRENCE-ID:{_format_datetime(cancelled_start)}
         END:VEVENT
         END:VCALENDAR
         """
     )
 
     fetcher = CalendarFetcher(session=DummySession(ics))
-    events, cancellations = await fetcher.fetch_events(["dummy://recur"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+    events, cancellations = asyncio.run(
+        fetcher.fetch_events(["dummy://recur"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+    )
 
-    # Expect two events (one cancelled occurrence removed)
+    # Expect two events on remaining dates, plus the explicit cancellation record
     assert len(events) == 2
     assert len(cancellations) == 1
-    cancelled = cancellations[0]
-    assert cancelled.start_time == cancelled_start

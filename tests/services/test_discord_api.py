@@ -1,8 +1,8 @@
+import asyncio
 from dataclasses import dataclass, field
 
 import discord
 import pendulum
-import pytest
 
 from maglab_events_bot.services import discord_api
 
@@ -22,8 +22,7 @@ class StubEvent:
         return self
 
 
-@pytest.mark.asyncio
-async def test_pick_synoptic_target_prefers_active_non_we():
+def test_pick_synoptic_target_prefers_active_non_we():
     now = pendulum.now("UTC")
     active_main = StubEvent(1, "Main Event", now.subtract(minutes=10), now.add(hours=1))
     active_we = StubEvent(2, "We are OPEN", now.subtract(minutes=5), now.add(minutes=30))
@@ -33,8 +32,7 @@ async def test_pick_synoptic_target_prefers_active_non_we():
     assert target is active_main
 
 
-@pytest.mark.asyncio
-async def test_enforce_single_synoptic_image_sets_and_clears(monkeypatch):
+def test_enforce_single_synoptic_image_sets_and_clears(monkeypatch):
     now = pendulum.now("UTC")
     active = StubEvent(1, "Main Event", now.subtract(minutes=5), now.add(minutes=55))
     previous = StubEvent(2, "Previous Event", now.subtract(hours=2), now.subtract(minutes=1))
@@ -48,16 +46,16 @@ async def test_enforce_single_synoptic_image_sets_and_clears(monkeypatch):
     previous.edits.append({"image": b"old"})
 
     # Initial enforcement attaches image to active event
-    await discord_api.enforce_single_synoptic_image(object(), b"image-bytes", "UTC")
+    asyncio.run(discord_api.enforce_single_synoptic_image(object(), b"image-bytes", "UTC"))
     assert active.edits and active.edits[-1]["image"] == b"image-bytes"
     assert previous.edits[-1]["image"] is None
 
     # Second call with same image avoids duplicate edits
-    await discord_api.enforce_single_synoptic_image(object(), b"image-bytes", "UTC")
+    asyncio.run(discord_api.enforce_single_synoptic_image(object(), b"image-bytes", "UTC"))
     assert len([edit for edit in active.edits if edit.get("image")]) == 1
 
     # Changing image causes update and clears previous target
     new_bytes = b"new-image"
-    await discord_api.enforce_single_synoptic_image(object(), new_bytes, "UTC")
+    asyncio.run(discord_api.enforce_single_synoptic_image(object(), new_bytes, "UTC"))
     assert active.edits[-1]["image"] == new_bytes
     assert any(edit.get("image") is None for edit in previous.edits)

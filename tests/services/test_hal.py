@@ -1,7 +1,7 @@
+import asyncio
 from textwrap import dedent
 
 import pendulum
-import pytest
 
 from maglab_events_bot.services import hal
 
@@ -23,15 +23,14 @@ OPEN_HTML = dedent(
 CLOSED_HTML = "<html><body><p>We are CLOSED.</p></body></html>"
 
 
-@pytest.mark.asyncio
-async def test_fetch_hal_status_parses_open_state(monkeypatch):
+def test_fetch_hal_status_parses_open_state(monkeypatch):
     async def fake_fetch(_url: str, _session) -> str:
         return OPEN_HTML
 
     monkeypatch.setattr(hal, "_fetch_hal_page", fake_fetch)
     tz = pendulum.timezone("America/Los_Angeles")
 
-    result = await hal.fetch_hal_status("https://example.com", tz, session=object())
+    result = asyncio.run(hal.fetch_hal_status("https://example.com", tz, session=object()))
 
     assert result is not None
     assert result.is_open
@@ -40,15 +39,14 @@ async def test_fetch_hal_status_parses_open_state(monkeypatch):
     assert result.sensors[1].status == "No Motion"
 
 
-@pytest.mark.asyncio
-async def test_fetch_hal_status_handles_closed_without_table(monkeypatch):
+def test_fetch_hal_status_handles_closed_without_table(monkeypatch):
     async def fake_fetch(_url: str, _session) -> str:
         return CLOSED_HTML
 
     monkeypatch.setattr(hal, "_fetch_hal_page", fake_fetch)
     tz = pendulum.timezone("America/Los_Angeles")
 
-    result = await hal.fetch_hal_status("https://example.com", tz, session=object())
+    result = asyncio.run(hal.fetch_hal_status("https://example.com", tz, session=object()))
 
     assert result is not None
     assert not result.is_open
