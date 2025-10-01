@@ -3,6 +3,7 @@
 ## Requirements
 - Python 3.10+
 - Dependencies installed via `poetry install` or `pip install -r requirements.txt`
+- Keep security patches current: after editing dependencies run `poetry lock --no-update` (or `poetry lock`) to refresh `poetry.lock` before deploying.
 
 ## Configuration
 1. Copy `.env.example` to `.env`.

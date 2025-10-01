@@ -123,20 +123,6 @@ class CalendarFetcher:
                 continue
 
             if status == "CANCELLED" and component.get("recurrence-id"):
-                recurrence_id = component.get("recurrence-id")
-                if recurrence_id and self._normalize_date(recurrence_id.dt).in_timezone("UTC") in recurrence_cancellations.get(uid, set()):
-                    continue
-                # Already tracked in recurrence_cancellations during the first pass
-                cancellations.append(
-                    CancelledCalendarEvent(
-                        uid=uid,
-                        name=summary,
-                        description=description,
-                        start_time=start.in_timezone("UTC"),
-                        end_time=end.in_timezone("UTC"),
-                        location=location,
-                    )
-                )
                 continue
 
             start, end = self._extract_start_end(component, tz)

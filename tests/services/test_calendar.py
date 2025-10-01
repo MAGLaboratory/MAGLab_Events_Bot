@@ -126,6 +126,6 @@ def test_fetch_events_expands_recurring_with_cancellation():
         fetcher.fetch_events(["dummy://recur"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
     )
 
-    # Expect two events on remaining dates, plus the explicit cancellation record
+    # Expect two events (one cancelled occurrence removed)
     assert len(events) == 2
-    assert len(cancellations) == 1
+    assert cancellations == []
