@@ -178,6 +178,7 @@ async def ensure_open_status_event(
 ) -> None:
     now = pendulum.now(timezone_name)
     end_time = now.add(minutes=duration_minutes)
+    start_time_minimum = now.add(seconds=60)
 
     events = await fetch_relevant_events(guild)
     we_events = [e for e in events if we_are_fragment.lower() in (e.name or "").lower()]
@@ -209,10 +210,14 @@ async def ensure_open_status_event(
                 logger.exception("Failed to delete stale event '%s': %s", primary_event.name, exc)
 
     try:
+        # Ensure start time always sits slightly in the future to avoid Discord rejecting it
+        future_now = pendulum.now(timezone_name)
+        start_time = max(start_time_minimum, future_now.add(seconds=30))
+
         await guild.create_scheduled_event(
             name=status_text,
             description=description,
-            start_time=now.add(seconds=10),
+            start_time=start_time,
             end_time=end_time,
             entity_type=discord.EntityType.external,
             location="MAG Laboratory",
