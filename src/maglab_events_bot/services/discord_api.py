@@ -99,8 +99,6 @@ async def enforce_single_synoptic_image(
     events = await fetch_relevant_events(guild)
     target = pick_synoptic_target(events, timezone_name, we_are_fragment)
     target_id = target.id if target else None
-    previous_id = _last_synoptic_event_id
-
     new_hash: Optional[str] = None
     if target and image_bytes:
         new_hash = hashlib.sha1(image_bytes).hexdigest()
@@ -113,14 +111,12 @@ async def enforce_single_synoptic_image(
         else:
             logger.debug("Synoptic image already current on event '%s'", target.name)
 
-    if previous_id and (previous_id != target_id or not new_hash):
-        previous = next((e for e in events if e.id == previous_id), None)
-        if previous:
+    for event in events:
+        if not target or event.id != target.id:
             try:
-                await _apply_event_image(previous, None)
-                logger.info("Cleared synoptic image from '%s'", previous.name)
+                await _apply_event_image(event, None)
             except Exception as exc:  # pylint: disable=broad-except
-                logger.exception("Failed to clear synoptic image on '%s': %s", previous.name, exc)
+                logger.exception("Failed to clear synoptic image on '%s': %s", event.name, exc)
 
     _last_synoptic_event_id = target_id if new_hash else None
     _last_synoptic_hash = new_hash
