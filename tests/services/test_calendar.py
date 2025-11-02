@@ -49,7 +49,9 @@ def test_fetch_events_parses_single_event():
 
     fetcher = CalendarFetcher(session=DummySession(ics))
     events, cancellations = asyncio.run(
-        fetcher.fetch_events(["dummy://single"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+        fetcher.fetch_events(
+            ["dummy://single"], sync_horizon_days=7, timezone_name="America/Los_Angeles"
+        )
     )
 
     assert cancellations == []
@@ -83,7 +85,9 @@ def test_fetch_events_handles_all_day_and_duration():
 
     fetcher = CalendarFetcher(session=DummySession(ics))
     events, _ = asyncio.run(
-        fetcher.fetch_events(["dummy://allday"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+        fetcher.fetch_events(
+            ["dummy://allday"], sync_horizon_days=7, timezone_name="America/Los_Angeles"
+        )
     )
 
     assert len(events) == 1
@@ -123,9 +127,91 @@ def test_fetch_events_expands_recurring_with_cancellation():
 
     fetcher = CalendarFetcher(session=DummySession(ics))
     events, cancellations = asyncio.run(
-        fetcher.fetch_events(["dummy://recur"], sync_horizon_days=7, timezone_name="America/Los_Angeles")
+        fetcher.fetch_events(
+            ["dummy://recur"], sync_horizon_days=7, timezone_name="America/Los_Angeles"
+        )
     )
 
     # Expect two events (one cancelled occurrence removed)
     assert len(events) == 2
+    assert len(cancellations) == 1
+    cancellation = cancellations[0]
+    assert cancellation.uid == "test-recur"
+    assert cancellation.name == "Daily Meetup"
+    assert cancellation.start_time == cancelled_start
+    assert cancellation.end_time == cancelled_start.add(hours=1)
+    assert cancellation.location == "MAG Laboratory"
+
+
+def test_fetch_events_honors_exdate_cancellations():
+    now = pendulum.now("UTC").replace(second=0, microsecond=0)
+    start = now.add(days=1)
+    end = start.add(hours=1)
+    skipped_start = start.add(days=1)
+
+    ics = dedent(
+        f"""
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        BEGIN:VEVENT
+        UID:test-exdate
+        DTSTART:{_format_datetime(start)}
+        DTEND:{_format_datetime(end)}
+        SUMMARY:Support Hours
+        LOCATION:MAG Laboratory
+        RRULE:FREQ=DAILY;COUNT=3
+        EXDATE:{_format_datetime(skipped_start)}
+        END:VEVENT
+        END:VCALENDAR
+        """
+    )
+
+    fetcher = CalendarFetcher(session=DummySession(ics))
+    events, cancellations = asyncio.run(
+        fetcher.fetch_events(
+            ["dummy://exdate"], sync_horizon_days=7, timezone_name="America/Los_Angeles"
+        )
+    )
+
+    assert len(events) == 2
+    assert len(cancellations) == 1
+    cancellation = cancellations[0]
+    assert cancellation.uid == "test-exdate"
+    assert cancellation.name == "Support Hours"
+    assert cancellation.location == "MAG Laboratory"
+    assert cancellation.start_time == skipped_start
+    assert cancellation.end_time == skipped_start.add(hours=1)
+
+
+def test_fetch_events_includes_events_overlap_window():
+    now = pendulum.now("UTC").replace(second=0, microsecond=0)
+    start = now.add(days=1)
+    long_end = start.add(days=10)
+
+    ics = dedent(
+        f"""
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        BEGIN:VEVENT
+        UID:test-long
+        DTSTART:{_format_datetime(start)}
+        DTEND:{_format_datetime(long_end)}
+        SUMMARY:Build Week
+        LOCATION:MAG Laboratory
+        END:VEVENT
+        END:VCALENDAR
+        """
+    )
+
+    fetcher = CalendarFetcher(session=DummySession(ics))
+    events, cancellations = asyncio.run(
+        fetcher.fetch_events(
+            ["dummy://long"], sync_horizon_days=7, timezone_name="America/Los_Angeles"
+        )
+    )
+
     assert cancellations == []
+    assert len(events) == 1
+    event = events[0]
+    assert event.start_time == start
+    assert event.end_time == long_end

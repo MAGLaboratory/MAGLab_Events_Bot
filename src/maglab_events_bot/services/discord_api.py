@@ -1,10 +1,12 @@
 """Abstractions over Discord scheduled event operations."""
+
 from __future__ import annotations
 
 import hashlib
 import logging
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable, Coroutine, Iterable, List, Optional, Sequence, Tuple, cast
+from typing import Callable, Coroutine, Dict, Iterable, List, Optional, Sequence, Tuple, cast
 
 import discord
 import pendulum
@@ -20,7 +22,9 @@ def _to_utc_datetime(value: datetime | None) -> Optional[pendulum.DateTime]:
     return pendulum.instance(value).in_timezone("UTC")
 
 
-def _filter_active(events: Sequence[discord.ScheduledEvent], tz_name: str) -> Tuple[List[discord.ScheduledEvent], List[discord.ScheduledEvent]]:
+def _filter_active(
+    events: Sequence[discord.ScheduledEvent], tz_name: str
+) -> Tuple[List[discord.ScheduledEvent], List[discord.ScheduledEvent]]:
     now = pendulum.now("UTC")
     del tz_name
     active: List[discord.ScheduledEvent] = []
@@ -75,10 +79,6 @@ def pick_synoptic_target(
     return None
 
 
-_last_synoptic_event_id: int | None = None
-_last_synoptic_hash: str | None = None
-
-
 _EditCoroutine = Coroutine[object, object, discord.ScheduledEvent]
 
 
@@ -87,25 +87,58 @@ async def _apply_event_image(event: discord.ScheduledEvent, image: Optional[byte
     await edit_fn(image=image)
 
 
+@dataclass(frozen=True)
+class SynopticImageState:
+    """Track the last synoptic image that was applied to a guild's target event."""
+
+    event_id: int | None = None
+    content_hash: str | None = None
+
+
+class SynopticImageCache:
+    """Store per-guild synoptic image state to avoid cross-guild leakage."""
+
+    def __init__(self) -> None:
+        self._state: Dict[int, SynopticImageState] = {}
+
+    def get(self, guild_id: int) -> SynopticImageState:
+        return self._state.get(guild_id, SynopticImageState())
+
+    def update(self, guild_id: int, *, event_id: int | None, content_hash: str | None) -> None:
+        self._state[guild_id] = SynopticImageState(event_id, content_hash)
+
+    def clear(self, guild_id: int) -> None:
+        self._state.pop(guild_id, None)
+
+
 async def enforce_single_synoptic_image(
     guild: discord.Guild,
     image_bytes: Optional[bytes],
     timezone_name: str,
     *,
     we_are_fragment: str = "We are",
+    cache: SynopticImageCache,
 ) -> None:
-    global _last_synoptic_event_id, _last_synoptic_hash
-
     events = await fetch_relevant_events(guild)
     target = pick_synoptic_target(events, timezone_name, we_are_fragment)
     target_id = target.id if target else None
     new_hash: Optional[str] = None
+    state = cache.get(guild.id)
+
     if target and image_bytes:
         new_hash = hashlib.sha1(image_bytes).hexdigest()
-        if target_id != _last_synoptic_event_id or new_hash != _last_synoptic_hash:
+        if target_id != state.event_id or new_hash != state.content_hash:
             try:
                 await _apply_event_image(target, image_bytes)
                 logger.info("Synoptic image set on '%s'", target.name)
+            except discord.NotFound:
+                logger.info(
+                    "Synoptic target '%s' disappeared before image update; skipping",
+                    target.name,
+                )
+                new_hash = None
+                target = None
+                target_id = None
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to set synoptic image on '%s': %s", target.name, exc)
         else:
@@ -115,11 +148,15 @@ async def enforce_single_synoptic_image(
         if not target or event.id != target.id:
             try:
                 await _apply_event_image(event, None)
+            except discord.NotFound:
+                logger.info("Event '%s' disappeared before clearing image; skipping", event.name)
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to clear synoptic image on '%s': %s", event.name, exc)
 
-    _last_synoptic_event_id = target_id if new_hash else None
-    _last_synoptic_hash = new_hash
+    if new_hash and target_id:
+        cache.update(guild.id, event_id=target_id, content_hash=new_hash)
+    else:
+        cache.clear(guild.id)
 
 
 async def has_active_non_fragment_event(
@@ -135,9 +172,7 @@ async def has_active_non_fragment_event(
         if start is None or end is None:
             continue
         if start <= now <= end and fragment.lower() not in (event.name or "").lower():
-            logger.info(
-                "Active non-fragment event found: '%s'", event.name
-            )
+            logger.info("Active non-fragment event found: '%s'", event.name)
             return True
     return False
 
@@ -194,7 +229,9 @@ async def ensure_open_status_event(
                 logger.info("Updated existing open-status event '%s'", primary_event.name)
                 return
             except discord.errors.Forbidden:
-                logger.warning("Permission denied updating event '%s'; deleting", primary_event.name)
+                logger.warning(
+                    "Permission denied updating event '%s'; deleting", primary_event.name
+                )
                 try:
                     await primary_event.delete()
                 except Exception as exc:  # pylint: disable=broad-except
