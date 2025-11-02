@@ -1,4 +1,5 @@
 """Primary Discord bot application wiring."""
+
 from __future__ import annotations
 
 import logging
@@ -12,6 +13,7 @@ from maglab_events_bot.cogs.calendar_sync import CalendarSyncCog
 from maglab_events_bot.cogs.open_status import OpenStatusCog
 from maglab_events_bot.config import get_settings
 from maglab_events_bot.logging import configure_logging
+from maglab_events_bot.services.discord_api import SynopticImageCache
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,7 @@ class MagLabBot(commands.Bot):
         intents = kwargs.pop("intents", discord.Intents.default())
         super().__init__(*args, intents=intents, **kwargs)
         self.settings = get_settings()
+        self.synoptic_cache = SynopticImageCache()
 
     async def setup_hook(self) -> None:
         await self.add_cog(OpenStatusCog(self))

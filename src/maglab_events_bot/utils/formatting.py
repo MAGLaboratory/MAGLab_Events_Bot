@@ -1,4 +1,5 @@
 """Formatting helpers for Discord messaging and text cleanup."""
+
 from __future__ import annotations
 
 import html

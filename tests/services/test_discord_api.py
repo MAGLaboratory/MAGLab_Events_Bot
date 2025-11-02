@@ -32,6 +32,11 @@ def test_pick_synoptic_target_prefers_active_non_we():
     assert target is active_main
 
 
+class StubGuild:
+    def __init__(self, guild_id: int = 123) -> None:
+        self.id = guild_id
+
+
 def test_enforce_single_synoptic_image_sets_and_clears(monkeypatch):
     now = pendulum.now("UTC")
     active = StubEvent(1, "Main Event", now.subtract(minutes=5), now.add(minutes=55))
@@ -41,21 +46,44 @@ def test_enforce_single_synoptic_image_sets_and_clears(monkeypatch):
         return [active, previous]
 
     monkeypatch.setattr(discord_api, "fetch_relevant_events", fake_fetch_relevant_events)
-    monkeypatch.setattr(discord_api, "_last_synoptic_event_id", previous.id)
-    monkeypatch.setattr(discord_api, "_last_synoptic_hash", "old-hash")
     previous.edits.append({"image": b"old"})
 
+    cache = discord_api.SynopticImageCache()
+    cache.update(123, event_id=previous.id, content_hash="old-hash")
+    guild = StubGuild()
+
     # Initial enforcement attaches image to active event
-    asyncio.run(discord_api.enforce_single_synoptic_image(object(), b"image-bytes", "UTC"))
+    asyncio.run(
+        discord_api.enforce_single_synoptic_image(
+            guild,
+            b"image-bytes",
+            "UTC",
+            cache=cache,
+        )
+    )
     assert active.edits and active.edits[-1]["image"] == b"image-bytes"
     assert previous.edits[-1]["image"] is None
 
     # Second call with same image avoids duplicate edits
-    asyncio.run(discord_api.enforce_single_synoptic_image(object(), b"image-bytes", "UTC"))
+    asyncio.run(
+        discord_api.enforce_single_synoptic_image(
+            guild,
+            b"image-bytes",
+            "UTC",
+            cache=cache,
+        )
+    )
     assert len([edit for edit in active.edits if edit.get("image")]) == 1
 
     # Changing image causes update and clears previous target
     new_bytes = b"new-image"
-    asyncio.run(discord_api.enforce_single_synoptic_image(object(), new_bytes, "UTC"))
+    asyncio.run(
+        discord_api.enforce_single_synoptic_image(
+            guild,
+            new_bytes,
+            "UTC",
+            cache=cache,
+        )
+    )
     assert active.edits[-1]["image"] == new_bytes
     assert any(edit.get("image") is None for edit in previous.edits)

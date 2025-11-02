@@ -1,4 +1,5 @@
 """Command-line interface for MAGLab Events Bot tasks."""
+
 from __future__ import annotations
 
 import argparse

@@ -71,7 +71,6 @@ pretty = true
 
 [tool.poetry.scripts]
 maglab-events-bot = "maglab_events_bot.cli:main"
-maglab-run-bot = "maglab_events_bot.bot:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

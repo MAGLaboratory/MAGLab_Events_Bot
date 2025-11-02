@@ -1,4 +1,5 @@
 """Discord cog that manages the open-status scheduled event."""
+
 from __future__ import annotations
 
 import logging
@@ -10,13 +11,14 @@ from discord.ext import commands, tasks
 
 from maglab_events_bot.config import get_settings
 from maglab_events_bot.services.discord_api import (
+    SynopticImageCache,
     delete_events_by_name_fragment,
     enforce_single_synoptic_image,
     ensure_open_status_event,
     has_active_non_fragment_event,
 )
 from maglab_events_bot.services.hal import fetch_hal_status
-from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes
+from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 from maglab_events_bot.utils.formatting import format_hal_sensor_table
 from maglab_events_bot.utils.http import build_session
 
@@ -33,6 +35,9 @@ class OpenStatusCog(commands.Cog):
         self.interval_minutes = self.settings.open_status_interval_minutes
         self.we_are_fragment = "We are"
         self._session = build_session()
+        if not hasattr(bot, "synoptic_cache"):
+            bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
+        self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
 
     async def cog_load(self) -> None:
         if not self.poll_hal_status.is_running():
@@ -67,19 +72,29 @@ class OpenStatusCog(commands.Cog):
         hal_status = await fetch_hal_status(
             str(self.settings.hal_url), self.timezone, session=self._session
         )
-        image_bytes = get_synoptic_image_bytes()
+        image_bytes = await get_synoptic_image_bytes_async()
 
         if hal_status is None:
             logger.warning(
                 "hal.status_unavailable",
                 extra={"guild_id": self.settings.guild_id},
             )
-            await enforce_single_synoptic_image(guild, image_bytes, self.settings.timezone)
+            await enforce_single_synoptic_image(
+                guild,
+                image_bytes,
+                self.settings.timezone,
+                cache=self._synoptic_cache,
+            )
             return
 
         if not hal_status.is_open:
             await delete_events_by_name_fragment(guild, self.we_are_fragment)
-            await enforce_single_synoptic_image(guild, image_bytes, self.settings.timezone)
+            await enforce_single_synoptic_image(
+                guild,
+                image_bytes,
+                self.settings.timezone,
+                cache=self._synoptic_cache,
+            )
             logger.info(
                 "hal.status_closed",
                 extra={"guild_id": self.settings.guild_id},
@@ -91,12 +106,22 @@ class OpenStatusCog(commands.Cog):
                 "hal.sensor_data_missing",
                 extra={"guild_id": self.settings.guild_id},
             )
-            await enforce_single_synoptic_image(guild, image_bytes, self.settings.timezone)
+            await enforce_single_synoptic_image(
+                guild,
+                image_bytes,
+                self.settings.timezone,
+                cache=self._synoptic_cache,
+            )
             return
 
         if await has_active_non_fragment_event(guild, fragment=self.we_are_fragment):
             await delete_events_by_name_fragment(guild, self.we_are_fragment)
-            await enforce_single_synoptic_image(guild, image_bytes, self.settings.timezone)
+            await enforce_single_synoptic_image(
+                guild,
+                image_bytes,
+                self.settings.timezone,
+                cache=self._synoptic_cache,
+            )
             logger.info(
                 "hal.skipped_due_to_active_event",
                 extra={"guild_id": self.settings.guild_id},
@@ -116,7 +141,12 @@ class OpenStatusCog(commands.Cog):
             description=formatted_message,
             timezone_name=self.settings.timezone,
         )
-        await enforce_single_synoptic_image(guild, image_bytes, self.settings.timezone)
+        await enforce_single_synoptic_image(
+            guild,
+            image_bytes,
+            self.settings.timezone,
+            cache=self._synoptic_cache,
+        )
         logger.info(
             "hal.status_open",
             extra={

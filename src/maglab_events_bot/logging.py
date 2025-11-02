@@ -1,4 +1,5 @@
 """Logging configuration utilities."""
+
 from __future__ import annotations
 
 import logging

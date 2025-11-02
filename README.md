@@ -10,7 +10,7 @@ Unified Discord bot that keeps MAG Laboratory's scheduled events aligned with re
 ## Getting Started
 1. Install dependencies with Poetry: `poetry install` (generate `requirements.txt` later with `poetry export` if another environment needs pip).
 2. Copy `.env.example` to `.env` and populate the Discord token plus any overrides.
-3. Run the bot: `poetry run maglab-run-bot` (or `python -m maglab_events_bot`).
+3. Run the bot: `poetry run maglab-events-bot run-bot` (or `python -m maglab_events_bot`).
 
 ## Project Layout
 ```
@@ -32,7 +32,7 @@ src/maglab_events_bot/
 └── utils/                  # Formatting and HTTP utilities
 ```
 
-Supporting resources live in `docs/` (architecture, operations, calendar mapping) and `tests/` for automated coverage scaffolding. Legacy scripts in `scripts/` now delegate to the package entry points for compatibility.
+Supporting resources live in `docs/` (architecture, operations, calendar mapping) and `tests/` for automated coverage scaffolding. The historical `scripts/` entry points were removed—run tasks through the CLI (`poetry run maglab-events-bot ...`) instead.
 
 ## Configuration
 | Variable | Description | Default |

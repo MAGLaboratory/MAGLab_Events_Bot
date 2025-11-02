@@ -1,4 +1,5 @@
 """Data models used across services and tasks."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,4 +1,5 @@
 """HTTP utilities for external integrations."""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Optional

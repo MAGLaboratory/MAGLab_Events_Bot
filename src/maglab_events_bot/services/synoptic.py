@@ -1,4 +1,5 @@
 """Services for generating the MAGLab synoptic status image."""
+
 from __future__ import annotations
 
 import logging
@@ -19,8 +20,7 @@ logger = logging.getLogger(__name__)
 if platform.system() == "Windows":
     os.environ.setdefault(
         "PATH",
-        os.environ.get("PATH", "")
-        + r";C:\\Program Files\\UniConvertor-2.0rc5\\dlls",
+        os.environ.get("PATH", "") + r";C:\\Program Files\\UniConvertor-2.0rc5\\dlls",
     )
 
 import cairosvg  # noqa: E402  pylint: disable=wrong-import-position

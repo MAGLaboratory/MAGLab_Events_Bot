@@ -1,4 +1,5 @@
 """Discord cog that keeps scheduled events in sync with Google Calendars."""
+
 from __future__ import annotations
 
 import logging
@@ -12,11 +13,12 @@ from maglab_events_bot.config import get_settings
 from maglab_events_bot.models.events import CalendarEvent, CancelledCalendarEvent
 from maglab_events_bot.services.calendar import CalendarFetcher
 from maglab_events_bot.services.discord_api import (
+    SynopticImageCache,
     enforce_single_synoptic_image,
     find_matching_discord_event,
     prune_orphaned_events,
 )
-from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes
+from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,9 @@ class CalendarSyncCog(commands.Cog):
         self.interval_hours = self.settings.calendar_sync_interval_hours
         self.allow_fragments = ("We are",)
         self.fetcher = CalendarFetcher()
+        if not hasattr(bot, "synoptic_cache"):
+            bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
+        self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
 
     async def cog_load(self) -> None:
         if not self.sync_calendar_events.is_running():
@@ -79,8 +84,13 @@ class CalendarSyncCog(commands.Cog):
             allow_fragments=self.allow_fragments,
         )
 
-        image_bytes = get_synoptic_image_bytes()
-        await enforce_single_synoptic_image(guild, image_bytes, self.settings.timezone)
+        image_bytes = await get_synoptic_image_bytes_async()
+        await enforce_single_synoptic_image(
+            guild,
+            image_bytes,
+            self.settings.timezone,
+            cache=self._synoptic_cache,
+        )
 
         logger.info(
             "calendar.sync_completed",
@@ -106,10 +116,14 @@ class CalendarSyncCog(commands.Cog):
         calendar_events: Iterable[CalendarEvent],
     ) -> None:
         for calendar_event in calendar_events:
-            start_time_display = calendar_event.start_time.in_timezone(self.timezone).to_datetime_string()
+            start_time_display = calendar_event.start_time.in_timezone(
+                self.timezone
+            ).to_datetime_string()
             match = find_matching_discord_event(discord_events, calendar_event)
             if match:
-                logger.info("Updating event '%s' scheduled at %s", calendar_event.name, start_time_display)
+                logger.info(
+                    "Updating event '%s' scheduled at %s", calendar_event.name, start_time_display
+                )
                 try:
                     await match.edit(
                         description=calendar_event.description,
@@ -118,7 +132,9 @@ class CalendarSyncCog(commands.Cog):
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.exception("Failed updating event '%s': %s", calendar_event.name, exc)
             else:
-                logger.info("Creating event '%s' scheduled at %s", calendar_event.name, start_time_display)
+                logger.info(
+                    "Creating event '%s' scheduled at %s", calendar_event.name, start_time_display
+                )
                 try:
                     await guild.create_scheduled_event(
                         name=calendar_event.name,
@@ -142,7 +158,9 @@ class CalendarSyncCog(commands.Cog):
             match = find_matching_discord_event(discord_events, cancellation)
             if not match:
                 continue
-            start_time_display = cancellation.start_time.in_timezone(self.timezone).to_datetime_string()
+            start_time_display = cancellation.start_time.in_timezone(
+                self.timezone
+            ).to_datetime_string()
             logger.info(
                 "Removing canceled event '%s' scheduled at %s",
                 cancellation.name,
@@ -154,7 +172,9 @@ class CalendarSyncCog(commands.Cog):
                 logger.exception("Failed deleting event '%s': %s", cancellation.name, exc)
 
     @staticmethod
-    def _build_calendar_keys(events: Iterable[CalendarEvent]) -> Iterable[tuple[str, pendulum.DateTime, str]]:
+    def _build_calendar_keys(
+        events: Iterable[CalendarEvent],
+    ) -> Iterable[tuple[str, pendulum.DateTime, str]]:
         for event in events:
             start = event.start_time.replace(second=0, microsecond=0)
             yield (event.name, start, event.location)

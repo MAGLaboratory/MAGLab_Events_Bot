@@ -1,4 +1,5 @@
 """Services for interacting with the MAGLab HAL status page."""
+
 from __future__ import annotations
 
 import asyncio
@@ -29,7 +30,9 @@ def _table_matches_sensor_schema(table) -> bool:
     if not header_candidates:
         first_row = table.find("tr")
         if first_row:
-            header_candidates = [cell.get_text(strip=True).lower() for cell in first_row.find_all("td")]
+            header_candidates = [
+                cell.get_text(strip=True).lower() for cell in first_row.find_all("td")
+            ]
 
     if not header_candidates:
         return False
@@ -82,7 +85,7 @@ async def _fetch_hal_page(url: str, session: requests.Session) -> Optional[str]:
                 attempt + 1,
                 exc,
             )
-            await asyncio.sleep(2 ** attempt)
+            await asyncio.sleep(2**attempt)
     logger.error("hal.fetch_exhausted", extra={"url": url})
     return None
 
@@ -106,7 +109,9 @@ async def fetch_hal_status(
         lab_status = "We are CLOSED"
     else:
         lab_status = (
-            "We are OPEN" if ("open" in page_text_lower and "closed" not in page_text_lower) else "We are CLOSED"
+            "We are OPEN"
+            if ("open" in page_text_lower and "closed" not in page_text_lower)
+            else "We are CLOSED"
         )
 
     sensor_data: list[HalSensorReading] = []

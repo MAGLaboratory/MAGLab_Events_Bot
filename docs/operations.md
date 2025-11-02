@@ -12,11 +12,9 @@
 
 ## Running the Bot
 ```bash
-poetry run maglab-run-bot
+poetry run maglab-events-bot run-bot
 # or
 python -m maglab_events_bot
-# and for subcommands:
-poetry run maglab-events-bot run-bot
 ```
 
 ## Generating Synoptic Image Manually
@@ -30,5 +28,5 @@ poetry run maglab-events-bot generate-synoptic --output synoptic.png
 
 ## Troubleshooting
 - Enable `requests` debugging by setting `LOGLEVEL=DEBUG` before running.
-- Validate HAL connectivity by running `python scripts/scrape_synoptic_view_and_crop_scale_for_discord_events.py`.
+- Validate HAL connectivity by running `poetry run maglab-events-bot generate-synoptic`.
 - Ensure the bot has `Manage Events` permission in the target guild.

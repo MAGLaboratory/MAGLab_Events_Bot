@@ -3,6 +3,7 @@ import asyncio
 import pytest
 
 from maglab_events_bot.cogs.open_status import OpenStatusCog
+from maglab_events_bot.services.discord_api import SynopticImageCache
 
 
 class DummySession:
@@ -19,8 +20,13 @@ def _ensure_discord_token(monkeypatch):
     yield
 
 
+class DummyBot:
+    def __init__(self) -> None:
+        self.synoptic_cache = SynopticImageCache()
+
+
 def test_cog_unload_closes_session(monkeypatch):
-    cog = OpenStatusCog(bot=object())
+    cog = OpenStatusCog(bot=DummyBot())
     dummy_session = DummySession()
     cog._session = dummy_session  # type: ignore[attr-defined]
 

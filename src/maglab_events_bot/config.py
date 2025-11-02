@@ -1,4 +1,5 @@
 """Application settings management."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -29,9 +30,7 @@ class Settings(BaseSettings):
         alias="ICS_URLS",
     )
     sync_days: int = Field(7, ge=1, alias="SYNC_DAYS")
-    calendar_sync_interval_hours: int = Field(
-        1, ge=1, alias="CALENDAR_SYNC_INTERVAL_HOURS"
-    )
+    calendar_sync_interval_hours: int = Field(1, ge=1, alias="CALENDAR_SYNC_INTERVAL_HOURS")
 
     timezone: str = Field("America/Los_Angeles", alias="TIMEZONE")
 
