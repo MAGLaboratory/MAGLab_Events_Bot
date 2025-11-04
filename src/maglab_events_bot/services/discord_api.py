@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable, Coroutine, Dict, Iterable, List, Optional, Sequence, Tuple, cast
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 UID_MARKER_PREFIX = "\n\n[maglab_uid:"
 UID_MARKER_SUFFIX = "]"
+UID_MARKER_MAX_LENGTH = 1000
 
 
 def _to_utc_datetime(value: datetime | None) -> Optional[pendulum.DateTime]:
@@ -74,9 +76,26 @@ def _strip_uid_marker(description: Optional[str]) -> str:
 def _ensure_uid_marker(description: Optional[str], uid: str) -> str:
     base = _strip_uid_marker(description).rstrip()
     marker = f"{UID_MARKER_PREFIX}{uid}{UID_MARKER_SUFFIX}"
-    if base:
-        return base + marker
-    return marker.lstrip("\n")
+
+    if not base:
+        trimmed_marker = marker.lstrip("\n")
+        if len(trimmed_marker) > UID_MARKER_MAX_LENGTH:
+            return trimmed_marker[:UID_MARKER_MAX_LENGTH]
+        return trimmed_marker
+
+    available = UID_MARKER_MAX_LENGTH - len(marker)
+    if available <= 0:
+        trimmed_marker = marker.lstrip("\n")
+        return trimmed_marker[:UID_MARKER_MAX_LENGTH]
+
+    base_trimmed = base[:available].rstrip()
+    if base_trimmed:
+        return base_trimmed + marker
+
+    trimmed_marker = marker.lstrip("\n")
+    if len(trimmed_marker) > UID_MARKER_MAX_LENGTH:
+        return trimmed_marker[:UID_MARKER_MAX_LENGTH]
+    return trimmed_marker
 
 
 def _extract_uid_marker(description: Optional[str]) -> Optional[str]:
@@ -309,7 +328,7 @@ async def prune_orphaned_events(
     timezone_name: str,
     allow_fragments: Optional[Iterable[str]] = None,
 ) -> None:
-    event_keys = set(calendar_keys)
+    key_counts = Counter(calendar_keys)
     allow_fragments = {frag.lower() for frag in allow_fragments or []}
     now = pendulum.now("UTC")
 
@@ -326,7 +345,10 @@ async def prune_orphaned_events(
             continue
         location = (event.location or "MAG Laboratory").strip()
         key = (name, start.replace(second=0, microsecond=0), location)
-        if key not in event_keys:
+        if key_counts[key] > 0:
+            key_counts[key] -= 1
+            continue
+        if key_counts[key] == 0:
             try:
                 await event.delete()
                 logger.info("Deleted orphaned event '%s'", name)

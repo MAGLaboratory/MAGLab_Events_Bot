@@ -132,6 +132,9 @@ class CalendarFetcher:
             uid = str(component.get("uid"))
             status = str(component.get("status", "")).upper()
 
+            if component.get("recurrence-id"):
+                continue
+
             if uid in full_cancellations:
                 continue
 
@@ -237,7 +240,9 @@ class CalendarFetcher:
 
                         ex_start_field = exception_component.get("dtstart")
                         if ex_start_field:
-                            ex_start = self._normalize_date(ex_start_field.dt, tz).in_timezone("UTC")
+                            ex_start = self._normalize_date(ex_start_field.dt, tz).in_timezone(
+                                "UTC"
+                            )
                         else:
                             ex_start = occ_start.in_timezone("UTC")
 

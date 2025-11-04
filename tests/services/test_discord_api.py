@@ -18,10 +18,14 @@ class StubEvent:
     status: discord.EventStatus = discord.EventStatus.scheduled
     description: str | None = ""
     edits: list[dict] = field(default_factory=list)
+    deleted: bool = False
 
     async def edit(self, **kwargs):
         self.edits.append(kwargs)
         return self
+
+    async def delete(self):
+        self.deleted = True
 
 
 def test_pick_synoptic_target_prefers_active_non_we():
@@ -107,3 +111,41 @@ def test_find_matching_discord_event_prefers_uid_marker():
 
     match = discord_api.find_matching_discord_event([existing], calendar_event)
     assert match is existing
+
+
+def test_apply_uid_marker_obeys_discord_limit():
+    description = "A" * 995
+    result = discord_api.apply_uid_marker(description, "uid-456")
+    assert len(result) <= 1000
+    assert result.endswith("uid-456]")
+
+
+def test_prune_orphaned_events_removes_duplicate_keys(monkeypatch):
+    now = pendulum.now("UTC").add(days=2)
+    start = now
+    end = start.add(hours=2)
+
+    keeper = StubEvent(1, "Curator Hours: Ben", start, end)
+    duplicate = StubEvent(2, "Curator Hours: Ben", start, end)
+
+    async def fake_fetch_relevant_events(_guild):
+        return [keeper, duplicate]
+
+    monkeypatch.setattr(discord_api, "fetch_relevant_events", fake_fetch_relevant_events)
+
+    calendar_key = (
+        "Curator Hours: Ben",
+        start.replace(second=0, microsecond=0),
+        "MAG Laboratory",
+    )
+
+    asyncio.run(
+        discord_api.prune_orphaned_events(
+            StubGuild(),
+            [calendar_key],
+            timezone_name="UTC",
+        )
+    )
+
+    assert not keeper.deleted
+    assert duplicate.deleted
