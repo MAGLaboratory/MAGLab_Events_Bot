@@ -14,6 +14,7 @@ from maglab_events_bot.models.events import CalendarEvent, CancelledCalendarEven
 from maglab_events_bot.services.calendar import CalendarFetcher
 from maglab_events_bot.services.discord_api import (
     SynopticImageCache,
+    apply_uid_marker,
     enforce_single_synoptic_image,
     find_matching_discord_event,
     prune_orphaned_events,
@@ -126,8 +127,13 @@ class CalendarSyncCog(commands.Cog):
                 )
                 try:
                     await match.edit(
-                        description=calendar_event.description,
+                        name=calendar_event.name,
+                        description=apply_uid_marker(
+                            calendar_event.description, calendar_event.uid
+                        ),
+                        start_time=calendar_event.start_time,
                         end_time=calendar_event.end_time,
+                        location=calendar_event.location,
                     )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.exception("Failed updating event '%s': %s", calendar_event.name, exc)
@@ -138,7 +144,9 @@ class CalendarSyncCog(commands.Cog):
                 try:
                     await guild.create_scheduled_event(
                         name=calendar_event.name,
-                        description=calendar_event.description,
+                        description=apply_uid_marker(
+                            calendar_event.description, calendar_event.uid
+                        ),
                         start_time=calendar_event.start_time,
                         end_time=calendar_event.end_time,
                         entity_type=discord.EntityType.external,

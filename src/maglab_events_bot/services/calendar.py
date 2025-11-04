@@ -164,23 +164,16 @@ class CalendarFetcher:
                     occ_end = occ_start + event_duration
                     occurrence_id = occ_start.in_timezone("UTC")
 
-                    if (
-                        uid in recurrence_cancellations
-                        and occurrence_id in recurrence_cancellations[uid]
-                    ):
-                        cancel_entry = recurrence_cancellations[uid][occurrence_id]
+                    cancel_entry = recurrence_cancellations.get(uid, {}).get(occurrence_id)
+                    cancel_component = None
+                    if cancel_entry is not None:
                         cancel_component = cancel_entry.get("component")
-                        exception_component = self._match_exception(
-                            exceptions.get(uid, []), occ_start
-                        )
 
+                    exception_component = self._match_exception(exceptions.get(uid, []), occ_start)
+
+                    # If we have an explicit CANCELLED component for this occurrence, honor it
+                    if cancel_component is not None:
                         cancel_summary_value = self._safe_component_get(cancel_component, "summary")
-                        if (
-                            cancel_summary_value is None
-                            and exception_component
-                            and hasattr(exception_component, "get")
-                        ):
-                            cancel_summary_value = exception_component.get("summary")
                         cancel_summary_str = summary
                         if cancel_summary_value is not None:
                             candidate = str(cancel_summary_value).strip()
@@ -190,12 +183,6 @@ class CalendarFetcher:
                         cancel_description_value = self._safe_component_get(
                             cancel_component, "description"
                         )
-                        if (
-                            cancel_description_value is None
-                            and exception_component
-                            and hasattr(exception_component, "get")
-                        ):
-                            cancel_description_value = exception_component.get("description")
                         cancel_description_str = description
                         if cancel_description_value is not None:
                             candidate = str(cancel_description_value).strip()
@@ -205,12 +192,6 @@ class CalendarFetcher:
                         cancel_location_value = self._safe_component_get(
                             cancel_component, "location"
                         )
-                        if (
-                            cancel_location_value is None
-                            and exception_component
-                            and hasattr(exception_component, "get")
-                        ):
-                            cancel_location_value = exception_component.get("location")
                         cancel_location_str = location
                         if cancel_location_value is not None:
                             candidate = str(cancel_location_value).strip()
@@ -245,8 +226,7 @@ class CalendarFetcher:
                         )
                         continue
 
-                    exception_component = self._match_exception(exceptions.get(uid, []), occ_start)
-                    if exception_component:
+                    if exception_component is not None:
                         ex_summary = exception_component.get("summary", summary).strip()
                         ex_description = truncate_description(
                             exception_component.get("description", description).strip()
@@ -254,26 +234,37 @@ class CalendarFetcher:
                         ex_location = (
                             exception_component.get("location", location).strip() or location
                         )
+
+                        ex_start_field = exception_component.get("dtstart")
+                        if ex_start_field:
+                            ex_start = self._normalize_date(ex_start_field.dt, tz).in_timezone("UTC")
+                        else:
+                            ex_start = occ_start.in_timezone("UTC")
+
                         ex_end_component = exception_component.get("dtend")
                         if ex_end_component:
                             ex_end = self._normalize_date(ex_end_component.dt, tz).in_timezone(
                                 "UTC"
                             )
                         else:
-                            ex_end = (occ_start + event_duration).in_timezone("UTC")
+                            ex_end = (ex_start + event_duration).in_timezone("UTC")
+
                         events.append(
                             CalendarEvent(
                                 uid=uid,
                                 name=ex_summary,
                                 description=ex_description,
-                                start_time=occ_start.in_timezone("UTC"),
+                                start_time=ex_start,
                                 end_time=ex_end,
                                 location=ex_location,
                             )
                         )
-                    else:
-                        events.append(
-                            CalendarEvent(
+                        continue
+
+                    if cancel_entry is not None:
+                        # No explicit CANCELLED component, but EXDATE removed this occurrence.
+                        cancellations.append(
+                            CancelledCalendarEvent(
                                 uid=uid,
                                 name=summary,
                                 description=description,
@@ -282,6 +273,18 @@ class CalendarFetcher:
                                 location=location,
                             )
                         )
+                        continue
+
+                    events.append(
+                        CalendarEvent(
+                            uid=uid,
+                            name=summary,
+                            description=description,
+                            start_time=occ_start.in_timezone("UTC"),
+                            end_time=occ_end.in_timezone("UTC"),
+                            location=location,
+                        )
+                    )
             else:
                 start_utc = start.in_timezone("UTC")
                 end_utc = end.in_timezone("UTC")

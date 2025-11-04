@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import discord
 import pendulum
 
+from maglab_events_bot.models.events import CalendarEvent
 from maglab_events_bot.services import discord_api
 
 
@@ -15,6 +16,7 @@ class StubEvent:
     end_time: pendulum.DateTime
     location: str = "MAG Laboratory"
     status: discord.EventStatus = discord.EventStatus.scheduled
+    description: str | None = ""
     edits: list[dict] = field(default_factory=list)
 
     async def edit(self, **kwargs):
@@ -87,3 +89,21 @@ def test_enforce_single_synoptic_image_sets_and_clears(monkeypatch):
     )
     assert active.edits[-1]["image"] == new_bytes
     assert any(edit.get("image") is None for edit in previous.edits)
+
+
+def test_find_matching_discord_event_prefers_uid_marker():
+    now = pendulum.now("UTC")
+    existing = StubEvent(1, "Curator Hours", now, now.add(hours=2))
+    existing.description = discord_api.apply_uid_marker("Original description", "uid-123")
+
+    calendar_event = CalendarEvent(
+        uid="uid-123",
+        name="Curator Hours",
+        description="Updated description",
+        start_time=now.add(days=1),
+        end_time=now.add(days=1, hours=2),
+        location="MAG Laboratory",
+    )
+
+    match = discord_api.find_matching_discord_event([existing], calendar_event)
+    assert match is existing

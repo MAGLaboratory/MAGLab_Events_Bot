@@ -15,6 +15,9 @@ from maglab_events_bot.models.events import CalendarEvent, CancelledCalendarEven
 
 logger = logging.getLogger(__name__)
 
+UID_MARKER_PREFIX = "\n\n[maglab_uid:"
+UID_MARKER_SUFFIX = "]"
+
 
 def _to_utc_datetime(value: datetime | None) -> Optional[pendulum.DateTime]:
     if value is None:
@@ -57,6 +60,41 @@ async def delete_events_by_name_fragment(guild: discord.Guild, fragment: str) ->
                 logger.info("Deleted event '%s'", event.name)
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to delete event %s: %s", event.name, exc)
+
+
+def _strip_uid_marker(description: Optional[str]) -> str:
+    if not description:
+        return ""
+    index = description.rfind(UID_MARKER_PREFIX)
+    if index == -1:
+        return description
+    return description[:index]
+
+
+def _ensure_uid_marker(description: Optional[str], uid: str) -> str:
+    base = _strip_uid_marker(description).rstrip()
+    marker = f"{UID_MARKER_PREFIX}{uid}{UID_MARKER_SUFFIX}"
+    if base:
+        return base + marker
+    return marker.lstrip("\n")
+
+
+def _extract_uid_marker(description: Optional[str]) -> Optional[str]:
+    if not description:
+        return None
+    index = description.rfind(UID_MARKER_PREFIX)
+    if index == -1:
+        return None
+    start = index + len(UID_MARKER_PREFIX)
+    end = description.find(UID_MARKER_SUFFIX, start)
+    if end == -1:
+        return None
+    return description[start:end].strip() or None
+
+
+def apply_uid_marker(description: Optional[str], uid: str) -> str:
+    """Append a hidden marker to the description so we can correlate events by UID."""
+    return _ensure_uid_marker(description, uid)
 
 
 def pick_synoptic_target(
@@ -184,6 +222,9 @@ def find_matching_discord_event(
     for event in discord_events:
         if event.status == discord.EventStatus.completed:
             continue
+        event_uid = _extract_uid_marker(event.description)
+        if event_uid and event_uid == calendar_event.uid:
+            return event
         event_name = event.name or ""
         if event_name != calendar_event.name:
             continue

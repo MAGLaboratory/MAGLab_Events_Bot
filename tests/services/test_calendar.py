@@ -183,6 +183,54 @@ def test_fetch_events_honors_exdate_cancellations():
     assert cancellation.end_time == skipped_start.add(hours=1)
 
 
+def test_fetch_events_uses_exception_start_time():
+    now = pendulum.now("UTC").replace(second=0, microsecond=0)
+    start = now.add(days=1)
+    end = start.add(hours=1)
+    moved_start = start.add(hours=3)
+    moved_end = moved_start.add(hours=2)
+
+    ics = dedent(
+        f"""
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        BEGIN:VEVENT
+        UID:test-exception
+        DTSTART:{_format_datetime(start)}
+        DTEND:{_format_datetime(end)}
+        SUMMARY:Workshop Night
+        LOCATION:MAG Laboratory
+        RRULE:FREQ=DAILY;COUNT=2
+        END:VEVENT
+        BEGIN:VEVENT
+        UID:test-exception
+        RECURRENCE-ID:{_format_datetime(start)}
+        DTSTART:{_format_datetime(moved_start)}
+        DTEND:{_format_datetime(moved_end)}
+        SUMMARY:Workshop Night (Moved)
+        LOCATION:MAG Laboratory
+        END:VEVENT
+        END:VCALENDAR
+        """
+    )
+
+    fetcher = CalendarFetcher(session=DummySession(ics))
+    events, cancellations = asyncio.run(
+        fetcher.fetch_events(
+            ["dummy://exception"],
+            sync_horizon_days=7,
+            timezone_name="America/Los_Angeles",
+        )
+    )
+
+    assert cancellations == []
+    assert len(events) == 2
+
+    moved_event = next(e for e in events if e.start_time == moved_start)
+    assert moved_event.end_time == moved_end
+    assert moved_event.name == "Workshop Night (Moved)"
+
+
 def test_fetch_events_includes_events_overlap_window():
     now = pendulum.now("UTC").replace(second=0, microsecond=0)
     start = now.add(days=1)
