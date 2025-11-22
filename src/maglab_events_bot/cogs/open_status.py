@@ -21,7 +21,7 @@ from maglab_events_bot.services.grafana import fetch_grafana_open_status
 from maglab_events_bot.services.hal import fetch_hal_status
 from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 from maglab_events_bot.utils.formatting import format_hal_sensor_table
-from maglab_events_bot.utils.http import build_session
+from maglab_events_bot.utils.http import build_aiohttp_client
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +35,16 @@ class OpenStatusCog(commands.Cog):
         self.timezone = pendulum.timezone(self.settings.timezone)
         self.interval_minutes = self.settings.open_status_interval_minutes
         self.we_are_fragment = "We are"
-        self._session = build_session()
+        self._http_client = None
         if not hasattr(bot, "synoptic_cache"):
             bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
         self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
 
     async def cog_load(self) -> None:
+        if self._http_client is None:
+            self._http_client = await build_aiohttp_client(
+                verify_ssl=self.settings.grafana_verify_ssl
+            )
         if not self.poll_hal_status.is_running():
             self.poll_hal_status.change_interval(minutes=self.interval_minutes)
             self.poll_hal_status.start()
@@ -50,7 +54,8 @@ class OpenStatusCog(commands.Cog):
         if self.poll_hal_status.is_running():
             self.poll_hal_status.cancel()
             logger.info("Open status poll loop stopped")
-        self._session.close()
+        if self._http_client:
+            await self._http_client.close()
 
     async def _get_guild(self) -> Optional[discord.Guild]:
         guild = self.bot.get_guild(self.settings.guild_id)
@@ -70,9 +75,12 @@ class OpenStatusCog(commands.Cog):
         if not guild:
             return
 
-        hal_status = await fetch_hal_status(
-            str(self.settings.hal_url), self.timezone, session=self._session
-        )
+        if self._http_client is None:
+            self._http_client = await build_aiohttp_client(
+                verify_ssl=self.settings.grafana_verify_ssl
+            )
+
+        hal_status = await fetch_hal_status(str(self.settings.hal_url), self.timezone, session=self._http_client)
         image_bytes = await get_synoptic_image_bytes_async()
 
         grafana_is_open = await fetch_grafana_open_status(
@@ -82,7 +90,7 @@ class OpenStatusCog(commands.Cog):
             username=self.settings.grafana_username,
             password=self.settings.grafana_password,
             verify_tls=self.settings.grafana_verify_ssl,
-            session=self._session,
+            session=self._http_client,
         )
 
         if hal_status is None:

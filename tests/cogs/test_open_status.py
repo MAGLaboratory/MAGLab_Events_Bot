@@ -10,7 +10,7 @@ class DummySession:
     def __init__(self) -> None:
         self.closed = False
 
-    def close(self) -> None:  # pragma: no cover - simple setter
+    async def close(self) -> None:  # pragma: no cover - simple setter
         self.closed = True
 
 
@@ -28,7 +28,7 @@ class DummyBot:
 def test_cog_unload_closes_session(monkeypatch):
     cog = OpenStatusCog(bot=DummyBot())
     dummy_session = DummySession()
-    cog._session = dummy_session  # type: ignore[attr-defined]
+    cog._http_client = dummy_session  # type: ignore[attr-defined]
 
     asyncio.run(cog.cog_unload())
 

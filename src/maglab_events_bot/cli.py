@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import sys
 
 import pendulum
 
 from maglab_events_bot.bot import main as run_bot
 from maglab_events_bot.config import get_settings
+from maglab_events_bot.logging import configure_logging
 from maglab_events_bot.services.grafana import fetch_grafana_open_status
 from maglab_events_bot.services.hal import fetch_hal_status
 from maglab_events_bot.services.synoptic import generate_synoptic_image
-from maglab_events_bot.utils.http import build_session
+from maglab_events_bot.utils.http import build_aiohttp_client
+
+logger = logging.getLogger(__name__)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -42,17 +46,21 @@ def _build_parser() -> argparse.ArgumentParser:
 async def _run_health_check() -> int:
     settings = get_settings()
     tz = pendulum.timezone(settings.timezone)
-    session = build_session()
+    configure_logging()
+    session = await build_aiohttp_client(verify_ssl=settings.grafana_verify_ssl)
 
     ok = True
     try:
         hal_status = await fetch_hal_status(str(settings.hal_url), tz, session=session)
         if hal_status is None:
-            print("HAL check: FAILED (no response)", file=sys.stderr)
+            logger.error("health.hal_failed", extra={"url": str(settings.hal_url)})
             ok = False
         else:
             status_text = "OPEN" if hal_status.is_open else "CLOSED"
-            print(f"HAL check: {status_text} (sensors={len(hal_status.sensors)})")
+            logger.info(
+                "health.hal_ok",
+                extra={"status": status_text, "sensor_count": len(hal_status.sensors)},
+            )
 
         grafana_status = await fetch_grafana_open_status(
             base_url=str(settings.grafana_base_url),
@@ -64,13 +72,25 @@ async def _run_health_check() -> int:
             session=session,
         )
         if grafana_status is None:
-            print("Grafana check: FAILED (see logs for details)", file=sys.stderr)
+            logger.error(
+                "health.grafana_failed",
+                extra={
+                    "url": str(settings.grafana_base_url),
+                    "alert": settings.grafana_alert_name,
+                },
+            )
             ok = False
         else:
             state = "FIRING (OPEN)" if grafana_status else "RESOLVED (CLOSED)"
-            print(f"Grafana check: {state}")
+            logger.info(
+                "health.grafana_ok",
+                extra={
+                    "alert": settings.grafana_alert_name,
+                    "state": state,
+                },
+            )
     finally:
-        session.close()
+        await session.close()
 
     return 0 if ok else 1
 

@@ -7,12 +7,12 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
+import aiohttp
 import pendulum
-import requests
 from bs4 import BeautifulSoup
 
 from maglab_events_bot.models.events import HalSensorReading, HalStatus
-from maglab_events_bot.utils.http import build_session
+from maglab_events_bot.utils.http import build_aiohttp_client
 
 logger = logging.getLogger(__name__)
 
@@ -102,31 +102,36 @@ def _parse_last_update(timestamp_str: str, tz: pendulum.tz.timezone.Timezone) ->
     return f"{delta.days} days ago"
 
 
-async def _fetch_hal_page(url: str, session: requests.Session) -> Optional[str]:
-    loop = asyncio.get_running_loop()
-    for attempt in range(3):
-        try:
-            response = await loop.run_in_executor(None, session.get, url)
-            response.raise_for_status()
-            return response.text
-        except requests.RequestException as exc:
-            logger.warning(
-                "hal.fetch_failed",
-                url,
-                attempt + 1,
-                exc,
-            )
-            await asyncio.sleep(2**attempt)
-    logger.error("hal.fetch_exhausted", extra={"url": url})
-    return None
+async def _fetch_hal_page(url: str, session: Optional[aiohttp.ClientSession]) -> Optional[str]:
+    owns_session = False
+    if session is None:
+        session = await build_aiohttp_client()
+        owns_session = True
+
+    try:
+        for attempt in range(3):
+            try:
+                async with session.get(url) as response:
+                    response.raise_for_status()
+                    return await response.text()
+            except aiohttp.ClientError as exc:
+                logger.warning(
+                    "hal.fetch_failed",
+                    extra={"url": url, "attempt": attempt + 1, "error": str(exc)},
+                )
+                await asyncio.sleep(2**attempt)
+        logger.error("hal.fetch_exhausted", extra={"url": url})
+        return None
+    finally:
+        if owns_session:
+            await session.close()
 
 
 async def fetch_hal_status(
     url: str,
     tz: pendulum.tz.timezone.Timezone,
-    session: Optional[requests.Session] = None,
+    session: Optional[aiohttp.ClientSession] = None,
 ) -> Optional[HalStatus]:
-    session = session or build_session()
     html = await _fetch_hal_page(url, session)
     if html is None:
         return None

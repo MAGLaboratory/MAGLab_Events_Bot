@@ -4,7 +4,7 @@ from maglab_events_bot.services import grafana
 
 
 def _run_fetch(monkeypatch, payload, **kwargs):
-    async def fake_fetch(_url, _session, _auth, _verify):
+    async def fake_fetch(_url, _session, _auth):
         return payload
 
     kwargs.setdefault("base_url", "https://example.com")
