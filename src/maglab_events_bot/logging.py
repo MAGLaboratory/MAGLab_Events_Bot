@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import logging.config
+import os
 from datetime import datetime, timezone
 from json import dumps
 from pathlib import Path
@@ -60,10 +61,21 @@ class StructuredJsonFormatter(logging.Formatter):
         return dumps(payload, default=str)
 
 
-def configure_logging(log_path: Optional[Path] = None, level: int = logging.INFO) -> None:
-    """Configure application-wide logging with console and rotating file handlers."""
+def configure_logging(
+    log_path: Optional[Path] = None,
+    level: int = logging.INFO,
+    structured: Optional[bool] = None,
+) -> None:
+    """Configure logging with human-readable console and optional structured file output."""
     target_path = log_path or DEFAULT_LOG_PATH
     target_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Allow operators to disable JSON logs for readability via LOG_STRUCTURED=false|0|no
+    if structured is None:
+        env_value = os.getenv("LOG_STRUCTURED", "true").lower()
+        structured = env_value not in {"0", "false", "no"}
+
+    file_formatter = "structured" if structured else "standard"
 
     logging_config = {
         "version": 1,
@@ -79,12 +91,12 @@ def configure_logging(log_path: Optional[Path] = None, level: int = logging.INFO
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "formatter": "structured",
+                "formatter": "standard",
                 "level": level,
             },
             "file": {
                 "class": "logging.handlers.RotatingFileHandler",
-                "formatter": "structured",
+                "formatter": file_formatter,
                 "level": level,
                 "filename": str(target_path),
                 "maxBytes": 5 * 1024 * 1024,
