@@ -17,6 +17,7 @@ from maglab_events_bot.services.discord_api import (
     ensure_open_status_event,
     has_active_non_fragment_event,
 )
+from maglab_events_bot.services.grafana import fetch_grafana_open_status
 from maglab_events_bot.services.hal import fetch_hal_status
 from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 from maglab_events_bot.utils.formatting import format_hal_sensor_table
@@ -74,6 +75,16 @@ class OpenStatusCog(commands.Cog):
         )
         image_bytes = await get_synoptic_image_bytes_async()
 
+        grafana_is_open = await fetch_grafana_open_status(
+            base_url=str(self.settings.grafana_base_url),
+            alert_name=self.settings.grafana_alert_name,
+            alerts_endpoint=self.settings.grafana_alerts_endpoint,
+            username=self.settings.grafana_username,
+            password=self.settings.grafana_password,
+            verify_tls=self.settings.grafana_verify_ssl,
+            session=self._session,
+        )
+
         if hal_status is None:
             logger.warning(
                 "hal.status_unavailable",
@@ -86,6 +97,9 @@ class OpenStatusCog(commands.Cog):
                 cache=self._synoptic_cache,
             )
             return
+
+        if grafana_is_open is not None:
+            hal_status.status_text = "We are OPEN" if grafana_is_open else "We are CLOSED"
 
         if not hal_status.is_open:
             await delete_events_by_name_fragment(guild, self.we_are_fragment)

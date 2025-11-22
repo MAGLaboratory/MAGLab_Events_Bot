@@ -51,6 +51,37 @@ def _find_sensor_table(soup: BeautifulSoup):
     return None
 
 
+def _collapse_text(element) -> str:
+    """Return the visible text for the element with normalized whitespace."""
+    return " ".join(segment.strip() for segment in element.stripped_strings if segment.strip())
+
+
+def _resolve_lab_status(soup: BeautifulSoup) -> str:
+    """Determine the HAL status message from the indicator banner or page text."""
+    indicator = soup.select_one("#openness")
+    if indicator:
+        classes = indicator.get("class") or []
+        if any("alert-success" in class_name for class_name in classes):
+            return "We are OPEN"
+        if any("alert-danger" in class_name for class_name in classes):
+            return "We are CLOSED"
+
+        indicator_text = _collapse_text(indicator).lower()
+        if "open" in indicator_text and "closed" not in indicator_text:
+            return "We are OPEN"
+        if "closed" in indicator_text and "open" not in indicator_text:
+            return "We are CLOSED"
+
+    page_text_lower = _collapse_text(soup).lower()
+
+    if "we are open" in page_text_lower or "the space is open" in page_text_lower:
+        return "We are OPEN"
+    if "we are closed" in page_text_lower or "the space is closed" in page_text_lower:
+        return "We are CLOSED"
+
+    return "We are OPEN" if ("open" in page_text_lower and "closed" not in page_text_lower) else "We are CLOSED"
+
+
 def _parse_last_update(timestamp_str: str, tz: pendulum.tz.timezone.Timezone) -> str:
     timestamp_str = timestamp_str.rsplit(" ", 1)[0]
     timestamp_format = "%b %d, %Y, %I:%M %p"
@@ -101,18 +132,7 @@ async def fetch_hal_status(
         return None
 
     soup = BeautifulSoup(html, "html.parser")
-    page_text_lower = soup.get_text().lower()
-
-    if "we are open" in page_text_lower:
-        lab_status = "We are OPEN"
-    elif "we are closed" in page_text_lower:
-        lab_status = "We are CLOSED"
-    else:
-        lab_status = (
-            "We are OPEN"
-            if ("open" in page_text_lower and "closed" not in page_text_lower)
-            else "We are CLOSED"
-        )
+    lab_status = _resolve_lab_status(soup)
 
     sensor_data: list[HalSensorReading] = []
     sensor_table = _find_sensor_table(soup)

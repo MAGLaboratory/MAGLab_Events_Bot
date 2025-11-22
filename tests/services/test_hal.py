@@ -22,6 +22,25 @@ OPEN_HTML = dedent(
 
 CLOSED_HTML = "<html><body><p>We are CLOSED.</p></body></html>"
 
+FRAGMENTED_OPEN_HTML = dedent(
+    """
+    <html>
+      <body>
+        <div id="activity_panel">
+          <div id="openness" class="alert alert-success">
+            <h1>We are <strong>OPEN</strong></h1>
+          </div>
+        </div>
+        <svg>
+          <g id="pod-bay-door">
+            <path id="pod-bay-door_closed" />
+          </g>
+        </svg>
+      </body>
+    </html>
+    """
+)
+
 
 def test_fetch_hal_status_parses_open_state(monkeypatch):
     async def fake_fetch(_url: str, _session) -> str:
@@ -51,6 +70,19 @@ def test_fetch_hal_status_handles_closed_without_table(monkeypatch):
     assert result is not None
     assert not result.is_open
     assert result.sensors == []
+
+
+def test_fetch_hal_status_handles_fragmented_banner(monkeypatch):
+    async def fake_fetch(_url: str, _session) -> str:
+        return FRAGMENTED_OPEN_HTML
+
+    monkeypatch.setattr(hal, "_fetch_hal_page", fake_fetch)
+    tz = pendulum.timezone("America/Los_Angeles")
+
+    result = asyncio.run(hal.fetch_hal_status("https://example.com", tz, session=object()))
+
+    assert result is not None
+    assert result.is_open
 
 
 def test_find_sensor_table_matches_expected_structure():

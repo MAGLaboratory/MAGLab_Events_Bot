@@ -45,6 +45,27 @@ Supporting resources live in `docs/` (architecture, operations, calendar mapping
 | `SYNC_DAYS` | Number of future days to sync | `7` |
 | `CALENDAR_SYNC_INTERVAL_HOURS` | Calendar sync cadence | `1` |
 | `TIMEZONE` | Display timezone | `America/Los_Angeles` |
+| `GRAFANA_BASE_URL` | Base URL for Grafana (needs intranet reachability) | `https://jane.maglab` |
+| `GRAFANA_ALERTS_ENDPOINT` | Alert listing endpoint | `/api/alertmanager/grafana/api/v2/alerts` |
+| `GRAFANA_ALERT_NAME` | Exact alert name to monitor | `The space is OPEN HAL status open` |
+| `GRAFANA_USERNAME` / `GRAFANA_PASSWORD` | Credentials for Grafana basic auth | none |
+| `GRAFANA_VERIFY_SSL` | Whether to validate Grafana TLS certificates | `true` |
+
+### Intranet Connectivity
+- The Grafana alert feed lives on the internal network (`https://jane.maglab` at `10.110.0.52`). Connect to the `maglab` WireGuard profile (e.g., `nmcli connection up maglab`) before running the bot.
+- Ensure the hostname resolves in the runtime environment. If DNS doesn’t provide it, add `10.110.0.52 jane.maglab` to `/etc/hosts` for both the host and any containers running the bot.
+- Grafana uses the MAGLab Root CA. Either import that certificate into the system trust store or set `GRAFANA_VERIFY_SSL=false` (less secure) to skip verification.
+- These requirements apply equally to CI/servers—document how the network is reached wherever the bot is deployed.
+
+### Health Check
+Run the health probe before daemonizing or after changing VPN/DNS credentials:
+
+```bash
+poetry run maglab-events-bot health-check
+# or: PYTHONPATH=src python -m maglab_events_bot health-check
+```
+
+It pings the HAL page and the configured Grafana alert once, failing fast if either is unreachable or unauthorized. Fix connectivity issues (VPN, `/etc/hosts`, credentials, TLS trust) until this command reports success.
 
 ## Development
 - Run all checks: `poetry run nox`

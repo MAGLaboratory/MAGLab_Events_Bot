@@ -22,6 +22,22 @@ class Settings(BaseSettings):
     )
     open_status_interval_minutes: int = Field(5, ge=1, alias="OPEN_STATUS_INTERVAL_MINUTES")
 
+    grafana_base_url: AnyHttpUrl = Field(
+        "https://jane.maglab",
+        alias="GRAFANA_BASE_URL",
+    )
+    grafana_alerts_endpoint: str = Field(
+        "/api/alertmanager/grafana/api/v2/alerts",
+        alias="GRAFANA_ALERTS_ENDPOINT",
+    )
+    grafana_alert_name: str = Field(
+        "The space is OPEN HAL status open",
+        alias="GRAFANA_ALERT_NAME",
+    )
+    grafana_username: Union[str, None] = Field(None, alias="GRAFANA_USERNAME")
+    grafana_password: Union[str, None] = Field(None, alias="GRAFANA_PASSWORD")
+    grafana_verify_ssl: bool = Field(True, alias="GRAFANA_VERIFY_SSL")
+
     ics_urls: Union[List[AnyHttpUrl], str] = Field(
         default_factory=lambda: [
             "https://calendar.google.com/calendar/ical/c_3keov3j3lc5qscq754mb4n38b4%40group.calendar.google.com/public/basic.ics",
