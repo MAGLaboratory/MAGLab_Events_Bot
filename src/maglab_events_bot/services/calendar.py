@@ -240,27 +240,28 @@ class CalendarFetcher:
 
                         ex_start_field = exception_component.get("dtstart")
                         if ex_start_field:
-                            ex_start = self._normalize_date(ex_start_field.dt, tz).in_timezone(
-                                "UTC"
-                            )
+                            ex_start_local = self._normalize_date(ex_start_field.dt, tz)
                         else:
-                            ex_start = occ_start.in_timezone("UTC")
+                            ex_start_local = occ_start
 
                         ex_end_component = exception_component.get("dtend")
                         if ex_end_component:
-                            ex_end = self._normalize_date(ex_end_component.dt, tz).in_timezone(
-                                "UTC"
-                            )
+                            ex_end_local = self._normalize_date(ex_end_component.dt, tz)
                         else:
-                            ex_end = (ex_start + event_duration).in_timezone("UTC")
+                            ex_end_local = ex_start_local + event_duration
+
+                        if not self._within_window(
+                            ex_start_local, ex_end_local, window_start.in_timezone(tz), window_end
+                        ):
+                            continue
 
                         events.append(
                             CalendarEvent(
                                 uid=uid,
                                 name=ex_summary,
                                 description=ex_description,
-                                start_time=ex_start,
-                                end_time=ex_end,
+                                start_time=ex_start_local.in_timezone("UTC"),
+                                end_time=ex_end_local.in_timezone("UTC"),
                                 location=ex_location,
                             )
                         )
@@ -290,6 +291,113 @@ class CalendarFetcher:
                             location=location,
                         )
                     )
+
+                # Handle RDATE occurrences that are outside the RRULE expansion
+                rdate_fields = component.get("rdate")
+                if rdate_fields:
+                    if not isinstance(rdate_fields, list):
+                        rdate_fields = [rdate_fields]
+                    rdate_values = []
+                    for rdate_field in rdate_fields:
+                        rdate_values.extend(getattr(rdate_field, "dts", []) or [])
+
+                    for rdate_value in rdate_values:
+                        occ_start = self._normalize_date(rdate_value.dt, tz).replace(
+                            second=0, microsecond=0
+                        )
+                        occ_end = occ_start + event_duration
+                        occurrence_id = occ_start.in_timezone("UTC")
+
+                        if not self._within_window(
+                            occ_start, occ_end, window_start.in_timezone(tz), window_end
+                        ):
+                            continue
+
+                        cancel_entry = recurrence_cancellations.get(uid, {}).get(occurrence_id)
+                        exception_component = self._match_exception(exceptions.get(uid, []), occ_start)
+
+                        if cancel_entry is not None:
+                            cancel_summary_value = cancel_entry.get("component", {}).get("summary")
+                            cancel_summary_str = summary
+                            if cancel_summary_value is not None:
+                                candidate = str(cancel_summary_value).strip()
+                                if candidate:
+                                    cancel_summary_str = candidate
+
+                            cancel_description_value = cancel_entry.get("component", {}).get("description")
+                            cancel_description_str = description
+                            if cancel_description_value is not None:
+                                candidate = str(cancel_description_value).strip()
+                                if candidate:
+                                    cancel_description_str = truncate_description(candidate)
+
+                            cancel_location_value = cancel_entry.get("component", {}).get("location")
+                            cancel_location_str = location
+                            if cancel_location_value is not None:
+                                candidate = str(cancel_location_value).strip()
+                                if candidate:
+                                    cancel_location_str = candidate
+
+                            cancellations.append(
+                                CancelledCalendarEvent(
+                                    uid=uid,
+                                    name=cancel_summary_str,
+                                    description=cancel_description_str,
+                                    start_time=occ_start.in_timezone("UTC"),
+                                    end_time=occ_end.in_timezone("UTC"),
+                                    location=cancel_location_str or location,
+                                )
+                            )
+                            continue
+
+                        if exception_component is not None:
+                            ex_summary = exception_component.get("summary", summary).strip()
+                            ex_description = truncate_description(
+                                exception_component.get("description", description).strip()
+                            )
+                            ex_location = (
+                                exception_component.get("location", location).strip() or location
+                            )
+
+                            ex_start_field = exception_component.get("dtstart")
+                            if ex_start_field:
+                                ex_start_local = self._normalize_date(ex_start_field.dt, tz)
+                            else:
+                                ex_start_local = occ_start
+
+                            ex_end_component = exception_component.get("dtend")
+                            if ex_end_component:
+                                ex_end_local = self._normalize_date(ex_end_component.dt, tz)
+                            else:
+                                ex_end_local = ex_start_local + event_duration
+
+                            if not self._within_window(
+                                ex_start_local, ex_end_local, window_start.in_timezone(tz), window_end
+                            ):
+                                continue
+
+                            events.append(
+                                CalendarEvent(
+                                    uid=uid,
+                                    name=ex_summary,
+                                    description=ex_description,
+                                    start_time=ex_start_local.in_timezone("UTC"),
+                                    end_time=ex_end_local.in_timezone("UTC"),
+                                    location=ex_location,
+                                )
+                            )
+                            continue
+
+                        events.append(
+                            CalendarEvent(
+                                uid=uid,
+                                name=summary,
+                                description=description,
+                                start_time=occ_start.in_timezone("UTC"),
+                                end_time=occ_end.in_timezone("UTC"),
+                                location=location,
+                            )
+                        )
             else:
                 start_utc = start.in_timezone("UTC")
                 end_utc = end.in_timezone("UTC")
@@ -404,6 +512,16 @@ class CalendarFetcher:
                     continue
                 parts[idx] = "UNTIL=" + source.in_timezone("UTC").strftime("%Y%m%dT%H%M%SZ")
         return ";".join(parts)
+
+    @staticmethod
+    def _within_window(
+        start: pendulum.DateTime,
+        end: pendulum.DateTime,
+        window_start: pendulum.DateTime,
+        window_end: pendulum.DateTime,
+    ) -> bool:
+        """Return True if any part of the event falls within the sync window."""
+        return not (end < window_start or start > window_end)
 
     @staticmethod
     def _safe_component_get(component: Any | None, key: str) -> Any | None:
