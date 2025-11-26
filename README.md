@@ -50,6 +50,8 @@ Supporting resources live in `docs/` (architecture, operations, calendar mapping
 | `GRAFANA_ALERT_NAME` | Exact alert name to monitor | `The space is OPEN HAL status open` |
 | `GRAFANA_USERNAME` / `GRAFANA_PASSWORD` | Credentials for Grafana basic auth | none |
 | `GRAFANA_VERIFY_SSL` | Whether to validate Grafana TLS certificates | `true` |
+| `SYNOPTIC_MAX_AGE_MINUTES` | Minutes before regenerating the cached synoptic image | `15` |
+| `SYNOPTIC_HTTP_TIMEOUT_SECONDS` | HTTP timeout for fetching the synoptic SVG | `20` |
 
 ### Intranet Connectivity
 - The Grafana alert feed lives on the internal network (`https://jane.maglab` at `10.110.0.52`). Connect to the `maglab` WireGuard profile (e.g., `nmcli connection up maglab`) before running the bot.

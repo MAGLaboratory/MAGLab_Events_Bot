@@ -15,7 +15,7 @@ from maglab_events_bot.logging import configure_logging
 from maglab_events_bot.services.grafana import fetch_grafana_open_status
 from maglab_events_bot.services.hal import fetch_hal_status
 from maglab_events_bot.services.synoptic import generate_synoptic_image
-from maglab_events_bot.utils.http import build_aiohttp_client
+from maglab_events_bot.utils.http import build_aiohttp_client, build_session
 
 logger = logging.getLogger(__name__)
 
@@ -105,10 +105,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "generate-synoptic":
         settings = get_settings()
         output_path = settings.synoptic_output_path if args.output is None else args.output
+        session = build_session(timeout=settings.synoptic_http_timeout_seconds)
         result = generate_synoptic_image(
             str(settings.hal_url),
             "maglab-synoptic-view",
             output_path,
+            session=session,
         )
         if result is None:
             print("Failed to generate synoptic image", file=sys.stderr)
