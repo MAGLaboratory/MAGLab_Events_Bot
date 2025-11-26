@@ -326,9 +326,11 @@ async def prune_orphaned_events(
     calendar_keys: Iterable[Tuple[str, pendulum.DateTime, str]],
     *,
     timezone_name: str,
+    allowed_uids: Optional[Iterable[str]] = None,
     allow_fragments: Optional[Iterable[str]] = None,
 ) -> None:
     key_counts = Counter(calendar_keys)
+    uid_allowlist = {uid for uid in allowed_uids or []}
     allow_fragments = {frag.lower() for frag in allow_fragments or []}
     now = pendulum.now("UTC")
 
@@ -342,6 +344,9 @@ async def prune_orphaned_events(
             continue
         name = event.name or ""
         if any(fragment in name.lower() for fragment in allow_fragments):
+            continue
+        event_uid = _extract_uid_marker(event.description)
+        if event_uid and event_uid in uid_allowlist:
             continue
         location = (event.location or "MAG Laboratory").strip()
         key = (name, start.replace(second=0, microsecond=0), location)

@@ -77,10 +77,12 @@ class CalendarSyncCog(commands.Cog):
         await self._process_events(guild, existing_events, events)
         await self._process_cancellations(guild, existing_events, cancellations)
 
+        allowed_uids = {event.uid for event in events}
         calendar_keys = self._build_calendar_keys(events)
         await prune_orphaned_events(
             guild,
             calendar_keys,
+            allowed_uids=allowed_uids,
             timezone_name=self.settings.timezone,
             allow_fragments=self.allow_fragments,
         )
