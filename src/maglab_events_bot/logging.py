@@ -70,10 +70,10 @@ def configure_logging(
     target_path = log_path or DEFAULT_LOG_PATH
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Allow operators to disable JSON logs for readability via LOG_STRUCTURED=false|0|no
+    # Allow operators to enable JSON logs via LOG_STRUCTURED=true|1|yes (default is text for readability)
     if structured is None:
-        env_value = os.getenv("LOG_STRUCTURED", "true").lower()
-        structured = env_value not in {"0", "false", "no"}
+        env_value = os.getenv("LOG_STRUCTURED", "false").lower()
+        structured = env_value in {"1", "true", "yes"}
 
     file_formatter = "structured" if structured else "standard"
 
