@@ -77,7 +77,7 @@ class CalendarSyncCog(commands.Cog):
         await self._process_events(guild, existing_events, events)
         await self._process_cancellations(guild, existing_events, cancellations)
 
-        allowed_uids = {event.uid for event in events}
+        allowed_uids = {event.uid for event in events} | {event.instance_uid for event in events}
         calendar_keys = self._build_calendar_keys(events)
         await prune_orphaned_events(
             guild,
@@ -131,7 +131,7 @@ class CalendarSyncCog(commands.Cog):
                     await match.edit(
                         name=calendar_event.name,
                         description=apply_uid_marker(
-                            calendar_event.description, calendar_event.uid
+                            calendar_event.description, calendar_event.instance_uid
                         ),
                         start_time=calendar_event.start_time,
                         end_time=calendar_event.end_time,
@@ -147,7 +147,7 @@ class CalendarSyncCog(commands.Cog):
                     await guild.create_scheduled_event(
                         name=calendar_event.name,
                         description=apply_uid_marker(
-                            calendar_event.description, calendar_event.uid
+                            calendar_event.description, calendar_event.instance_uid
                         ),
                         start_time=calendar_event.start_time,
                         end_time=calendar_event.end_time,

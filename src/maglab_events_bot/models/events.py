@@ -9,6 +9,12 @@ from typing import List, Optional
 import pendulum
 
 
+def _format_instance_uid(uid: str, start_time: pendulum.DateTime) -> str:
+    """Return a stable per-occurrence UID by combining UID and UTC start."""
+    normalized_start = start_time.in_timezone("UTC").replace(second=0, microsecond=0)
+    return f"{uid}::{normalized_start.to_iso8601_string()}"
+
+
 @dataclass(slots=True)
 class HalSensorReading:
     name: str
@@ -36,6 +42,10 @@ class CalendarEvent:
     end_time: pendulum.DateTime
     location: str
 
+    @property
+    def instance_uid(self) -> str:
+        return _format_instance_uid(self.uid, self.start_time)
+
 
 @dataclass(slots=True)
 class CancelledCalendarEvent:
@@ -45,6 +55,10 @@ class CancelledCalendarEvent:
     end_time: pendulum.DateTime
     location: str
     description: Optional[str] = None
+
+    @property
+    def instance_uid(self) -> str:
+        return _format_instance_uid(self.uid, self.start_time)
 
 
 @dataclass(slots=True)

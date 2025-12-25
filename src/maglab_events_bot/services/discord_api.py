@@ -238,20 +238,40 @@ def find_matching_discord_event(
     discord_events: Sequence[discord.ScheduledEvent],
     calendar_event: CalendarEvent | CancelledCalendarEvent,
 ) -> Optional[discord.ScheduledEvent]:
+    base_uid_counts: Counter[str] = Counter()
+    for existing in discord_events:
+        marker = _extract_uid_marker(getattr(existing, "description", None))
+        if not marker:
+            continue
+        base = marker.split("::", 1)[0]
+        base_uid_counts[base] += 1
+
     for event in discord_events:
         if event.status == discord.EventStatus.completed:
             continue
+        instance_uid = getattr(calendar_event, "instance_uid", calendar_event.uid)
         event_uid = _extract_uid_marker(event.description)
-        if event_uid and event_uid == calendar_event.uid:
-            return event
-        event_name = event.name or ""
-        if event_name != calendar_event.name:
-            continue
         start_time = _to_utc_datetime(event.start_time)
-        if start_time is None or _to_utc_datetime(event.end_time) is None:
+        end_time = _to_utc_datetime(event.end_time)
+        if start_time is None or end_time is None:
             continue
         start_time = start_time.replace(second=0, microsecond=0)
         cal_start = calendar_event.start_time.replace(second=0, microsecond=0)
+        if event_uid:
+            event_uid_base = event_uid.split("::", 1)[0]
+            if event_uid == instance_uid:
+                return event
+            if event_uid == calendar_event.uid and start_time == cal_start:
+                return event
+            if (
+                "::" in event_uid
+                and event_uid_base == calendar_event.uid
+                and base_uid_counts.get(calendar_event.uid, 0) == 1
+            ):
+                return event
+        event_name = event.name or ""
+        if event_name != calendar_event.name:
+            continue
         event_location = (event.location or "MAG Laboratory").strip()
         if start_time == cal_start and event_location == calendar_event.location:
             return event

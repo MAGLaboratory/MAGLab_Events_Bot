@@ -96,16 +96,56 @@ def test_enforce_single_synoptic_image_sets_and_clears(monkeypatch):
 
 
 def test_find_matching_discord_event_prefers_uid_marker():
-    now = pendulum.now("UTC")
-    existing = StubEvent(1, "Curator Hours", now, now.add(hours=2))
-    existing.description = discord_api.apply_uid_marker("Original description", "uid-123")
-
+    start_time = pendulum.now("UTC").replace(second=0, microsecond=0)
     calendar_event = CalendarEvent(
         uid="uid-123",
         name="Curator Hours",
         description="Updated description",
+        start_time=start_time,
+        end_time=start_time.add(hours=2),
+        location="MAG Laboratory",
+    )
+
+    existing = StubEvent(1, "Curator Hours", calendar_event.start_time, calendar_event.end_time)
+    existing.description = discord_api.apply_uid_marker(
+        "Original description", calendar_event.instance_uid
+    )
+
+    match = discord_api.find_matching_discord_event([existing], calendar_event)
+    assert match is existing
+
+
+def test_find_matching_discord_event_requires_start_time_with_legacy_uid():
+    now = pendulum.now("UTC").replace(second=0, microsecond=0)
+    existing = StubEvent(1, "Curator Hours", now, now.add(hours=2))
+    existing.description = discord_api.apply_uid_marker("Original description", "legacy-uid")
+
+    calendar_event = CalendarEvent(
+        uid="legacy-uid",
+        name="Curator Hours",
+        description="Updated description",
         start_time=now.add(days=1),
         end_time=now.add(days=1, hours=2),
+        location="MAG Laboratory",
+    )
+
+    match = discord_api.find_matching_discord_event([existing], calendar_event)
+    assert match is None
+
+
+def test_find_matching_discord_event_reschedules_singleton_uid():
+    start_time = pendulum.now("UTC").replace(second=0, microsecond=0)
+    existing = StubEvent(1, "Curator Hours", start_time, start_time.add(hours=2))
+    existing.description = discord_api.apply_uid_marker(
+        "Original description", "singleton-uid::" + start_time.to_iso8601_string()
+    )
+
+    calendar_event = CalendarEvent(
+        uid="singleton-uid",
+        name="Curator Hours",
+        description="Updated description",
+        start_time=start_time.add(hours=1),
+        end_time=start_time.add(hours=3),
         location="MAG Laboratory",
     )
 
