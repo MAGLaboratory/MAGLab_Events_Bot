@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+import aiohttp
 import discord
 import pendulum
 from discord.ext import commands, tasks
@@ -35,7 +36,7 @@ class OpenStatusCog(commands.Cog):
         self.timezone = pendulum.timezone(self.settings.timezone)
         self.interval_minutes = self.settings.open_status_interval_minutes
         self.we_are_fragment = "We are"
-        self._http_client = None
+        self._http_client: Optional[aiohttp.ClientSession] = None
         if not hasattr(bot, "synoptic_cache"):
             bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
         self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
@@ -71,6 +72,20 @@ class OpenStatusCog(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def poll_hal_status(self) -> None:
+        try:
+            await self._poll_hal_status_once()
+        except discord.HTTPException as exc:
+            logger.warning(
+                "hal.poll_discord_api_failed",
+                extra={
+                    "guild_id": self.settings.guild_id,
+                    "status": getattr(exc, "status", None),
+                    "code": getattr(exc, "code", None),
+                    "error": str(exc),
+                },
+            )
+
+    async def _poll_hal_status_once(self) -> None:
         guild = await self._get_guild()
         if not guild:
             return

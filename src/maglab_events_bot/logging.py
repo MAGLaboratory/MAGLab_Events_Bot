@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timezone
 from json import dumps
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 DEFAULT_LOG_PATH = Path("logs/maglab_events_bot.log")
 
@@ -49,7 +49,7 @@ class StructuredJsonFormatter(logging.Formatter):
             if key not in STRUCTURED_EXCLUDE_KEYS
         }
 
-        payload = {
+        payload: dict[str, Any] = {
             "time": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,

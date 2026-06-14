@@ -23,8 +23,6 @@ if platform.system() == "Windows":
         os.environ.get("PATH", "") + r";C:\\Program Files\\UniConvertor-2.0rc5\\dlls",
     )
 
-import cairosvg  # noqa: E402  pylint: disable=wrong-import-position
-
 DEFAULT_CROP_BOX = (180, 72, 1000, 540)
 DEFAULT_SIZE = (880, 352)
 
@@ -66,6 +64,8 @@ def save_scaled_png(
 ) -> Path:
     temporary_png = output_path.with_suffix(".tmp.png")
     try:
+        import cairosvg
+
         svg_with_size = ensure_emoji_font(_wrap_svg(svg_content))
         cairosvg.svg2png(bytestring=svg_with_size.encode("utf-8"), write_to=str(temporary_png))
 

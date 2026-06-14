@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Iterable, Optional, Sequence
 
 import discord
@@ -63,6 +64,20 @@ class CalendarSyncCog(commands.Cog):
 
     @tasks.loop(hours=1)
     async def sync_calendar_events(self) -> None:
+        try:
+            await self._sync_calendar_events_once()
+        except discord.HTTPException as exc:
+            logger.warning(
+                "calendar.sync_discord_api_failed",
+                extra={
+                    "guild_id": self.settings.guild_id,
+                    "status": getattr(exc, "status", None),
+                    "code": getattr(exc, "code", None),
+                    "error": str(exc),
+                },
+            )
+
+    async def _sync_calendar_events_once(self) -> None:
         guild = await self._get_guild()
         if not guild:
             return
@@ -123,16 +138,24 @@ class CalendarSyncCog(commands.Cog):
                 self.timezone
             ).to_datetime_string()
             match = find_matching_discord_event(discord_events, calendar_event)
+            desired_description = apply_uid_marker(
+                calendar_event.description, calendar_event.instance_uid
+            )
             if match:
+                if self._event_matches_calendar(match, calendar_event, desired_description):
+                    logger.debug(
+                        "Skipping unchanged event '%s' scheduled at %s",
+                        calendar_event.name,
+                        start_time_display,
+                    )
+                    continue
                 logger.info(
                     "Updating event '%s' scheduled at %s", calendar_event.name, start_time_display
                 )
                 try:
                     await match.edit(
                         name=calendar_event.name,
-                        description=apply_uid_marker(
-                            calendar_event.description, calendar_event.instance_uid
-                        ),
+                        description=desired_description,
                         start_time=calendar_event.start_time,
                         end_time=calendar_event.end_time,
                         location=calendar_event.location,
@@ -146,9 +169,7 @@ class CalendarSyncCog(commands.Cog):
                 try:
                     await guild.create_scheduled_event(
                         name=calendar_event.name,
-                        description=apply_uid_marker(
-                            calendar_event.description, calendar_event.instance_uid
-                        ),
+                        description=desired_description,
                         start_time=calendar_event.start_time,
                         end_time=calendar_event.end_time,
                         entity_type=discord.EntityType.external,
@@ -188,3 +209,26 @@ class CalendarSyncCog(commands.Cog):
         for event in events:
             start = event.start_time.replace(second=0, microsecond=0)
             yield (event.name, start, event.location)
+
+    @staticmethod
+    def _to_utc_minute(value: datetime | None) -> Optional[pendulum.DateTime]:
+        if value is None:
+            return None
+        return pendulum.instance(value).in_timezone("UTC").replace(second=0, microsecond=0)
+
+    @classmethod
+    def _event_matches_calendar(
+        cls,
+        discord_event: discord.ScheduledEvent,
+        calendar_event: CalendarEvent,
+        desired_description: str,
+    ) -> bool:
+        start = cls._to_utc_minute(discord_event.start_time)
+        end = cls._to_utc_minute(discord_event.end_time)
+        return (
+            (discord_event.name or "") == calendar_event.name
+            and (discord_event.description or "") == desired_description
+            and start == calendar_event.start_time.replace(second=0, microsecond=0)
+            and end == calendar_event.end_time.replace(second=0, microsecond=0)
+            and (discord_event.location or "MAG Laboratory").strip() == calendar_event.location
+        )
