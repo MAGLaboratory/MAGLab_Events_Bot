@@ -2,7 +2,7 @@
 
 Unified Discord bot that keeps MAG Laboratory's scheduled events aligned with real-world status:
 - Mirrors Google Calendar events into Discord scheduled events with cancellation handling.
-- Publishes the lab's HAL open/closed status as a rolling "We are" event.
+- Publishes Grafana's live open-switch status as a rolling "We are" event.
 - Enforces a single synoptic status image across all scheduled events.
 
 ![image](https://github.com/user-attachments/assets/d533bfe2-d30d-4550-8d32-40458fe55b72)
@@ -19,7 +19,7 @@ src/maglab_events_bot/
 ├── cli.py                  # Command-line utilities (run bot, generate synoptic image)
 ├── cogs/
 │   ├── calendar_sync.py    # Google Calendar → Discord events sync loop
-│   └── open_status.py      # HAL status polling loop
+│   └── open_status.py      # Grafana open-switch polling loop
 ├── config.py               # Centralized settings via environment variables
 ├── logging.py              # Logging configuration helpers
 ├── models/                 # Dataclasses for HAL and calendar data
@@ -39,22 +39,25 @@ Supporting resources live in `docs/` (architecture, operations, calendar mapping
 |----------|-------------|---------|
 | `DISCORD_TOKEN` | Bot token with permission to manage scheduled events | required |
 | `GUILD_ID` | Discord guild/server ID | `697971426799517774` |
-| `HAL_STATUS_URL` | Source of HAL open/closed status | `https://www.maglaboratory.org/hal` |
-| `OPEN_STATUS_INTERVAL_MINUTES` | HAL polling frequency | `5` |
+| `HAL_STATUS_URL` | Source of HAL sensor details | `https://www.maglaboratory.org/hal` |
+| `OPEN_STATUS_INTERVAL_MINUTES` | Open-switch polling frequency | `5` |
 | `ICS_URLS` | Comma-separated Google Calendar ICS feeds | default public calendars |
 | `SYNC_DAYS` | Number of future days to sync | `7` |
 | `CALENDAR_SYNC_INTERVAL_HOURS` | Calendar sync cadence | `1` |
 | `TIMEZONE` | Display timezone | `America/Los_Angeles` |
 | `GRAFANA_BASE_URL` | Base URL for Grafana (needs intranet reachability) | `https://jane.maglab` |
-| `GRAFANA_ALERTS_ENDPOINT` | Alert listing endpoint | `/api/alertmanager/grafana/api/v2/alerts` |
-| `GRAFANA_ALERT_NAME` | Exact alert name to monitor | `The space is OPEN HAL status open` |
+| `GRAFANA_DATASOURCE_ID` | Numeric ID of the InfluxDB datasource | `1` |
+| `GRAFANA_DATABASE` | InfluxDB database containing the switch | `maglab` |
+| `GRAFANA_MEASUREMENT` | InfluxDB measurement containing the switch | `maglab` |
+| `GRAFANA_OPEN_SWITCH_FIELD` | Field used as the authoritative open state | `Open Switch` |
+| `GRAFANA_MAX_SAMPLE_AGE_MINUTES` | Reject switch readings older than this | `15` |
 | `GRAFANA_USERNAME` / `GRAFANA_PASSWORD` | Credentials for Grafana basic auth | none |
 | `GRAFANA_VERIFY_SSL` | Whether to validate Grafana TLS certificates | `true` |
 | `SYNOPTIC_MAX_AGE_MINUTES` | Minutes before regenerating the cached synoptic image | `15` |
 | `SYNOPTIC_HTTP_TIMEOUT_SECONDS` | HTTP timeout for fetching the synoptic SVG | `20` |
 
 ### Intranet Connectivity
-- The Grafana alert feed lives on the internal network (`https://jane.maglab` at `10.110.0.52`). Connect to the `maglab` WireGuard profile (e.g., `nmcli connection up maglab`) before running the bot.
+- The Grafana datasource proxy lives on the internal network (`https://jane.maglab` at `10.110.0.52`). Connect to the `maglab` WireGuard profile (e.g., `nmcli connection up maglab`) before running the bot.
 - Ensure the hostname resolves in the runtime environment. If DNS doesn’t provide it, add `10.110.0.52 jane.maglab` to `/etc/hosts` for both the host and any containers running the bot.
 - Grafana uses the MAGLab Root CA. Either import that certificate into the system trust store or set `GRAFANA_VERIFY_SSL=false` (less secure) to skip verification.
 - These requirements apply equally to CI/servers—document how the network is reached wherever the bot is deployed.
@@ -64,10 +67,10 @@ Run the health probe before daemonizing or after changing VPN/DNS credentials:
 
 ```bash
 poetry run maglab-events-bot health-check
-# or: PYTHONPATH=src python -m maglab_events_bot health-check
+# or: PYTHONPATH=src python -m maglab_events_bot.cli health-check
 ```
 
-It pings the HAL page and the configured Grafana alert once, failing fast if either is unreachable or unauthorized. Fix connectivity issues (VPN, `/etc/hosts`, credentials, TLS trust) until this command reports success.
+It pings the HAL page and reads the live Grafana open switch once, failing fast if either is unreachable, unauthorized, or the switch sample is stale. Fix connectivity issues (VPN, `/etc/hosts`, credentials, TLS trust) until this command reports success.
 
 ## Development
 - Run all checks: `poetry run nox`

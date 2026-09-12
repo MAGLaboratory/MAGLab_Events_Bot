@@ -64,8 +64,11 @@ async def _run_health_check() -> int:
 
         grafana_status = await fetch_grafana_open_status(
             base_url=str(settings.grafana_base_url),
-            alert_name=settings.grafana_alert_name,
-            alerts_endpoint=settings.grafana_alerts_endpoint,
+            datasource_id=settings.grafana_datasource_id,
+            database=settings.grafana_database,
+            measurement=settings.grafana_measurement,
+            field=settings.grafana_open_switch_field,
+            max_age_minutes=settings.grafana_max_sample_age_minutes,
             username=settings.grafana_username,
             password=settings.grafana_password,
             verify_tls=settings.grafana_verify_ssl,
@@ -76,16 +79,16 @@ async def _run_health_check() -> int:
                 "health.grafana_failed",
                 extra={
                     "url": str(settings.grafana_base_url),
-                    "alert": settings.grafana_alert_name,
+                    "field": settings.grafana_open_switch_field,
                 },
             )
             ok = False
         else:
-            state = "FIRING (OPEN)" if grafana_status else "RESOLVED (CLOSED)"
+            state = "OPEN" if grafana_status else "CLOSED"
             logger.info(
                 "health.grafana_ok",
                 extra={
-                    "alert": settings.grafana_alert_name,
+                    "field": settings.grafana_open_switch_field,
                     "state": state,
                 },
             )

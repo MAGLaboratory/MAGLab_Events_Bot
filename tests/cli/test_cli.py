@@ -16,7 +16,7 @@ def test_generate_synoptic_cli_success(monkeypatch, tmp_path, capsys):
     output_path = tmp_path / "syn.png"
     monkeypatch.setenv("DISCORD_TOKEN", "token")
 
-    def fake_generate(_url: str, _svg_id: str, output) -> Path:
+    def fake_generate(_url: str, _svg_id: str, output, **_kwargs) -> Path:
         path = Path(output)
         path.write_bytes(b"")
         return path

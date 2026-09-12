@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+import aiohttp
 import discord
 import pendulum
 from discord.ext import commands, tasks
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpenStatusCog(commands.Cog):
-    """Keeps the "We are OPEN" event up-to-date based on HAL status."""
+    """Keeps the "We are OPEN" event up-to-date from Grafana's live switch."""
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -35,7 +36,7 @@ class OpenStatusCog(commands.Cog):
         self.timezone = pendulum.timezone(self.settings.timezone)
         self.interval_minutes = self.settings.open_status_interval_minutes
         self.we_are_fragment = "We are"
-        self._http_client = None
+        self._http_client: Optional[aiohttp.ClientSession] = None
         if not hasattr(bot, "synoptic_cache"):
             bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
         self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
@@ -80,22 +81,23 @@ class OpenStatusCog(commands.Cog):
                 verify_ssl=self.settings.grafana_verify_ssl
             )
 
-        hal_status = await fetch_hal_status(str(self.settings.hal_url), self.timezone, session=self._http_client)
-        image_bytes = await get_synoptic_image_bytes_async()
-
         grafana_is_open = await fetch_grafana_open_status(
             base_url=str(self.settings.grafana_base_url),
-            alert_name=self.settings.grafana_alert_name,
-            alerts_endpoint=self.settings.grafana_alerts_endpoint,
+            datasource_id=self.settings.grafana_datasource_id,
+            database=self.settings.grafana_database,
+            measurement=self.settings.grafana_measurement,
+            field=self.settings.grafana_open_switch_field,
+            max_age_minutes=self.settings.grafana_max_sample_age_minutes,
             username=self.settings.grafana_username,
             password=self.settings.grafana_password,
             verify_tls=self.settings.grafana_verify_ssl,
             session=self._http_client,
         )
+        image_bytes = await get_synoptic_image_bytes_async()
 
-        if hal_status is None:
+        if grafana_is_open is None:
             logger.warning(
-                "hal.status_unavailable",
+                "grafana.open_switch_unavailable",
                 extra={"guild_id": self.settings.guild_id},
             )
             await enforce_single_synoptic_image(
@@ -106,10 +108,7 @@ class OpenStatusCog(commands.Cog):
             )
             return
 
-        if grafana_is_open is not None:
-            hal_status.status_text = "We are OPEN" if grafana_is_open else "We are CLOSED"
-
-        if not hal_status.is_open:
+        if not grafana_is_open:
             await delete_events_by_name_fragment(guild, self.we_are_fragment)
             await enforce_single_synoptic_image(
                 guild,
@@ -118,10 +117,30 @@ class OpenStatusCog(commands.Cog):
                 cache=self._synoptic_cache,
             )
             logger.info(
-                "hal.status_closed",
+                "grafana.status_closed",
                 extra={"guild_id": self.settings.guild_id},
             )
             return
+
+        hal_status = await fetch_hal_status(
+            str(self.settings.hal_url),
+            self.timezone,
+            session=self._http_client,
+        )
+        if hal_status is None:
+            logger.warning(
+                "hal.sensor_data_unavailable",
+                extra={"guild_id": self.settings.guild_id},
+            )
+            await enforce_single_synoptic_image(
+                guild,
+                image_bytes,
+                self.settings.timezone,
+                cache=self._synoptic_cache,
+            )
+            return
+
+        hal_status.status_text = "We are OPEN"
 
         if not hal_status.sensors:
             logger.warning(
@@ -170,7 +189,7 @@ class OpenStatusCog(commands.Cog):
             cache=self._synoptic_cache,
         )
         logger.info(
-            "hal.status_open",
+            "grafana.status_open",
             extra={
                 "guild_id": self.settings.guild_id,
                 "sensor_count": len(hal_status.sensors),

@@ -25,9 +25,10 @@ poetry run maglab-events-bot generate-synoptic --output synoptic.png
 
 ## Monitoring
 - Logs are written to `logs/maglab_events_bot.log` and stdout.
-- Discord scheduled events should reflect HAL status and Google Calendar events within the configured intervals.
+- Discord scheduled events should reflect Grafana's live open-switch status and Google Calendar events within the configured intervals.
 
 ## Troubleshooting
 - Enable `requests` debugging by setting `LOGLEVEL=DEBUG` before running.
 - Validate HAL connectivity by running `poetry run maglab-events-bot generate-synoptic`.
+- Run `poetry run maglab-events-bot health-check` to validate the live Grafana switch, its freshness, and HAL sensor connectivity.
 - Ensure the bot has `Manage Events` permission in the target guild.

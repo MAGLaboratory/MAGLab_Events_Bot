@@ -26,13 +26,17 @@ class Settings(BaseSettings):
         "https://jane.maglab",
         alias="GRAFANA_BASE_URL",
     )
-    grafana_alerts_endpoint: str = Field(
-        "/api/alertmanager/grafana/api/v2/alerts",
-        alias="GRAFANA_ALERTS_ENDPOINT",
+    grafana_datasource_id: int = Field(1, ge=1, alias="GRAFANA_DATASOURCE_ID")
+    grafana_database: str = Field("maglab", alias="GRAFANA_DATABASE")
+    grafana_measurement: str = Field("maglab", alias="GRAFANA_MEASUREMENT")
+    grafana_open_switch_field: str = Field(
+        "Open Switch",
+        alias="GRAFANA_OPEN_SWITCH_FIELD",
     )
-    grafana_alert_name: str = Field(
-        "The space is OPEN HAL status open",
-        alias="GRAFANA_ALERT_NAME",
+    grafana_max_sample_age_minutes: int = Field(
+        15,
+        ge=1,
+        alias="GRAFANA_MAX_SAMPLE_AGE_MINUTES",
     )
     grafana_username: Union[str, None] = Field(None, alias="GRAFANA_USERNAME")
     grafana_password: Union[str, None] = Field(None, alias="GRAFANA_PASSWORD")
@@ -55,9 +59,7 @@ class Settings(BaseSettings):
         alias="SYNOPTIC_OUTPUT_PATH",
     )
     synoptic_max_age_minutes: int = Field(15, ge=1, alias="SYNOPTIC_MAX_AGE_MINUTES")
-    synoptic_http_timeout_seconds: int = Field(
-        20, ge=1, alias="SYNOPTIC_HTTP_TIMEOUT_SECONDS"
-    )
+    synoptic_http_timeout_seconds: int = Field(20, ge=1, alias="SYNOPTIC_HTTP_TIMEOUT_SECONDS")
 
     model_config = SettingsConfigDict(
         env_file=".env",
