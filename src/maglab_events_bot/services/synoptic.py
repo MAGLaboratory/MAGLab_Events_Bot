@@ -27,8 +27,6 @@ if platform.system() == "Windows":
         os.environ.get("PATH", "") + r";C:\\Program Files\\UniConvertor-2.0rc5\\dlls",
     )
 
-import cairosvg  # noqa: E402  pylint: disable=wrong-import-position
-
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "data/static/maglab_synoptic_template.svg"
 DEFAULT_SIZE = (800, 320)
@@ -445,6 +443,10 @@ def generate_synoptic_image(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     try:
+        # Keep the optional native rendering stack out of bot startup so a
+        # broken Cairo installation does not stop calendar/status polling.
+        import cairosvg
+
         svg_content = render_synoptic_svg(samples)
         cairosvg.svg2png(
             bytestring=svg_content,

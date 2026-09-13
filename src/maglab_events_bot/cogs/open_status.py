@@ -76,6 +76,20 @@ class OpenStatusCog(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def poll_hal_status(self) -> None:
+        try:
+            await self._poll_hal_status_once()
+        except discord.HTTPException as exc:
+            logger.warning(
+                "hal.poll_discord_api_failed",
+                extra={
+                    "guild_id": self.settings.guild_id,
+                    "status": getattr(exc, "status", None),
+                    "code": getattr(exc, "code", None),
+                    "error": str(exc),
+                },
+            )
+
+    async def _poll_hal_status_once(self) -> None:
         guild = await self._get_guild()
         if not guild:
             return

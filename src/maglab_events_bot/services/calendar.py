@@ -94,8 +94,6 @@ class CalendarFetcher:
 
         exceptions: Dict[str, List] = {}
         recurrence_cancellations: Dict[str, Dict[pendulum.DateTime, Dict[str, Any]]] = {}
-        full_cancellations: set = set()
-
         for component in calendar.walk():
             if component.name != "VEVENT":
                 continue
@@ -111,9 +109,6 @@ class CalendarFetcher:
                 else:
                     exceptions.setdefault(uid, []).append(component)
                 continue
-
-            if status == "CANCELLED":
-                full_cancellations.add(uid)
 
             exdate_fields = component.get("exdate")
             if exdate_fields:
@@ -133,9 +128,6 @@ class CalendarFetcher:
             status = str(component.get("status", "")).upper()
 
             if component.get("recurrence-id"):
-                continue
-
-            if uid in full_cancellations:
                 continue
 
             if status == "CANCELLED" and component.get("recurrence-id"):
@@ -166,6 +158,19 @@ class CalendarFetcher:
                     )
                     occ_end = occ_start + event_duration
                     occurrence_id = occ_start.in_timezone("UTC")
+
+                    if status == "CANCELLED":
+                        cancellations.append(
+                            CancelledCalendarEvent(
+                                uid=uid,
+                                name=summary,
+                                description=description,
+                                start_time=occ_start.in_timezone("UTC"),
+                                end_time=occ_end.in_timezone("UTC"),
+                                location=location,
+                            )
+                        )
+                        continue
 
                     cancel_entry = recurrence_cancellations.get(uid, {}).get(occurrence_id)
                     cancel_component = None
@@ -297,7 +302,7 @@ class CalendarFetcher:
                 if rdate_fields:
                     if not isinstance(rdate_fields, list):
                         rdate_fields = [rdate_fields]
-                    rdate_values = []
+                    rdate_values: list[Any] = []
                     for rdate_field in rdate_fields:
                         rdate_values.extend(getattr(rdate_field, "dts", []) or [])
 
@@ -314,7 +319,9 @@ class CalendarFetcher:
                             continue
 
                         cancel_entry = recurrence_cancellations.get(uid, {}).get(occurrence_id)
-                        exception_component = self._match_exception(exceptions.get(uid, []), occ_start)
+                        exception_component = self._match_exception(
+                            exceptions.get(uid, []), occ_start
+                        )
 
                         if cancel_entry is not None:
                             cancel_summary_value = cancel_entry.get("component", {}).get("summary")
@@ -324,14 +331,18 @@ class CalendarFetcher:
                                 if candidate:
                                     cancel_summary_str = candidate
 
-                            cancel_description_value = cancel_entry.get("component", {}).get("description")
+                            cancel_description_value = cancel_entry.get("component", {}).get(
+                                "description"
+                            )
                             cancel_description_str = description
                             if cancel_description_value is not None:
                                 candidate = str(cancel_description_value).strip()
                                 if candidate:
                                     cancel_description_str = truncate_description(candidate)
 
-                            cancel_location_value = cancel_entry.get("component", {}).get("location")
+                            cancel_location_value = cancel_entry.get("component", {}).get(
+                                "location"
+                            )
                             cancel_location_str = location
                             if cancel_location_value is not None:
                                 candidate = str(cancel_location_value).strip()
@@ -372,7 +383,10 @@ class CalendarFetcher:
                                 ex_end_local = ex_start_local + event_duration
 
                             if not self._within_window(
-                                ex_start_local, ex_end_local, window_start.in_timezone(tz), window_end
+                                ex_start_local,
+                                ex_end_local,
+                                window_start.in_timezone(tz),
+                                window_end,
                             ):
                                 continue
 

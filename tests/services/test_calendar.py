@@ -143,6 +143,46 @@ def test_fetch_events_expands_recurring_with_cancellation():
     assert cancellation.location == "MAG Laboratory"
 
 
+def test_fetch_events_emits_single_event_cancellation():
+    now = pendulum.now("UTC").replace(second=0, microsecond=0)
+    start = now.add(days=1)
+    end = start.add(hours=1)
+
+    ics = dedent(
+        f"""
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        BEGIN:VEVENT
+        UID:test-cancelled-single
+        DTSTART:{_format_datetime(start)}
+        DTEND:{_format_datetime(end)}
+        SUMMARY:Cancelled Workshop
+        DESCRIPTION:No longer happening
+        LOCATION:MAG Laboratory
+        STATUS:CANCELLED
+        END:VEVENT
+        END:VCALENDAR
+        """
+    )
+
+    fetcher = CalendarFetcher(session=DummySession(ics))
+    events, cancellations = asyncio.run(
+        fetcher.fetch_events(
+            ["dummy://cancelled-single"],
+            sync_horizon_days=7,
+            timezone_name="America/Los_Angeles",
+        )
+    )
+
+    assert events == []
+    assert len(cancellations) == 1
+    cancellation = cancellations[0]
+    assert cancellation.uid == "test-cancelled-single"
+    assert cancellation.name == "Cancelled Workshop"
+    assert cancellation.start_time == start
+    assert cancellation.end_time == end
+
+
 def test_fetch_events_honors_exdate_cancellations():
     now = pendulum.now("UTC").replace(second=0, microsecond=0)
     start = now.add(days=1)

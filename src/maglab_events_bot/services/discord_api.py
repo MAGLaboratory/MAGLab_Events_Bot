@@ -350,7 +350,7 @@ async def prune_orphaned_events(
     allow_fragments: Optional[Iterable[str]] = None,
 ) -> None:
     key_counts = Counter(calendar_keys)
-    uid_allowlist = {uid for uid in allowed_uids or []}
+    uid_allowlist = set(allowed_uids or [])
     allow_fragments = {frag.lower() for frag in allow_fragments or []}
     now = pendulum.now("UTC")
 
