@@ -227,10 +227,8 @@ class StatusChannelReconciler:
             value=(
                 f"Pod Bay Door: **{summary.pod_bay_door}**\nFront Door: **{summary.front_door}**"
             ),
-            inline=True,
+            inline=False,
         )
-        temperatures = "\n".join(f"{name}: **{value}**" for name, value in summary.temperatures)
-        embed.add_field(name="Temperatures", value=temperatures, inline=True)
         embed.set_footer(
             text=(f"{STATUS_MESSAGE_MARKER} • {summary.updated_date} {summary.updated_time}")
         )

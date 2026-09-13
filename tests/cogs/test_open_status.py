@@ -3,7 +3,9 @@ import asyncio
 import pytest
 
 import maglab_events_bot.cogs.open_status as open_status_module
+import maglab_events_bot.config as config_module
 from maglab_events_bot.cogs.open_status import OpenStatusCog
+from maglab_events_bot.config import get_settings
 from maglab_events_bot.services.discord_api import SynopticImageCache
 
 
@@ -17,8 +19,13 @@ class DummySession:
 
 @pytest.fixture(autouse=True)
 def _ensure_discord_token(monkeypatch):
+    get_settings.cache_clear()
+    model_config = dict(config_module.Settings.model_config)
+    model_config["env_file"] = None
+    monkeypatch.setattr(config_module.Settings, "model_config", model_config, raising=False)
     monkeypatch.setenv("DISCORD_TOKEN", "token")
     yield
+    get_settings.cache_clear()
 
 
 class DummyBot:

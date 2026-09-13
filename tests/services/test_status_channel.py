@@ -111,6 +111,7 @@ def test_reconcile_creates_one_pinned_dashboard_and_skips_unchanged_state():
     assert message.pin_count == 1
     assert message.edits == []
     assert send_kwargs["embed"].title == "MAGLab is OPEN"
+    assert [field.name for field in send_kwargs["embed"].fields] == ["Doors"]
     assert send_kwargs["file"].filename == "maglab-status.png"
 
 
