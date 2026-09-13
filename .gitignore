@@ -46,3 +46,4 @@ Thumbs.db
 
 # Temporary images
 *.tmp.png
+src/maglab_events_bot/data/static/maglab_synoptic_view_scaled.png
