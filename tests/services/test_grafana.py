@@ -65,6 +65,14 @@ def test_build_last_values_query_quotes_identifiers():
     assert query == 'SELECT last("Open Switch") AS "value" FROM "lab\\"status"'
 
 
+def test_build_last_active_values_query_filters_for_positive_motion():
+    query = grafana._build_last_active_values_query("maglab", ["Office Motion"])
+
+    assert query == (
+        'SELECT last("Office Motion") AS "value" FROM "maglab" WHERE "Office Motion" = 1'
+    )
+
+
 def test_extract_latest_samples_maps_statement_ids():
     sampled_at = datetime.now(timezone.utc)
     timestamp_ms = int(sampled_at.timestamp() * 1000)

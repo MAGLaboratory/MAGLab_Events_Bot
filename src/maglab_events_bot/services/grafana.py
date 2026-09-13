@@ -12,6 +12,7 @@ import aiohttp
 from maglab_events_bot.utils.http import build_aiohttp_client
 
 logger = logging.getLogger(__name__)
+LAST_ACTIVE_SAMPLE_PREFIX = "__last_active__:"
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,23 @@ def _build_last_values_query(measurement: str, fields: Sequence[str]) -> str:
     measurement_name = _quote_influx_identifier(measurement)
     return "; ".join(
         f'SELECT last({_quote_influx_identifier(field)}) AS "value" FROM {measurement_name}'
+        for field in fields
+    )
+
+
+def last_active_sample_key(field: str) -> str:
+    """Return the result key used for a field's most recent positive sample."""
+
+    return f"{LAST_ACTIVE_SAMPLE_PREFIX}{field}"
+
+
+def _build_last_active_values_query(measurement: str, fields: Sequence[str]) -> str:
+    measurement_name = _quote_influx_identifier(measurement)
+    return "; ".join(
+        (
+            f'SELECT last({_quote_influx_identifier(field)}) AS "value" '
+            f"FROM {measurement_name} WHERE {_quote_influx_identifier(field)} = 1"
+        )
         for field in fields
     )
 
@@ -202,19 +220,29 @@ async def fetch_grafana_sensor_samples(
     password: Optional[str] = None,
     verify_tls: bool = True,
     session: Optional[aiohttp.ClientSession] = None,
+    last_active_fields: Sequence[str] = (),
 ) -> Optional[dict[str, GrafanaSample]]:
     """Fetch the latest value and timestamp for each requested field."""
 
     if not base_url:
         logger.error("grafana.base_url_missing")
         return None
-    if not fields:
+    if not fields and not last_active_fields:
         return {}
 
     url = _build_query_url(base_url, datasource_id)
+    query_parts = [
+        query
+        for query in (
+            _build_last_values_query(measurement, fields),
+            _build_last_active_values_query(measurement, last_active_fields),
+        )
+        if query
+    ]
+    result_keys = list(fields) + [last_active_sample_key(field) for field in last_active_fields]
     params = {
         "db": database,
-        "q": _build_last_values_query(measurement, fields),
+        "q": "; ".join(query_parts),
         "epoch": "ms",
     }
     auth = aiohttp.BasicAuth(username, password) if username and password else None
@@ -228,7 +256,7 @@ async def fetch_grafana_sensor_samples(
         if payload is None:
             return None
 
-        return _extract_latest_samples(payload, fields)
+        return _extract_latest_samples(payload, result_keys)
     finally:
         if owns_session:
             await session.close()

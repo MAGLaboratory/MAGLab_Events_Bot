@@ -17,6 +17,7 @@ from zoneinfo import ZoneInfo
 from maglab_events_bot.services.grafana import (
     GrafanaSample,
     coerce_grafana_bool,
+    last_active_sample_key,
     sample_is_fresh,
 )
 
@@ -87,6 +88,7 @@ class SynopticStatusSummary:
     temperatures: Tuple[Tuple[str, str], ...]
     updated_date: str
     updated_time: str
+    last_motion: str
 
 
 def _elements_by_id(root: ElementTree.Element) -> dict[str, ElementTree.Element]:
@@ -351,6 +353,29 @@ def _last_updated_text(samples: Mapping[str, GrafanaSample]) -> Tuple[str, str]:
     )
 
 
+def _formatted_sample_time(sampled_at: datetime) -> str:
+    local_time = sampled_at.astimezone(MAGLAB_TIMEZONE)
+    hour = local_time.strftime("%I").lstrip("0") or "0"
+    return f"{local_time.month}/{local_time.day}/{local_time:%y} {hour}:{local_time:%M %p %Z}"
+
+
+def _last_motion_text(
+    samples: Mapping[str, GrafanaSample],
+    privacy_enabled: bool,
+) -> str:
+    if privacy_enabled:
+        return "Unavailable"
+    motion_samples = [
+        sample
+        for field in MOTION_SENSORS
+        if (sample := samples.get(last_active_sample_key(field))) is not None
+    ]
+    if not motion_samples:
+        return "Unavailable"
+    latest = max(motion_samples, key=lambda sample: sample.sampled_at)
+    return _formatted_sample_time(latest.sampled_at)
+
+
 def get_synoptic_status_summary(
     samples: Mapping[str, GrafanaSample],
     *,
@@ -376,6 +401,7 @@ def get_synoptic_status_summary(
         ),
         updated_date=updated_date,
         updated_time=updated_time,
+        last_motion=_last_motion_text(samples, privacy_enabled),
     )
 
 

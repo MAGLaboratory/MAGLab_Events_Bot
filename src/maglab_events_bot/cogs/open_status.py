@@ -26,7 +26,11 @@ from maglab_events_bot.services.grafana import (
 )
 from maglab_events_bot.services.hal import fetch_hal_status
 from maglab_events_bot.services.status_channel import StatusChannelReconciler
-from maglab_events_bot.services.synoptic import SYNOPTIC_FIELDS, synoptic_image_state_key
+from maglab_events_bot.services.synoptic import (
+    MOTION_SENSORS,
+    SYNOPTIC_FIELDS,
+    synoptic_image_state_key,
+)
 from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 from maglab_events_bot.utils.formatting import format_hal_sensor_table
 from maglab_events_bot.utils.http import build_aiohttp_client
@@ -131,6 +135,7 @@ class OpenStatusCog(commands.Cog):
             password=self.settings.grafana_password,
             verify_tls=self.settings.grafana_verify_ssl,
             session=self._http_client,
+            last_active_fields=tuple(MOTION_SENSORS),
         )
         grafana_is_open = get_grafana_open_status(
             grafana_samples,

@@ -85,11 +85,11 @@ class StatusChannelReconciler:
             await self._rename_if_needed(channel, summary.space)
 
             message = await self._find_message(channel)
-            state_key = f"{image_state_key}:{summary.space}"
+            state_key = f"{image_state_key}:{summary.space}:{summary.last_motion}"
             if message is not None and self._last_state_key == state_key:
                 return
 
-            embed = self._build_embed(summary, space_is_open_override is True, image_bytes)
+            embed = self._build_embed(summary, image_bytes)
             file = self._image_file(image_bytes)
             if message is None:
                 message = await self._create_message(channel, embed, file)
@@ -201,40 +201,42 @@ class StatusChannelReconciler:
         if bot_user is None or message.author.id != bot_user.id:
             return False
         return any(
-            (embed.footer.text or "").startswith(STATUS_MESSAGE_MARKER) for embed in message.embeds
+            (embed.description or "").startswith(STATUS_MESSAGE_MARKER)
+            or (embed.footer.text or "").startswith(STATUS_MESSAGE_MARKER)
+            for embed in message.embeds
         )
 
     def _build_embed(
         self,
         summary: SynopticStatusSummary,
-        calendar_override: bool,
         image_bytes: bytes | None,
     ) -> discord.Embed:
         status = summary.space.upper()
-        description = (
-            "Open because a scheduled MAGLab event is currently in progress."
-            if calendar_override
-            else "Live status from MAGLab sensors."
-        )
+        updated_time = self._without_timezone(summary.updated_time)
+        last_motion = self._without_timezone(summary.last_motion)
+        description_lines = [
+            f"{STATUS_MESSAGE_MARKER} • {summary.updated_date} {updated_time}".rstrip(),
+            "",
+            f"Pod Bay Door: **{summary.pod_bay_door}**",
+            f"Front Door: **{summary.front_door}**",
+            f"Last Motion: **{last_motion}**",
+        ]
         embed = discord.Embed(
             title=f"MAGLab is {status}",
             url=self.hal_url,
-            description=description,
+            description="\n".join(description_lines),
             color=STATUS_COLORS.get(summary.space, STATUS_COLORS["Unknown"]),
-        )
-        embed.add_field(
-            name="Doors",
-            value=(
-                f"Pod Bay Door: **{summary.pod_bay_door}**\nFront Door: **{summary.front_door}**"
-            ),
-            inline=False,
-        )
-        embed.set_footer(
-            text=(f"{STATUS_MESSAGE_MARKER} • {summary.updated_date} {summary.updated_time}")
         )
         if image_bytes is not None:
             embed.set_image(url=f"attachment://{STATUS_IMAGE_FILENAME}")
         return embed
+
+    @staticmethod
+    def _without_timezone(value: str) -> str:
+        parts = value.rsplit(" ", 1)
+        if len(parts) == 2 and parts[1].isalpha() and parts[1].isupper():
+            return parts[0]
+        return value
 
     @staticmethod
     def _image_file(image_bytes: bytes | None) -> Optional[discord.File]:

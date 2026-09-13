@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from maglab_events_bot.services.grafana import GrafanaSample
+from maglab_events_bot.services.grafana import GrafanaSample, last_active_sample_key
 from maglab_events_bot.services.status_channel import StatusChannelReconciler
 from maglab_events_bot.services.synoptic import SYNOPTIC_FIELDS, synoptic_image_state_key
 
@@ -111,7 +111,12 @@ def test_reconcile_creates_one_pinned_dashboard_and_skips_unchanged_state():
     assert message.pin_count == 1
     assert message.edits == []
     assert send_kwargs["embed"].title == "MAGLab is OPEN"
-    assert [field.name for field in send_kwargs["embed"].fields] == ["Doors"]
+    assert send_kwargs["embed"].description.startswith("MAGLab live status • Updated ")
+    assert "\n\nPod Bay Door: **Closed**" in send_kwargs["embed"].description
+    assert "Front Door: **Closed**" in send_kwargs["embed"].description
+    assert "Last Motion: **Unavailable**" in send_kwargs["embed"].description
+    assert send_kwargs["embed"].footer.text is None
+    assert send_kwargs["embed"].fields == []
     assert send_kwargs["file"].filename == "maglab-status.png"
 
 
@@ -140,7 +145,37 @@ def test_channel_name_uses_same_calendar_override_as_synoptic_status():
 
     assert channel.name == "🟢・space-open"
     assert channel.sent[0][1]["embed"].title == "MAGLab is OPEN"
-    assert "scheduled MAGLab event" in channel.sent[0][1]["embed"].description
+
+
+def test_dashboard_formats_latest_general_motion_without_room_name():
+    bot = StubBot()
+    channel = StubChannel(bot.user.id)
+    reconciler = StatusChannelReconciler(
+        bot,
+        channel_id=123,
+        message_id=None,
+        rename_channel=False,
+        hal_url="https://www.maglaboratory.org/hal",
+    )
+    samples = _samples()
+    samples[last_active_sample_key("Office Motion")] = GrafanaSample(
+        value=1,
+        sampled_at=datetime(2026, 9, 14, 1, 20, tzinfo=timezone.utc),
+    )
+
+    asyncio.run(
+        reconciler.reconcile(
+            StubGuild(channel),
+            samples,
+            b"png",
+            synoptic_image_state_key(samples),
+        )
+    )
+
+    description = channel.sent[0][1]["embed"].description
+    assert "Last Motion: **9/13/26 6:20 PM**" in description
+    assert "PDT" not in description
+    assert "Office" not in description
 
 
 def test_changed_synoptic_state_edits_the_existing_message_and_closes_channel():
