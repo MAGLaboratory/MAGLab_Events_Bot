@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     discord_token: str = Field(..., alias="DISCORD_TOKEN")
     guild_id: int = Field(697971426799517774, alias="GUILD_ID")
+    status_channel_id: Union[int, None] = Field(None, alias="STATUS_CHANNEL_ID")
+    status_message_id: Union[int, None] = Field(None, alias="STATUS_MESSAGE_ID")
+    status_channel_rename: bool = Field(True, alias="STATUS_CHANNEL_RENAME")
 
     hal_url: AnyHttpUrl = Field(
         "https://www.maglaboratory.org/hal",

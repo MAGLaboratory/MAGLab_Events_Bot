@@ -25,6 +25,7 @@ from maglab_events_bot.services.grafana import (
     get_grafana_open_status,
 )
 from maglab_events_bot.services.hal import fetch_hal_status
+from maglab_events_bot.services.status_channel import StatusChannelReconciler
 from maglab_events_bot.services.synoptic import SYNOPTIC_FIELDS, synoptic_image_state_key
 from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 from maglab_events_bot.utils.formatting import format_hal_sensor_table
@@ -50,6 +51,13 @@ class OpenStatusCog(commands.Cog):
         if not hasattr(bot, "reconciliation_lock"):
             bot.reconciliation_lock = asyncio.Lock()  # type: ignore[attr-defined]
         self._reconciliation_lock = bot.reconciliation_lock  # type: ignore[attr-defined]
+        self._status_channel = StatusChannelReconciler(
+            bot,
+            channel_id=self.settings.status_channel_id,
+            message_id=self.settings.status_message_id,
+            rename_channel=self.settings.status_channel_rename,
+            hal_url=str(self.settings.hal_url),
+        )
 
     async def cog_load(self) -> None:
         if self._http_client is None:
@@ -67,6 +75,11 @@ class OpenStatusCog(commands.Cog):
             logger.info("Open status poll loop stopped")
         if self._http_client:
             await self._http_client.close()
+
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
+        if payload.channel_id == self.settings.status_channel_id:
+            self._status_channel.invalidate_message(payload.message_id)
 
     async def _get_guild(self) -> Optional[discord.Guild]:
         guild = self.bot.get_guild(self.settings.guild_id)
@@ -137,6 +150,13 @@ class OpenStatusCog(commands.Cog):
         )
         image_state_key = synoptic_image_state_key(
             grafana_samples or {},
+            space_is_open_override=True if calendar_forces_space_open else None,
+        )
+        await self._status_channel.reconcile(
+            guild,
+            grafana_samples or {},
+            image_bytes,
+            image_state_key,
             space_is_open_override=True if calendar_forces_space_open else None,
         )
 

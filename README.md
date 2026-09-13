@@ -4,6 +4,7 @@ Unified Discord bot that keeps MAG Laboratory's scheduled events aligned with re
 - Mirrors Google Calendar events into Discord scheduled events with cancellation handling.
 - Publishes Grafana's live open-switch status as a rolling "We are" event.
 - Enforces a single synoptic status image across all scheduled events.
+- Optionally maintains a single pinned live-status dashboard in a dedicated channel.
 
 ![image](https://github.com/user-attachments/assets/d533bfe2-d30d-4550-8d32-40458fe55b72)
 
@@ -27,6 +28,7 @@ src/maglab_events_bot/
 │   ├── calendar.py         # ICS ingestion and normalization
 │   ├── discord_api.py      # Scheduled-event helpers
 │   ├── hal.py              # HAL scraping and parsing
+│   ├── status_channel.py   # Persistent live-status channel dashboard
 │   └── synoptic.py         # Synoptic image rendering
 ├── tasks/                  # Shared background-task helpers
 └── utils/                  # Formatting and HTTP utilities
@@ -39,6 +41,9 @@ Supporting resources live in `docs/` (architecture, operations, calendar mapping
 |----------|-------------|---------|
 | `DISCORD_TOKEN` | Bot token with permission to manage scheduled events | required |
 | `GUILD_ID` | Discord guild/server ID | `697971426799517774` |
+| `STATUS_CHANNEL_ID` | Dedicated text channel for the live dashboard; blank disables it | none |
+| `STATUS_MESSAGE_ID` | Existing bot-authored dashboard message to reuse | auto-discovered |
+| `STATUS_CHANNEL_RENAME` | Rename the status channel for open/closed/unknown | `true` |
 | `HAL_STATUS_URL` | Source of HAL sensor details | `https://www.maglaboratory.org/hal` |
 | `OPEN_STATUS_INTERVAL_MINUTES` | Open-switch polling frequency | `5` |
 | `ICS_URLS` | Comma-separated Google Calendar ICS feeds | default public calendars |
@@ -76,6 +81,7 @@ It pings the HAL page and reads the live Grafana open switch once, failing fast 
 - Logs are written to `logs/maglab_events_bot.log`
 
 ## Deployment Notes
-- Ensure the bot has `Manage Events` permission in the target guild.
+- Ensure the bot has `Manage Events`. The optional dashboard also needs View Channel, Read Message History, Send Messages, Embed Links, Attach Files, Manage Channels, and permission to pin its message.
+- Make the configured status channel read-only for ordinary members if it should contain only the pinned dashboard. The bot never removes human-authored messages.
 - For containerized deployments, mount a writable `logs/` directory.
 - Rotate tokens and update `.env` when credentials change.

@@ -34,6 +34,23 @@ def test_get_settings_supports_csv_ics(monkeypatch):
     ]
 
 
+def test_status_channel_is_optional_and_reads_ids(monkeypatch):
+    monkeypatch.setenv("DISCORD_TOKEN", "dummy-token")
+    settings = get_settings()
+    assert settings.status_channel_id is None
+    assert settings.status_message_id is None
+    assert settings.status_channel_rename is True
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("STATUS_CHANNEL_ID", "123")
+    monkeypatch.setenv("STATUS_MESSAGE_ID", "456")
+    monkeypatch.setenv("STATUS_CHANNEL_RENAME", "false")
+    settings = get_settings()
+    assert settings.status_channel_id == 123
+    assert settings.status_message_id == 456
+    assert settings.status_channel_rename is False
+
+
 def test_missing_token_raises_validation_error(monkeypatch):
     monkeypatch.delenv("DISCORD_TOKEN", raising=False)
     with pytest.raises(ValidationError):

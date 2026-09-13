@@ -7,6 +7,7 @@ import logging
 import math
 import os
 import platform
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Mapping, Tuple
@@ -74,6 +75,18 @@ TEMPERATURE_SENSORS = {
     "ConfRm Temp": "ConfRm",
     "Outdoor Temp": "Outdoor",
 }
+
+
+@dataclass(frozen=True)
+class SynopticStatusSummary:
+    """Human-readable values shared by the image and Discord status channel."""
+
+    space: str
+    front_door: str
+    pod_bay_door: str
+    temperatures: Tuple[Tuple[str, str], ...]
+    updated_date: str
+    updated_time: str
 
 
 def _elements_by_id(root: ElementTree.Element) -> dict[str, ElementTree.Element]:
@@ -335,6 +348,34 @@ def _last_updated_text(samples: Mapping[str, GrafanaSample]) -> Tuple[str, str]:
     return (
         f"Updated {latest.month}/{latest.day}/{latest:%y}",
         f"{hour}:{latest:%M %p %Z}",
+    )
+
+
+def get_synoptic_status_summary(
+    samples: Mapping[str, GrafanaSample],
+    *,
+    now: datetime | None = None,
+    space_is_open_override: bool | None = None,
+) -> SynopticStatusSummary:
+    """Return the same interpreted conditions displayed by the synoptic renderer."""
+
+    current_time = now or datetime.now(timezone.utc)
+    tech_bad = _is_tech_bad(samples, current_time)
+    privacy_enabled = _active_binary(samples, "Privacy_Switch", now=current_time)
+    updated_date, updated_time = _last_updated_text(samples)
+    return SynopticStatusSummary(
+        space=_space_state(samples, tech_bad, current_time, space_is_open_override)[2],
+        front_door=_door_state(samples, "Front Door", tech_bad, privacy_enabled)[0],
+        pod_bay_door=_door_state(samples, "Pod Bay Door", tech_bad, privacy_enabled)[0],
+        temperatures=tuple(
+            (
+                prefix,
+                "XX°C" if tech_bad else _temperature_text(samples.get(field)),
+            )
+            for field, prefix in TEMPERATURE_SENSORS.items()
+        ),
+        updated_date=updated_date,
+        updated_time=updated_time,
     )
 
 
