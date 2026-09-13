@@ -1,49 +1,30 @@
-"""Support for synoptic image generation and loading."""
+"""Support for rendering and loading the Grafana-backed synoptic image."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Mapping, Optional
 
-from maglab_events_bot.config import Settings, get_settings
+from maglab_events_bot.config import get_settings
+from maglab_events_bot.services.grafana import GrafanaSample
 from maglab_events_bot.services.synoptic import generate_synoptic_image
-from maglab_events_bot.utils.http import build_session
 
 logger = logging.getLogger(__name__)
 
 
-def _synoptic_is_stale(target: Path, max_age_minutes: int) -> bool:
-    """Return True if the cached synoptic image is older than the allowed window."""
-    try:
-        modified = datetime.fromtimestamp(target.stat().st_mtime, tz=timezone.utc)
-    except FileNotFoundError:
-        return True
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=max_age_minutes)
-    return modified < cutoff
-
-
-def _load_synoptic_image_bytes(settings: Settings, target: Path) -> Optional[bytes]:
-    needs_refresh = _synoptic_is_stale(target, settings.synoptic_max_age_minutes)
-
-    if needs_refresh:
-        session = build_session(timeout=settings.synoptic_http_timeout_seconds)
-        generated = generate_synoptic_image(
-            str(settings.hal_url),
-            "maglab-synoptic-view",
-            target,
-            session=session,
-        )
-        if generated is None:
-            if target.exists():
-                logger.warning(
-                    "Synoptic image stale but regeneration failed; serving cached version"
-                )
-            else:
-                logger.warning("Synoptic image could not be generated")
-                return None
+def _render_synoptic_image_bytes(
+    samples: Mapping[str, GrafanaSample],
+    target: Path,
+) -> Optional[bytes]:
+    generated = generate_synoptic_image(samples, target)
+    if generated is None:
+        if target.exists():
+            logger.warning("Synoptic regeneration failed; serving cached version")
+        else:
+            logger.warning("Synoptic image could not be generated")
+            return None
     try:
         return target.read_bytes()
     except FileNotFoundError:
@@ -51,15 +32,30 @@ def _load_synoptic_image_bytes(settings: Settings, target: Path) -> Optional[byt
         return None
 
 
-def get_synoptic_image_bytes(output_path: Optional[Path] = None) -> Optional[bytes]:
-    """Synchronous helper retained for backwards compatibility."""
+def get_synoptic_image_bytes(
+    samples: Optional[Mapping[str, GrafanaSample]] = None,
+    output_path: Optional[Path] = None,
+) -> Optional[bytes]:
+    """Render the current snapshot and return the resulting PNG bytes."""
+
     settings = get_settings()
     target = output_path or settings.synoptic_output_path
-    return _load_synoptic_image_bytes(settings, target)
+    if samples is None:
+        try:
+            return target.read_bytes()
+        except FileNotFoundError:
+            return None
+    return _render_synoptic_image_bytes(samples, target)
 
 
-async def get_synoptic_image_bytes_async(output_path: Optional[Path] = None) -> Optional[bytes]:
-    """Fetch or generate synoptic bytes without blocking the event loop."""
+async def get_synoptic_image_bytes_async(
+    samples: Optional[Mapping[str, GrafanaSample]] = None,
+    output_path: Optional[Path] = None,
+) -> Optional[bytes]:
+    """Render synoptic bytes without blocking the event loop."""
+
     settings = get_settings()
     target = output_path or settings.synoptic_output_path
-    return await asyncio.to_thread(_load_synoptic_image_bytes, settings, target)
+    if samples is None:
+        return await asyncio.to_thread(get_synoptic_image_bytes, None, target)
+    return await asyncio.to_thread(_render_synoptic_image_bytes, samples, target)

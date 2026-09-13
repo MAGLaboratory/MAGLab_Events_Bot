@@ -8,14 +8,14 @@
   - `services.hal` scrapes HAL status and formats sensor readings.
   - `services.grafana` reads the authoritative open-switch value through Grafana's InfluxDB datasource proxy.
   - `services.calendar` expands ICS feeds, recurrences, and cancellations.
-  - `services.synoptic` renders the synoptic SVG to a Discord-friendly PNG.
+  - `services.synoptic` applies the upstream HAL conditions to live Grafana samples and renders a local SVG template to an 800×320 Discord banner.
   - `services.discord_api` wraps Discord scheduled-event operations.
 - **Utilities** – shared helpers for HTTP sessions and formatting.
 - **Tasks** – high-level helpers around shared background responsibilities (e.g. synoptic image generation).
 
 ## Data Flow
 1. Background loop fires (open status every few minutes, calendar hourly).
-2. Cohesive service fetches external data (HAL or ICS feed).
+2. Cohesive service fetches external data (Grafana, HAL sensor details, or ICS feed).
 3. Models layer normalises domain objects (`HalStatus`, `CalendarEvent`).
 4. Discord service applies changes: creates/updates/deletes events, enforces single synoptic image policy.
 5. Logging is centralised and emitted via rotating file + console.

@@ -18,8 +18,12 @@ from maglab_events_bot.services.discord_api import (
     ensure_open_status_event,
     has_active_non_fragment_event,
 )
-from maglab_events_bot.services.grafana import fetch_grafana_open_status
+from maglab_events_bot.services.grafana import (
+    fetch_grafana_sensor_samples,
+    get_grafana_open_status,
+)
 from maglab_events_bot.services.hal import fetch_hal_status
+from maglab_events_bot.services.synoptic import SYNOPTIC_FIELDS
 from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 from maglab_events_bot.utils.formatting import format_hal_sensor_table
 from maglab_events_bot.utils.http import build_aiohttp_client
@@ -81,19 +85,23 @@ class OpenStatusCog(commands.Cog):
                 verify_ssl=self.settings.grafana_verify_ssl
             )
 
-        grafana_is_open = await fetch_grafana_open_status(
+        grafana_samples = await fetch_grafana_sensor_samples(
             base_url=str(self.settings.grafana_base_url),
             datasource_id=self.settings.grafana_datasource_id,
             database=self.settings.grafana_database,
             measurement=self.settings.grafana_measurement,
-            field=self.settings.grafana_open_switch_field,
-            max_age_minutes=self.settings.grafana_max_sample_age_minutes,
+            fields=SYNOPTIC_FIELDS,
             username=self.settings.grafana_username,
             password=self.settings.grafana_password,
             verify_tls=self.settings.grafana_verify_ssl,
             session=self._http_client,
         )
-        image_bytes = await get_synoptic_image_bytes_async()
+        grafana_is_open = get_grafana_open_status(
+            grafana_samples,
+            self.settings.grafana_open_switch_field,
+            self.settings.grafana_max_sample_age_minutes,
+        )
+        image_bytes = await get_synoptic_image_bytes_async(grafana_samples or {})
 
         if grafana_is_open is None:
             logger.warning(

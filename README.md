@@ -32,7 +32,7 @@ src/maglab_events_bot/
 └── utils/                  # Formatting and HTTP utilities
 ```
 
-Supporting resources live in `docs/` (architecture, operations, calendar mapping) and `tests/` for automated coverage scaffolding. The historical `scripts/` entry points were removed—run tasks through the CLI (`poetry run maglab-events-bot ...`) instead.
+Supporting resources live in `docs/` (architecture, operations, calendar mapping, and [synoptic source/condition notes](docs/synoptic.md)) and `tests/` for automated coverage scaffolding. The historical `scripts/` entry points were removed—run tasks through the CLI (`poetry run maglab-events-bot ...`) instead.
 
 ## Configuration
 | Variable | Description | Default |
@@ -53,8 +53,6 @@ Supporting resources live in `docs/` (architecture, operations, calendar mapping
 | `GRAFANA_MAX_SAMPLE_AGE_MINUTES` | Reject switch readings older than this | `15` |
 | `GRAFANA_USERNAME` / `GRAFANA_PASSWORD` | Credentials for Grafana basic auth | none |
 | `GRAFANA_VERIFY_SSL` | Whether to validate Grafana TLS certificates | `true` |
-| `SYNOPTIC_MAX_AGE_MINUTES` | Minutes before regenerating the cached synoptic image | `15` |
-| `SYNOPTIC_HTTP_TIMEOUT_SECONDS` | HTTP timeout for fetching the synoptic SVG | `20` |
 
 ### Intranet Connectivity
 - The Grafana datasource proxy lives on the internal network (`https://jane.maglab` at `10.110.0.52`). Connect to the `maglab` WireGuard profile (e.g., `nmcli connection up maglab`) before running the bot.

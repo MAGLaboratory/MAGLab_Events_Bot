@@ -14,7 +14,7 @@ def _payload(value, sampled_at=None):
                 "series": [
                     {
                         "name": "maglab",
-                        "columns": ["time", "open_switch"],
+                        "columns": ["time", "value"],
                         "values": [[timestamp_ms, value]],
                     }
                 ],
@@ -59,7 +59,29 @@ def test_fetch_grafana_open_status_returns_none_for_unknown_value(monkeypatch):
     assert _run_fetch(monkeypatch, _payload(2)) is None
 
 
-def test_build_last_value_query_quotes_identifiers():
-    query = grafana._build_last_value_query('lab"status', "Open Switch")
+def test_build_last_values_query_quotes_identifiers():
+    query = grafana._build_last_values_query('lab"status', ["Open Switch"])
 
-    assert query == 'SELECT last("Open Switch") AS "open_switch" FROM "lab\\"status"'
+    assert query == 'SELECT last("Open Switch") AS "value" FROM "lab\\"status"'
+
+
+def test_extract_latest_samples_maps_statement_ids():
+    sampled_at = datetime.now(timezone.utc)
+    timestamp_ms = int(sampled_at.timestamp() * 1000)
+    payload = {
+        "results": [
+            {
+                "statement_id": 0,
+                "series": [{"columns": ["time", "value"], "values": [[timestamp_ms, 1]]}],
+            },
+            {
+                "statement_id": 1,
+                "series": [{"columns": ["time", "value"], "values": [[timestamp_ms, 30125]]}],
+            },
+        ]
+    }
+
+    samples = grafana._extract_latest_samples(payload, ["Open Switch", "Bay Temp"])
+
+    assert samples["Open Switch"].value == 1
+    assert samples["Bay Temp"].value == 30125

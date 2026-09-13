@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 import aiohttp
 
 from maglab_events_bot.utils.http import build_aiohttp_client
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class GrafanaSample:
+    """A value and its InfluxDB sample time."""
+
+    value: Any
+    sampled_at: datetime
 
 
 def _build_query_url(base_url: str, datasource_id: int) -> str:
@@ -22,10 +31,11 @@ def _quote_influx_identifier(identifier: str) -> str:
     return f'"{escaped}"'
 
 
-def _build_last_value_query(measurement: str, field: str) -> str:
-    return (
-        f'SELECT last({_quote_influx_identifier(field)}) AS "open_switch" '
-        f"FROM {_quote_influx_identifier(measurement)}"
+def _build_last_values_query(measurement: str, fields: Sequence[str]) -> str:
+    measurement_name = _quote_influx_identifier(measurement)
+    return "; ".join(
+        f'SELECT last({_quote_influx_identifier(field)}) AS "value" FROM {measurement_name}'
+        for field in fields
     )
 
 
@@ -46,16 +56,23 @@ async def _fetch_query_payload(
     return None
 
 
-def _extract_latest_sample(payload: Any) -> Optional[tuple[int, Any]]:
+def _extract_latest_samples(
+    payload: Any,
+    fields: Sequence[str],
+) -> dict[str, GrafanaSample]:
+    samples: dict[str, GrafanaSample] = {}
     if not isinstance(payload, dict):
-        return None
+        return samples
 
     results = payload.get("results")
     if not isinstance(results, list):
-        return None
+        return samples
 
     for result in results:
         if not isinstance(result, dict):
+            continue
+        statement_id = result.get("statement_id")
+        if not isinstance(statement_id, int) or not 0 <= statement_id < len(fields):
             continue
         series_entries = result.get("series")
         if not isinstance(series_entries, list):
@@ -69,7 +86,7 @@ def _extract_latest_sample(payload: Any) -> Optional[tuple[int, Any]]:
                 continue
             try:
                 time_index = columns.index("time")
-                value_index = columns.index("open_switch")
+                value_index = columns.index("value")
             except ValueError:
                 continue
             row = values[0]
@@ -80,17 +97,29 @@ def _extract_latest_sample(payload: Any) -> Optional[tuple[int, Any]]:
                 value = row[value_index]
             except (IndexError, TypeError, ValueError):
                 continue
-            return timestamp_ms, value
-    return None
+            try:
+                sampled_at = datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc)
+            except (OverflowError, OSError, ValueError):
+                continue
+            samples[fields[statement_id]] = GrafanaSample(value=value, sampled_at=sampled_at)
+    return samples
 
 
-def _sample_is_fresh(timestamp_ms: int, max_age_minutes: int) -> bool:
-    sampled_at = datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc)
-    age_seconds = (datetime.now(timezone.utc) - sampled_at).total_seconds()
+def sample_is_fresh(
+    sampled_at: datetime,
+    max_age_minutes: int,
+    now: datetime | None = None,
+) -> bool:
+    """Return whether a timestamp is recent enough to use."""
+
+    current_time = now or datetime.now(timezone.utc)
+    age_seconds = (current_time - sampled_at).total_seconds()
     return -60 <= age_seconds <= max_age_minutes * 60
 
 
-def _switch_value_to_bool(value: Any) -> Optional[bool]:
+def coerce_grafana_bool(value: Any) -> Optional[bool]:
+    """Convert Grafana's common binary representations to a boolean."""
+
     if isinstance(value, bool):
         return value
     if isinstance(value, (int, float)):
@@ -121,14 +150,71 @@ async def fetch_grafana_open_status(
 ) -> Optional[bool]:
     """Return the live switch state, or None if it cannot be trusted."""
 
+    samples = await fetch_grafana_sensor_samples(
+        base_url=base_url,
+        datasource_id=datasource_id,
+        database=database,
+        measurement=measurement,
+        fields=[field],
+        username=username,
+        password=password,
+        verify_tls=verify_tls,
+        session=session,
+    )
+    return get_grafana_open_status(samples, field, max_age_minutes)
+
+
+def get_grafana_open_status(
+    samples: Optional[dict[str, GrafanaSample]],
+    field: str,
+    max_age_minutes: int,
+) -> Optional[bool]:
+    """Interpret an open-switch sample from an existing Grafana snapshot."""
+
+    if samples is None:
+        return None
+    sample = samples.get(field)
+    if sample is None:
+        logger.warning("grafana.open_switch_sample_missing", extra={"field": field})
+        return None
+    if not sample_is_fresh(sample.sampled_at, max_age_minutes):
+        logger.warning(
+            "grafana.open_switch_sample_stale",
+            extra={
+                "sampled_at": sample.sampled_at.isoformat(),
+                "max_age_minutes": max_age_minutes,
+            },
+        )
+        return None
+    result = coerce_grafana_bool(sample.value)
+    if result is None:
+        logger.warning("grafana.open_switch_value_unknown", extra={"value": sample.value})
+    return result
+
+
+async def fetch_grafana_sensor_samples(
+    base_url: str,
+    datasource_id: int,
+    database: str,
+    measurement: str,
+    fields: Sequence[str],
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    verify_tls: bool = True,
+    session: Optional[aiohttp.ClientSession] = None,
+) -> Optional[dict[str, GrafanaSample]]:
+    """Fetch the latest value and timestamp for each requested field."""
+
     if not base_url:
         logger.error("grafana.base_url_missing")
         return None
+    if not fields:
+        return {}
 
     url = _build_query_url(base_url, datasource_id)
     params = {
         "db": database,
-        "q": _build_last_value_query(measurement, field),
+        "q": _build_last_values_query(measurement, fields),
         "epoch": "ms",
     }
     auth = aiohttp.BasicAuth(username, password) if username and password else None
@@ -142,23 +228,7 @@ async def fetch_grafana_open_status(
         if payload is None:
             return None
 
-        sample = _extract_latest_sample(payload)
-        if sample is None:
-            logger.warning("grafana.open_switch_sample_missing", extra={"url": url})
-            return None
-
-        timestamp_ms, value = sample
-        if not _sample_is_fresh(timestamp_ms, max_age_minutes):
-            logger.warning(
-                "grafana.open_switch_sample_stale",
-                extra={"timestamp_ms": timestamp_ms, "max_age_minutes": max_age_minutes},
-            )
-            return None
-
-        result = _switch_value_to_bool(value)
-        if result is None:
-            logger.warning("grafana.open_switch_value_unknown", extra={"value": value})
-        return result
+        return _extract_latest_samples(payload, fields)
     finally:
         if owns_session:
             await session.close()

@@ -58,9 +58,6 @@ class Settings(BaseSettings):
         Path(__file__).resolve().parent / "data/static/maglab_synoptic_view_scaled.png",
         alias="SYNOPTIC_OUTPUT_PATH",
     )
-    synoptic_max_age_minutes: int = Field(15, ge=1, alias="SYNOPTIC_MAX_AGE_MINUTES")
-    synoptic_http_timeout_seconds: int = Field(20, ge=1, alias="SYNOPTIC_HTTP_TIMEOUT_SECONDS")
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

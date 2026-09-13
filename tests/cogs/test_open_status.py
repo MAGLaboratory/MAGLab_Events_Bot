@@ -52,12 +52,12 @@ def test_closed_grafana_switch_deletes_open_event_without_hal_status(monkeypatch
     deleted = False
 
     async def fake_grafana(**_kwargs):
-        return False
+        return {}
 
     async def fake_hal(*_args, **_kwargs):
         return None
 
-    async def fake_image():
+    async def fake_image(_samples):
         return b"image"
 
     async def fake_delete(guild, fragment):
@@ -69,7 +69,12 @@ def test_closed_grafana_switch_deletes_open_event_without_hal_status(monkeypatch
     async def fake_enforce(*_args, **_kwargs):
         return None
 
-    monkeypatch.setattr(open_status_module, "fetch_grafana_open_status", fake_grafana)
+    monkeypatch.setattr(open_status_module, "fetch_grafana_sensor_samples", fake_grafana)
+    monkeypatch.setattr(
+        open_status_module,
+        "get_grafana_open_status",
+        lambda *_args: False,
+    )
     monkeypatch.setattr(open_status_module, "fetch_hal_status", fake_hal)
     monkeypatch.setattr(open_status_module, "get_synoptic_image_bytes_async", fake_image)
     monkeypatch.setattr(open_status_module, "delete_events_by_name_fragment", fake_delete)
@@ -92,7 +97,7 @@ def test_missing_grafana_switch_does_not_fall_back_to_hal(monkeypatch):
     async def fake_hal(*_args, **_kwargs):
         raise AssertionError("HAL status must not decide open/closed")
 
-    async def fake_image():
+    async def fake_image(_samples):
         return b"image"
 
     async def fake_delete(*_args, **_kwargs):
@@ -102,7 +107,7 @@ def test_missing_grafana_switch_does_not_fall_back_to_hal(monkeypatch):
     async def fake_enforce(*_args, **_kwargs):
         return None
 
-    monkeypatch.setattr(open_status_module, "fetch_grafana_open_status", fake_grafana)
+    monkeypatch.setattr(open_status_module, "fetch_grafana_sensor_samples", fake_grafana)
     monkeypatch.setattr(open_status_module, "fetch_hal_status", fake_hal)
     monkeypatch.setattr(open_status_module, "get_synoptic_image_bytes_async", fake_image)
     monkeypatch.setattr(open_status_module, "delete_events_by_name_fragment", fake_delete)

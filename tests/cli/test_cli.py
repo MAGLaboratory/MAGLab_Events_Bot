@@ -16,11 +16,15 @@ def test_generate_synoptic_cli_success(monkeypatch, tmp_path, capsys):
     output_path = tmp_path / "syn.png"
     monkeypatch.setenv("DISCORD_TOKEN", "token")
 
-    def fake_generate(_url: str, _svg_id: str, output, **_kwargs) -> Path:
+    async def fake_fetch(**_kwargs):
+        return {}
+
+    def fake_generate(_samples, output) -> Path:
         path = Path(output)
         path.write_bytes(b"")
         return path
 
+    monkeypatch.setattr(cli, "fetch_grafana_sensor_samples", fake_fetch)
     monkeypatch.setattr(cli, "generate_synoptic_image", fake_generate)
 
     exit_code = cli.main(["generate-synoptic", "--output", str(output_path)])
