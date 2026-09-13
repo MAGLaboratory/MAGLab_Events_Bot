@@ -30,8 +30,8 @@ the display conditions below.
 | Privacy | `Privacy_Switch = 1` masks door and motion activity |
 | Doors | Open when the binary field is `1`; closed when `0` |
 | Motion | Active when the binary field is `1` and its sample is no more than 20 minutes old |
-| Temperatures | Grafana millidegrees Celsius divided by 1000, converted to Fahrenheit, and rounded to whole degrees |
-| Failure rendering | Unknown status, red failure marks, and `XX°C / XX°F` temperatures |
+| Temperatures | Grafana millidegrees Celsius divided by 1000 and rounded to whole degrees |
+| Failure rendering | Unknown status, red failure marks, and `XX°C` temperatures |
 
 The bot reads all required fields with one Grafana datasource-proxy request. The SVG geometry is
 stored locally in `data/static/maglab_synoptic_template.svg`, and Python applies the same

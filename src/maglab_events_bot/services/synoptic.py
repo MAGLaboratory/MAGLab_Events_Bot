@@ -34,7 +34,7 @@ DISCORD_VIEW_BOX = "-40 72 1187.5 475"
 TECH_BAD_AFTER_MINUTES = 15
 MOTION_ACTIVE_MINUTES = 20
 MAGLAB_TIMEZONE = ZoneInfo("America/Los_Angeles")
-OPEN_COLOR = "#006400"
+OPEN_COLOR = "#2ecc40"
 CLOSED_COLOR = "#c62828"
 UNKNOWN_COLOR = "#555555"
 
@@ -144,14 +144,12 @@ def _active_binary(
     return coerce_grafana_bool(sample.value) is True
 
 
-def _temperature_text(sample: GrafanaSample | None) -> Tuple[str, str]:
+def _temperature_text(sample: GrafanaSample | None) -> str:
     if sample is None or not isinstance(sample.value, (int, float)):
-        return "XX°C", "XX°F"
+        return "XX°C"
     celsius = sample.value / 1000
-    fahrenheit = (celsius * 9 / 5) + 32
     rounded_celsius = math.floor(celsius + 0.5)
-    rounded_fahrenheit = math.floor(fahrenheit + 0.5)
-    return f"{rounded_celsius}°C", f"{rounded_fahrenheit}°F"
+    return f"{rounded_celsius}°C"
 
 
 def _space_state(
@@ -244,22 +242,17 @@ def _render_temperatures(
     for field, prefix in TEMPERATURE_SENSORS.items():
         temperature_id = f"{prefix}-Temp_Temperature"
         enclosure_id = f"{prefix}-Temp_Enclosure"
-        celsius_text, fahrenheit_text = (
-            ("XX°C", "XX°F") if tech_bad else _temperature_text(samples.get(field))
+        _set_text(
+            elements,
+            temperature_id,
+            "XX°C" if tech_bad else _temperature_text(samples.get(field)),
         )
-        _set_text(elements, temperature_id, celsius_text)
         temperature = elements[temperature_id]
         _set_style(elements, temperature_id, "font-size", "28px")
         text_child = next(iter(temperature), None)
         if text_child is not None:
-            text_child.set("x", "23")
-            text_child.set("y", "29")
-        fahrenheit_line = ElementTree.SubElement(
-            temperature,
-            f"{{{SVG_NAMESPACE}}}tspan",
-            {"x": "23", "y": "59"},
-        )
-        fahrenheit_line.text = fahrenheit_text
+            text_child.set("x", "20")
+            text_child.set("y", "30")
 
         # The upstream SVG uses a Unicode thermometer emoji, which CairoSVG's
         # server font renders as a missing-glyph square. Draw a portable vector
@@ -276,23 +269,23 @@ def _render_temperatures(
             icon,
             f"{{{SVG_NAMESPACE}}}path",
             {
-                "d": "M 10,11 V 47",
+                "d": "M 8,7 V 25",
                 "fill": "none",
                 "stroke": icon_color,
-                "stroke-width": "3",
+                "stroke-width": "2.4",
                 "stroke-linecap": "round",
             },
         )
         ElementTree.SubElement(
             icon,
             f"{{{SVG_NAMESPACE}}}circle",
-            {"cx": "10", "cy": "53", "r": "6", "fill": icon_color},
+            {"cx": "8", "cy": "29.5", "r": "4.5", "fill": icon_color},
         )
 
-        elements[enclosure_id].set("width", "96")
-        elements[enclosure_id].set("height", "68")
-        elements[f"{prefix}-Temp_Bk-Slash"].set("d", "m 0,0 96,68")
-        elements[f"{prefix}-Temp_Fw-Slash"].set("d", "m 96,0 -96,68")
+        elements[enclosure_id].set("width", "86")
+        elements[enclosure_id].set("height", "36")
+        elements[f"{prefix}-Temp_Bk-Slash"].set("d", "m 0,0 86,36")
+        elements[f"{prefix}-Temp_Fw-Slash"].set("d", "m 86,0 -86,36")
         _set_visibility(elements, f"{prefix}-Temp_Fail", tech_bad)
         healthy_color = "#ffffff" if prefix == "Outdoor" else "#000000"
         _set_style(
@@ -302,14 +295,14 @@ def _render_temperatures(
             "#ff0000" if tech_bad else healthy_color,
         )
 
-    # The upstream positions assume short Celsius-only labels. Move the wider
-    # dual-unit enclosures into clear areas of their corresponding rooms.
+    # Stay in each sensor's upstream area while retaining at least eight SVG
+    # units of clearance from nearby walls, labels, and motion enclosures.
     temperature_positions = {
-        "Outdoor-Temp": "translate(160,80)",
-        "Bay-Temp": "translate(300,225)",
-        "ConfRm-Temp": "translate(821,210)",
-        "ShopB-Temp": "translate(625,289)",
-        "ElecRm-Temp": "translate(858,325)",
+        "Outdoor-Temp": "translate(168,76)",
+        "Bay-Temp": "translate(300,255)",
+        "ConfRm-Temp": "translate(827,240)",
+        "ShopB-Temp": "translate(590,292)",
+        "ElecRm-Temp": "translate(864,331)",
     }
     for element_id, transform in temperature_positions.items():
         elements[element_id].set("transform", transform)

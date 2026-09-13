@@ -44,11 +44,11 @@ def test_render_applies_open_door_motion_and_temperature_conditions():
     assert "fill:#ffffff" in elements["Space-Floor"].get("style", "")
     assert elements["Front-Door_Open"].get("visibility") == "visible"
     assert elements["Front-Door_Closed"].get("visibility") == "hidden"
-    assert "stroke:#006400" in elements["Front-Door_Open"].get("style", "")
+    assert "stroke:#2ecc40" in elements["Front-Door_Open"].get("style", "")
     assert "stroke:#c62828" in elements["Front-Door_Closed"].get("style", "")
     assert elements["Office-Motion_Motion"].get("visibility") == "visible"
-    assert _text(elements["Bay-Temp_Temperature"]).splitlines() == ["30°C", "86°F"]
-    assert _text(elements["Outdoor-Temp_Temperature"]).splitlines() == ["35°C", "95°F"]
+    assert _text(elements["Bay-Temp_Temperature"]) == "30°C"
+    assert _text(elements["Outdoor-Temp_Temperature"]) == "35°C"
     assert elements["Bay-Temp_Symbol"].get("visibility") == "hidden"
     assert elements["Bay-Temp_Vector-Symbol"] is not None
     summary = _text(elements["Discord-Safe-Area-Summary"])
@@ -77,5 +77,5 @@ def test_render_marks_entire_view_failed_when_latest_sample_is_stale():
     assert elements["Front-Door_Fail"].get("visibility") == "visible"
     assert elements["Office-Motion_Fail"].get("visibility") == "visible"
     assert elements["HAL_Fail"].get("visibility") == "visible"
-    assert _text(elements["Bay-Temp_Temperature"]).splitlines() == ["XX°C", "XX°F"]
+    assert _text(elements["Bay-Temp_Temperature"]) == "XX°C"
     assert "Unknown" in _text(elements["Discord-Safe-Area-Summary"])
