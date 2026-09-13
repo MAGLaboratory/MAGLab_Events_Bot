@@ -17,10 +17,16 @@ logger = logging.getLogger(__name__)
 def _render_synoptic_image_bytes(
     samples: Mapping[str, GrafanaSample],
     target: Path,
+    space_is_open_override: bool | None = None,
+    serve_cached_on_failure: bool = True,
 ) -> Optional[bytes]:
-    generated = generate_synoptic_image(samples, target)
+    generated = generate_synoptic_image(
+        samples,
+        target,
+        space_is_open_override=space_is_open_override,
+    )
     if generated is None:
-        if target.exists():
+        if target.exists() and serve_cached_on_failure:
             logger.warning("Synoptic regeneration failed; serving cached version")
         else:
             logger.warning("Synoptic image could not be generated")
@@ -35,6 +41,9 @@ def _render_synoptic_image_bytes(
 def get_synoptic_image_bytes(
     samples: Optional[Mapping[str, GrafanaSample]] = None,
     output_path: Optional[Path] = None,
+    *,
+    space_is_open_override: bool | None = None,
+    serve_cached_on_failure: bool = True,
 ) -> Optional[bytes]:
     """Render the current snapshot and return the resulting PNG bytes."""
 
@@ -45,12 +54,20 @@ def get_synoptic_image_bytes(
             return target.read_bytes()
         except FileNotFoundError:
             return None
-    return _render_synoptic_image_bytes(samples, target)
+    return _render_synoptic_image_bytes(
+        samples,
+        target,
+        space_is_open_override,
+        serve_cached_on_failure,
+    )
 
 
 async def get_synoptic_image_bytes_async(
     samples: Optional[Mapping[str, GrafanaSample]] = None,
     output_path: Optional[Path] = None,
+    *,
+    space_is_open_override: bool | None = None,
+    serve_cached_on_failure: bool = True,
 ) -> Optional[bytes]:
     """Render synoptic bytes without blocking the event loop."""
 
@@ -58,4 +75,10 @@ async def get_synoptic_image_bytes_async(
     target = output_path or settings.synoptic_output_path
     if samples is None:
         return await asyncio.to_thread(get_synoptic_image_bytes, None, target)
-    return await asyncio.to_thread(_render_synoptic_image_bytes, samples, target)
+    return await asyncio.to_thread(
+        _render_synoptic_image_bytes,
+        samples,
+        target,
+        space_is_open_override,
+        serve_cached_on_failure,
+    )

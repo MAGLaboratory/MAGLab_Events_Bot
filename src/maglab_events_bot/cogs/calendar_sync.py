@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Iterable, Optional, Sequence
@@ -38,6 +39,9 @@ class CalendarSyncCog(commands.Cog):
         if not hasattr(bot, "synoptic_cache"):
             bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
         self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
+        if not hasattr(bot, "reconciliation_lock"):
+            bot.reconciliation_lock = asyncio.Lock()  # type: ignore[attr-defined]
+        self._reconciliation_lock = bot.reconciliation_lock  # type: ignore[attr-defined]
 
     async def cog_load(self) -> None:
         if not self.sync_calendar_events.is_running():
@@ -65,7 +69,8 @@ class CalendarSyncCog(commands.Cog):
     @tasks.loop(hours=1)
     async def sync_calendar_events(self) -> None:
         try:
-            await self._sync_calendar_events_once()
+            async with self._reconciliation_lock:
+                await self._sync_calendar_events_once()
         except discord.HTTPException as exc:
             logger.warning(
                 "calendar.sync_discord_api_failed",
@@ -89,17 +94,18 @@ class CalendarSyncCog(commands.Cog):
         )
         existing_events = await guild.fetch_scheduled_events()
 
-        await self._process_events(guild, existing_events, events)
-        await self._process_cancellations(guild, existing_events, cancellations)
+        existing_events = await self._process_events(guild, existing_events, events)
+        existing_events = await self._process_cancellations(guild, existing_events, cancellations)
 
         allowed_uids = {event.uid for event in events} | {event.instance_uid for event in events}
         calendar_keys = self._build_calendar_keys(events)
-        await prune_orphaned_events(
+        existing_events = await prune_orphaned_events(
             guild,
             calendar_keys,
             allowed_uids=allowed_uids,
             timezone_name=self.settings.timezone,
             allow_fragments=self.allow_fragments,
+            events=existing_events,
         )
 
         image_bytes = await get_synoptic_image_bytes_async()
@@ -108,6 +114,7 @@ class CalendarSyncCog(commands.Cog):
             image_bytes,
             self.settings.timezone,
             cache=self._synoptic_cache,
+            events=existing_events,
         )
 
         logger.info(
@@ -132,12 +139,13 @@ class CalendarSyncCog(commands.Cog):
         guild: discord.Guild,
         discord_events: Sequence[discord.ScheduledEvent],
         calendar_events: Iterable[CalendarEvent],
-    ) -> None:
+    ) -> list[discord.ScheduledEvent]:
+        current_events = list(discord_events)
         for calendar_event in calendar_events:
             start_time_display = calendar_event.start_time.in_timezone(
                 self.timezone
             ).to_datetime_string()
-            match = find_matching_discord_event(discord_events, calendar_event)
+            match = find_matching_discord_event(current_events, calendar_event)
             desired_description = apply_uid_marker(
                 calendar_event.description, calendar_event.instance_uid
             )
@@ -153,13 +161,18 @@ class CalendarSyncCog(commands.Cog):
                     "Updating event '%s' scheduled at %s", calendar_event.name, start_time_display
                 )
                 try:
-                    await match.edit(
+                    updated_event = await match.edit(
                         name=calendar_event.name,
                         description=desired_description,
                         start_time=calendar_event.start_time,
                         end_time=calendar_event.end_time,
                         location=calendar_event.location,
                     )
+                    if updated_event is not match:
+                        current_events = [
+                            updated_event if event.id == match.id else event
+                            for event in current_events
+                        ]
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.exception("Failed updating event '%s': %s", calendar_event.name, exc)
             else:
@@ -167,7 +180,7 @@ class CalendarSyncCog(commands.Cog):
                     "Creating event '%s' scheduled at %s", calendar_event.name, start_time_display
                 )
                 try:
-                    await guild.create_scheduled_event(
+                    created_event = await guild.create_scheduled_event(
                         name=calendar_event.name,
                         description=desired_description,
                         start_time=calendar_event.start_time,
@@ -176,17 +189,21 @@ class CalendarSyncCog(commands.Cog):
                         location=calendar_event.location,
                         privacy_level=discord.PrivacyLevel.guild_only,
                     )
+                    if created_event is not None:
+                        current_events.append(created_event)
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.exception("Failed creating event '%s': %s", calendar_event.name, exc)
+        return current_events
 
     async def _process_cancellations(
         self,
         guild: discord.Guild,
         discord_events: Sequence[discord.ScheduledEvent],
         cancellations: Iterable[CancelledCalendarEvent],
-    ) -> None:
+    ) -> list[discord.ScheduledEvent]:
+        current_events = list(discord_events)
         for cancellation in cancellations:
-            match = find_matching_discord_event(discord_events, cancellation)
+            match = find_matching_discord_event(current_events, cancellation)
             if not match:
                 continue
             start_time_display = cancellation.start_time.in_timezone(
@@ -199,8 +216,10 @@ class CalendarSyncCog(commands.Cog):
             )
             try:
                 await match.delete()
+                current_events = [event for event in current_events if event.id != match.id]
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed deleting event '%s': %s", cancellation.name, exc)
+        return current_events
 
     @staticmethod
     def _build_calendar_keys(

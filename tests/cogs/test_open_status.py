@@ -29,10 +29,19 @@ class DummyBot:
 class PollingBot(DummyBot):
     def __init__(self) -> None:
         super().__init__()
-        self.guild = object()
+        self.guild = PollingGuild()
 
     def get_guild(self, _guild_id):
         return self.guild
+
+
+class PollingGuild:
+    def __init__(self) -> None:
+        self.fetch_count = 0
+
+    async def fetch_scheduled_events(self):
+        self.fetch_count += 1
+        return []
 
 
 def test_cog_unload_closes_session(monkeypatch):
@@ -57,10 +66,13 @@ def test_closed_grafana_switch_deletes_open_event_without_hal_status(monkeypatch
     async def fake_hal(*_args, **_kwargs):
         return None
 
-    async def fake_image(_samples):
+    async def fake_image(_samples, **_kwargs):
         return b"image"
 
-    async def fake_delete(guild, fragment):
+    async def fake_active_event(*_args, **_kwargs):
+        return False
+
+    async def fake_delete(guild, fragment, **_kwargs):
         nonlocal deleted
         assert guild is bot.guild
         assert fragment == "We are"
@@ -76,6 +88,11 @@ def test_closed_grafana_switch_deletes_open_event_without_hal_status(monkeypatch
         lambda *_args: False,
     )
     monkeypatch.setattr(open_status_module, "fetch_hal_status", fake_hal)
+    monkeypatch.setattr(
+        open_status_module,
+        "has_active_non_fragment_event",
+        fake_active_event,
+    )
     monkeypatch.setattr(open_status_module, "get_synoptic_image_bytes_async", fake_image)
     monkeypatch.setattr(open_status_module, "delete_events_by_name_fragment", fake_delete)
     monkeypatch.setattr(open_status_module, "enforce_single_synoptic_image", fake_enforce)
@@ -97,8 +114,11 @@ def test_missing_grafana_switch_does_not_fall_back_to_hal(monkeypatch):
     async def fake_hal(*_args, **_kwargs):
         raise AssertionError("HAL status must not decide open/closed")
 
-    async def fake_image(_samples):
+    async def fake_image(_samples, **_kwargs):
         return b"image"
+
+    async def fake_active_event(*_args, **_kwargs):
+        return False
 
     async def fake_delete(*_args, **_kwargs):
         nonlocal deleted
@@ -109,6 +129,11 @@ def test_missing_grafana_switch_does_not_fall_back_to_hal(monkeypatch):
 
     monkeypatch.setattr(open_status_module, "fetch_grafana_sensor_samples", fake_grafana)
     monkeypatch.setattr(open_status_module, "fetch_hal_status", fake_hal)
+    monkeypatch.setattr(
+        open_status_module,
+        "has_active_non_fragment_event",
+        fake_active_event,
+    )
     monkeypatch.setattr(open_status_module, "get_synoptic_image_bytes_async", fake_image)
     monkeypatch.setattr(open_status_module, "delete_events_by_name_fragment", fake_delete)
     monkeypatch.setattr(open_status_module, "enforce_single_synoptic_image", fake_enforce)
@@ -116,3 +141,51 @@ def test_missing_grafana_switch_does_not_fall_back_to_hal(monkeypatch):
     asyncio.run(cog.poll_hal_status.coro(cog))
 
     assert not deleted
+
+
+def test_active_calendar_event_overrides_closed_switch_for_banner(monkeypatch):
+    bot = PollingBot()
+    cog = OpenStatusCog(bot=bot)
+    cog._http_client = DummySession()  # type: ignore[assignment]
+    rendered_with_override = False
+
+    async def fake_grafana(**_kwargs):
+        return {}
+
+    async def fake_active_event(_guild, *, fragment, excluded_names, events):
+        assert fragment == "We are"
+        assert excluded_names == open_status_module.REMOTE_ONLY_EVENT_NAMES
+        assert events == []
+        return True
+
+    async def fake_image(_samples, *, space_is_open_override, serve_cached_on_failure):
+        nonlocal rendered_with_override
+        rendered_with_override = space_is_open_override is True
+        assert serve_cached_on_failure is False
+        return b"image"
+
+    async def fake_delete(*_args, **_kwargs):
+        return None
+
+    async def fake_enforce(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(open_status_module, "fetch_grafana_sensor_samples", fake_grafana)
+    monkeypatch.setattr(
+        open_status_module,
+        "get_grafana_open_status",
+        lambda *_args: False,
+    )
+    monkeypatch.setattr(
+        open_status_module,
+        "has_active_non_fragment_event",
+        fake_active_event,
+    )
+    monkeypatch.setattr(open_status_module, "get_synoptic_image_bytes_async", fake_image)
+    monkeypatch.setattr(open_status_module, "delete_events_by_name_fragment", fake_delete)
+    monkeypatch.setattr(open_status_module, "enforce_single_synoptic_image", fake_enforce)
+
+    asyncio.run(cog.poll_hal_status.coro(cog))
+
+    assert rendered_with_override
+    assert bot.guild.fetch_count == 1

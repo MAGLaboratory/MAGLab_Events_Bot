@@ -7,7 +7,18 @@ import logging
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable, Coroutine, Dict, Iterable, List, Optional, Sequence, Tuple, cast
+from typing import (
+    Callable,
+    Collection,
+    Coroutine,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    cast,
+)
 
 import discord
 import pendulum
@@ -53,15 +64,25 @@ async def fetch_relevant_events(guild: discord.Guild) -> List[discord.ScheduledE
     return [event for event in events if event.status != discord.EventStatus.completed]
 
 
-async def delete_events_by_name_fragment(guild: discord.Guild, fragment: str) -> None:
-    events = await fetch_relevant_events(guild)
-    for event in events:
+async def delete_events_by_name_fragment(
+    guild: discord.Guild,
+    fragment: str,
+    *,
+    events: Optional[Sequence[discord.ScheduledEvent]] = None,
+) -> List[discord.ScheduledEvent]:
+    relevant_events = list(events) if events is not None else await fetch_relevant_events(guild)
+    remaining_events: List[discord.ScheduledEvent] = []
+    for event in relevant_events:
         if fragment.lower() in (event.name or "").lower():
             try:
                 await event.delete()
                 logger.info("Deleted event '%s'", event.name)
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to delete event %s: %s", event.name, exc)
+                remaining_events.append(event)
+        else:
+            remaining_events.append(event)
+    return remaining_events
 
 
 def _strip_uid_marker(description: Optional[str]) -> str:
@@ -175,19 +196,27 @@ async def enforce_single_synoptic_image(
     *,
     we_are_fragment: str = "We are",
     cache: SynopticImageCache,
+    events: Optional[Sequence[discord.ScheduledEvent]] = None,
+    image_state_key: Optional[str] = None,
 ) -> None:
-    events = await fetch_relevant_events(guild)
-    target = pick_synoptic_target(events, timezone_name, we_are_fragment)
+    relevant_events = list(events) if events is not None else await fetch_relevant_events(guild)
+    target = pick_synoptic_target(relevant_events, timezone_name, we_are_fragment)
     target_id = target.id if target else None
     new_hash: Optional[str] = None
+    target_is_current = False
     state = cache.get(guild.id)
 
     if target and image_bytes:
-        new_hash = hashlib.sha1(image_bytes).hexdigest()
-        if target_id != state.event_id or new_hash != state.content_hash:
+        new_hash = image_state_key or hashlib.sha1(image_bytes).hexdigest()
+        if (
+            target_id != state.event_id
+            or new_hash != state.content_hash
+            or getattr(target, "cover_image", None) is None
+        ):
             try:
                 await _apply_event_image(target, image_bytes)
                 logger.info("Synoptic image set on '%s'", target.name)
+                target_is_current = True
             except discord.NotFound:
                 logger.info(
                     "Synoptic target '%s' disappeared before image update; skipping",
@@ -200,9 +229,12 @@ async def enforce_single_synoptic_image(
                 logger.exception("Failed to set synoptic image on '%s': %s", target.name, exc)
         else:
             logger.debug("Synoptic image already current on event '%s'", target.name)
+            target_is_current = True
 
-    for event in events:
-        if not target or event.id != target.id:
+    for event in relevant_events:
+        if (not target or event.id != target.id) and getattr(
+            event, "cover_image", None
+        ) is not None:
             try:
                 await _apply_event_image(event, None)
             except discord.NotFound:
@@ -210,7 +242,7 @@ async def enforce_single_synoptic_image(
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to clear synoptic image on '%s': %s", event.name, exc)
 
-    if new_hash and target_id:
+    if target_is_current and new_hash and target_id:
         cache.update(guild.id, event_id=target_id, content_hash=new_hash)
     else:
         cache.clear(guild.id)
@@ -220,15 +252,21 @@ async def has_active_non_fragment_event(
     guild: discord.Guild,
     *,
     fragment: str,
+    excluded_names: Collection[str] = (),
+    events: Optional[Sequence[discord.ScheduledEvent]] = None,
 ) -> bool:
-    events = await fetch_relevant_events(guild)
+    relevant_events = list(events) if events is not None else await fetch_relevant_events(guild)
     now = pendulum.now("UTC")
-    for event in events:
+    excluded_names_normalized = {name.strip().casefold() for name in excluded_names}
+    for event in relevant_events:
         start = _to_utc_datetime(event.start_time)
         end = _to_utc_datetime(event.end_time)
         if start is None or end is None:
             continue
-        if start <= now <= end and fragment.lower() not in (event.name or "").lower():
+        event_name = (event.name or "").strip()
+        if event_name.casefold() in excluded_names_normalized:
+            continue
+        if start <= now <= end and fragment.casefold() not in event_name.casefold():
             logger.info("Active non-fragment event found: '%s'", event.name)
             return True
     return False
@@ -286,13 +324,16 @@ async def ensure_open_status_event(
     timezone_name: str,
     duration_minutes: int = 10,
     we_are_fragment: str = "We are",
-) -> None:
+    events: Optional[Sequence[discord.ScheduledEvent]] = None,
+) -> List[discord.ScheduledEvent]:
     now = pendulum.now(timezone_name)
     end_time = now.add(minutes=duration_minutes)
     start_time_minimum = now.add(seconds=60)
 
-    events = await fetch_relevant_events(guild)
-    we_events = [e for e in events if we_are_fragment.lower() in (e.name or "").lower()]
+    relevant_events = list(events) if events is not None else await fetch_relevant_events(guild)
+    we_events = [
+        event for event in relevant_events if we_are_fragment.lower() in (event.name or "").lower()
+    ]
 
     primary_event = we_events[0] if we_events else None
 
@@ -301,24 +342,35 @@ async def ensure_open_status_event(
         end_existing = _to_utc_datetime(primary_event.end_time)
         if start_time and end_existing and start_time <= now <= end_existing:
             try:
-                await primary_event.edit(
+                updated_event = await primary_event.edit(
                     name=status_text,
                     description=description,
                     end_time=end_time,
                 )
                 logger.info("Updated existing open-status event '%s'", primary_event.name)
-                return
+                if updated_event is not primary_event:
+                    relevant_events = [
+                        updated_event if event.id == primary_event.id else event
+                        for event in relevant_events
+                    ]
+                return relevant_events
             except discord.errors.Forbidden:
                 logger.warning(
                     "Permission denied updating event '%s'; deleting", primary_event.name
                 )
                 try:
                     await primary_event.delete()
+                    relevant_events = [
+                        event for event in relevant_events if event.id != primary_event.id
+                    ]
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.exception("Failed to delete event '%s': %s", primary_event.name, exc)
         else:
             try:
                 await primary_event.delete()
+                relevant_events = [
+                    event for event in relevant_events if event.id != primary_event.id
+                ]
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to delete stale event '%s': %s", primary_event.name, exc)
 
@@ -327,7 +379,7 @@ async def ensure_open_status_event(
         future_now = pendulum.now(timezone_name)
         start_time = max(start_time_minimum, future_now.add(seconds=30))
 
-        await guild.create_scheduled_event(
+        created_event = await guild.create_scheduled_event(
             name=status_text,
             description=description,
             start_time=start_time,
@@ -336,9 +388,11 @@ async def ensure_open_status_event(
             location="MAG Laboratory",
             privacy_level=discord.PrivacyLevel.guild_only,
         )
+        relevant_events.append(created_event)
         logger.info("Created new open-status event '%s'", status_text)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to create open-status event: %s", exc)
+    return relevant_events
 
 
 async def prune_orphaned_events(
@@ -348,30 +402,37 @@ async def prune_orphaned_events(
     timezone_name: str,
     allowed_uids: Optional[Iterable[str]] = None,
     allow_fragments: Optional[Iterable[str]] = None,
-) -> None:
+    events: Optional[Sequence[discord.ScheduledEvent]] = None,
+) -> List[discord.ScheduledEvent]:
     key_counts = Counter(calendar_keys)
     uid_allowlist = set(allowed_uids or [])
     allow_fragments = {frag.lower() for frag in allow_fragments or []}
     now = pendulum.now("UTC")
 
-    events = await fetch_relevant_events(guild)
-    for event in events:
+    relevant_events = list(events) if events is not None else await fetch_relevant_events(guild)
+    remaining_events: List[discord.ScheduledEvent] = []
+    for event in relevant_events:
         start = _to_utc_datetime(event.start_time)
         end = _to_utc_datetime(event.end_time)
         if start is None or end is None:
+            remaining_events.append(event)
             continue
         if start <= now <= end:
+            remaining_events.append(event)
             continue
         name = event.name or ""
         if any(fragment in name.lower() for fragment in allow_fragments):
+            remaining_events.append(event)
             continue
         event_uid = _extract_uid_marker(event.description)
         if event_uid and event_uid in uid_allowlist:
+            remaining_events.append(event)
             continue
         location = (event.location or "MAG Laboratory").strip()
         key = (name, start.replace(second=0, microsecond=0), location)
         if key_counts[key] > 0:
             key_counts[key] -= 1
+            remaining_events.append(event)
             continue
         if key_counts[key] == 0:
             try:
@@ -379,3 +440,5 @@ async def prune_orphaned_events(
                 logger.info("Deleted orphaned event '%s'", name)
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to delete event '%s': %s", name, exc)
+                remaining_events.append(event)
+    return remaining_events

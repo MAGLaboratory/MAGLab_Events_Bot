@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Optional
 
@@ -16,6 +17,7 @@ from maglab_events_bot.services.discord_api import (
     delete_events_by_name_fragment,
     enforce_single_synoptic_image,
     ensure_open_status_event,
+    fetch_relevant_events,
     has_active_non_fragment_event,
 )
 from maglab_events_bot.services.grafana import (
@@ -23,12 +25,13 @@ from maglab_events_bot.services.grafana import (
     get_grafana_open_status,
 )
 from maglab_events_bot.services.hal import fetch_hal_status
-from maglab_events_bot.services.synoptic import SYNOPTIC_FIELDS
+from maglab_events_bot.services.synoptic import SYNOPTIC_FIELDS, synoptic_image_state_key
 from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 from maglab_events_bot.utils.formatting import format_hal_sensor_table
 from maglab_events_bot.utils.http import build_aiohttp_client
 
 logger = logging.getLogger(__name__)
+REMOTE_ONLY_EVENT_NAMES = frozenset({"Public Business Meeting"})
 
 
 class OpenStatusCog(commands.Cog):
@@ -44,6 +47,9 @@ class OpenStatusCog(commands.Cog):
         if not hasattr(bot, "synoptic_cache"):
             bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
         self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
+        if not hasattr(bot, "reconciliation_lock"):
+            bot.reconciliation_lock = asyncio.Lock()  # type: ignore[attr-defined]
+        self._reconciliation_lock = bot.reconciliation_lock  # type: ignore[attr-defined]
 
     async def cog_load(self) -> None:
         if self._http_client is None:
@@ -77,7 +83,8 @@ class OpenStatusCog(commands.Cog):
     @tasks.loop(minutes=1)
     async def poll_hal_status(self) -> None:
         try:
-            await self._poll_hal_status_once()
+            async with self._reconciliation_lock:
+                await self._poll_hal_status_once()
         except discord.HTTPException as exc:
             logger.warning(
                 "hal.poll_discord_api_failed",
@@ -93,6 +100,8 @@ class OpenStatusCog(commands.Cog):
         guild = await self._get_guild()
         if not guild:
             return
+
+        discord_events = await fetch_relevant_events(guild)
 
         if self._http_client is None:
             self._http_client = await build_aiohttp_client(
@@ -115,7 +124,21 @@ class OpenStatusCog(commands.Cog):
             self.settings.grafana_open_switch_field,
             self.settings.grafana_max_sample_age_minutes,
         )
-        image_bytes = await get_synoptic_image_bytes_async(grafana_samples or {})
+        calendar_forces_space_open = await has_active_non_fragment_event(
+            guild,
+            fragment=self.we_are_fragment,
+            excluded_names=REMOTE_ONLY_EVENT_NAMES,
+            events=discord_events,
+        )
+        image_bytes = await get_synoptic_image_bytes_async(
+            grafana_samples or {},
+            space_is_open_override=True if calendar_forces_space_open else None,
+            serve_cached_on_failure=False,
+        )
+        image_state_key = synoptic_image_state_key(
+            grafana_samples or {},
+            space_is_open_override=True if calendar_forces_space_open else None,
+        )
 
         if grafana_is_open is None:
             logger.warning(
@@ -127,16 +150,24 @@ class OpenStatusCog(commands.Cog):
                 image_bytes,
                 self.settings.timezone,
                 cache=self._synoptic_cache,
+                events=discord_events,
+                image_state_key=image_state_key,
             )
             return
 
         if not grafana_is_open:
-            await delete_events_by_name_fragment(guild, self.we_are_fragment)
+            discord_events = await delete_events_by_name_fragment(
+                guild,
+                self.we_are_fragment,
+                events=discord_events,
+            )
             await enforce_single_synoptic_image(
                 guild,
                 image_bytes,
                 self.settings.timezone,
                 cache=self._synoptic_cache,
+                events=discord_events,
+                image_state_key=image_state_key,
             )
             logger.info(
                 "grafana.status_closed",
@@ -159,6 +190,8 @@ class OpenStatusCog(commands.Cog):
                 image_bytes,
                 self.settings.timezone,
                 cache=self._synoptic_cache,
+                events=discord_events,
+                image_state_key=image_state_key,
             )
             return
 
@@ -174,16 +207,28 @@ class OpenStatusCog(commands.Cog):
                 image_bytes,
                 self.settings.timezone,
                 cache=self._synoptic_cache,
+                events=discord_events,
+                image_state_key=image_state_key,
             )
             return
 
-        if await has_active_non_fragment_event(guild, fragment=self.we_are_fragment):
-            await delete_events_by_name_fragment(guild, self.we_are_fragment)
+        if calendar_forces_space_open or await has_active_non_fragment_event(
+            guild,
+            fragment=self.we_are_fragment,
+            events=discord_events,
+        ):
+            discord_events = await delete_events_by_name_fragment(
+                guild,
+                self.we_are_fragment,
+                events=discord_events,
+            )
             await enforce_single_synoptic_image(
                 guild,
                 image_bytes,
                 self.settings.timezone,
                 cache=self._synoptic_cache,
+                events=discord_events,
+                image_state_key=image_state_key,
             )
             logger.info(
                 "hal.skipped_due_to_active_event",
@@ -198,17 +243,20 @@ class OpenStatusCog(commands.Cog):
             scraped_display,
             str(self.settings.hal_url),
         )
-        await ensure_open_status_event(
+        discord_events = await ensure_open_status_event(
             guild,
             status_text=hal_status.status_text,
             description=formatted_message,
             timezone_name=self.settings.timezone,
+            events=discord_events,
         )
         await enforce_single_synoptic_image(
             guild,
             image_bytes,
             self.settings.timezone,
             cache=self._synoptic_cache,
+            events=discord_events,
+            image_state_key=image_state_key,
         )
         logger.info(
             "grafana.status_open",

@@ -26,7 +26,7 @@ the display conditions below.
 | Component | Condition |
 | --- | --- |
 | Whole view | Technical failure when the newest sensor update is older than 15 minutes |
-| Space status | Open only when `Open Switch` is `1` and recent; otherwise closed |
+| Space status | Open when `Open Switch` is `1` and recent, or while an in-person calendar event is active |
 | Privacy | `Privacy_Switch = 1` masks door and motion activity |
 | Doors | Open when the binary field is `1`; closed when `0` |
 | Motion | Active when the binary field is `1` and its sample is no more than 20 minutes old |
@@ -37,6 +37,9 @@ The bot reads all required fields with one Grafana datasource-proxy request. The
 stored locally in `data/static/maglab_synoptic_template.svg`, and Python applies the same
 conditions before rasterizing it. The output is 800×320 pixels (a 5:2 Discord event-banner ratio)
 with a view box selected to retain the full floor plan without stretching it.
+
+The recurring `Public Business Meeting` is remote-only and is excluded from the calendar override;
+during that event the Space status continues to follow the Grafana `Open Switch` exclusively.
 
 ## Discord cropping
 

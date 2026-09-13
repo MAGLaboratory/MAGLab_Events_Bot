@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import math
 import os
@@ -156,7 +157,10 @@ def _space_state(
     samples: Mapping[str, GrafanaSample],
     tech_bad: bool,
     now: datetime,
+    space_is_open_override: bool | None = None,
 ) -> Tuple[str, str, str]:
+    if space_is_open_override is True:
+        return "#ffffff", OPEN_COLOR, "Open"
     if tech_bad:
         return "#e0d5d5", UNKNOWN_COLOR, "Unknown"
     if _active_binary(samples, "Open Switch", MOTION_ACTIVE_MINUTES, now):
@@ -169,8 +173,9 @@ def _render_openness(
     samples: Mapping[str, GrafanaSample],
     tech_bad: bool,
     now: datetime,
+    space_is_open_override: bool | None,
 ) -> None:
-    floor, color, label = _space_state(samples, tech_bad, now)
+    floor, color, label = _space_state(samples, tech_bad, now, space_is_open_override)
     _set_style(elements, "Space-Floor", "fill", floor)
     _set_style(elements, "Space_Openness", "fill", color)
     _set_text(elements, "Space_Openness", label)
@@ -184,6 +189,7 @@ def _render_doors(
 ) -> None:
     for field, prefix in DOORS.items():
         is_open = not privacy_enabled and _active_binary(samples, field)
+        open_ids: Tuple[str, ...]
         if prefix == "Pod-Bay-Door":
             open_ids = (f"{prefix}_Open-0", f"{prefix}_Open-1")
         else:
@@ -332,16 +338,60 @@ def _last_updated_text(samples: Mapping[str, GrafanaSample]) -> Tuple[str, str]:
     )
 
 
+def synoptic_image_state_key(
+    samples: Mapping[str, GrafanaSample],
+    *,
+    now: datetime | None = None,
+    space_is_open_override: bool | None = None,
+) -> str:
+    """Hash visible sensor state while ignoring the informational update timestamp."""
+
+    current_time = now or datetime.now(timezone.utc)
+    tech_bad = _is_tech_bad(samples, current_time)
+    privacy_enabled = _active_binary(samples, "Privacy_Switch", now=current_time)
+    visible_state: list[object] = [
+        tech_bad,
+        privacy_enabled,
+        _space_state(samples, tech_bad, current_time, space_is_open_override)[2],
+    ]
+    visible_state.extend(
+        _door_state(samples, field, tech_bad, privacy_enabled)[0] for field in DOORS
+    )
+    visible_state.extend(
+        (
+            field,
+            not tech_bad
+            and not privacy_enabled
+            and _active_binary(samples, field, MOTION_ACTIVE_MINUTES, current_time),
+        )
+        for field in MOTION_SENSORS
+    )
+    visible_state.extend(
+        (
+            field,
+            "XX°C" if tech_bad else _temperature_text(samples.get(field)),
+        )
+        for field in TEMPERATURE_SENSORS
+    )
+    return hashlib.sha1(repr(tuple(visible_state)).encode("utf-8")).hexdigest()
+
+
 def _append_safe_area_summary(
     root: ElementTree.Element,
     samples: Mapping[str, GrafanaSample],
     tech_bad: bool,
     privacy_enabled: bool,
     now: datetime,
+    space_is_open_override: bool | None,
 ) -> None:
     """Put essential state inside Discord's shallow list-card center crop."""
 
-    floor_color, space_color, space_label = _space_state(samples, tech_bad, now)
+    floor_color, space_color, space_label = _space_state(
+        samples,
+        tech_bad,
+        now,
+        space_is_open_override,
+    )
     front_label, front_color = _door_state(samples, "Front Door", tech_bad, privacy_enabled)
     pod_bay_label, pod_bay_color = _door_state(samples, "Pod Bay Door", tech_bad, privacy_enabled)
 
@@ -405,6 +455,7 @@ def render_synoptic_svg(
     *,
     now: datetime | None = None,
     template_path: Path = TEMPLATE_PATH,
+    space_is_open_override: bool | None = None,
 ) -> bytes:
     """Apply the website backend's conditions to the local SVG template."""
 
@@ -418,12 +469,25 @@ def render_synoptic_svg(
     tech_bad = _is_tech_bad(samples, current_time)
     privacy_enabled = _active_binary(samples, "Privacy_Switch", now=current_time)
 
-    _render_openness(elements, samples, tech_bad, current_time)
+    _render_openness(
+        elements,
+        samples,
+        tech_bad,
+        current_time,
+        space_is_open_override,
+    )
     _render_doors(elements, samples, tech_bad, privacy_enabled)
     _render_motion(elements, samples, tech_bad, privacy_enabled, current_time)
     _render_computers(elements, tech_bad)
     _render_temperatures(elements, samples, tech_bad)
-    _append_safe_area_summary(root, samples, tech_bad, privacy_enabled, current_time)
+    _append_safe_area_summary(
+        root,
+        samples,
+        tech_bad,
+        privacy_enabled,
+        current_time,
+        space_is_open_override,
+    )
     return ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
@@ -431,6 +495,8 @@ def generate_synoptic_image(
     samples: Mapping[str, GrafanaSample],
     output_path: Path,
     target_size: Tuple[int, int] = DEFAULT_SIZE,
+    *,
+    space_is_open_override: bool | None = None,
 ) -> Path | None:
     """Render a Discord-sized PNG from a Grafana snapshot."""
 
@@ -440,7 +506,10 @@ def generate_synoptic_image(
         # broken Cairo installation does not stop calendar/status polling.
         import cairosvg
 
-        svg_content = render_synoptic_svg(samples)
+        svg_content = render_synoptic_svg(
+            samples,
+            space_is_open_override=space_is_open_override,
+        )
         cairosvg.svg2png(
             bytestring=svg_content,
             write_to=str(output_path),

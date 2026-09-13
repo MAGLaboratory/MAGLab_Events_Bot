@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Optional
 
@@ -24,6 +25,7 @@ class MagLabBot(commands.Bot):
         super().__init__(*args, intents=intents, **kwargs)
         self.settings = get_settings()
         self.synoptic_cache = SynopticImageCache()
+        self.reconciliation_lock = asyncio.Lock()
 
     async def setup_hook(self) -> None:
         await self.add_cog(OpenStatusCog(self))
