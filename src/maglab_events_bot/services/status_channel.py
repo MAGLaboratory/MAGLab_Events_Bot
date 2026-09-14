@@ -21,8 +21,9 @@ STATUS_MESSAGE_MARKER = "MAGLab live status"
 STATUS_IMAGE_FILENAME = "maglab-status.png"
 STATUS_CHANNEL_NAMES = {
     "Open": "🟢・space-open",
-    "Closed": "🔴・space-closed",
-    "Unknown": "⚪・status-unknown",
+    "ClosedActive": "🔴・space-closed-but-active",
+    "ClosedInactive": "🔴・space-closed-and-inactive",
+    "Unknown": "⚪・space-status-unknown",
 }
 STATUS_COLORS = {
     "Open": 0x2ECC40,
@@ -82,7 +83,7 @@ class StatusChannelReconciler:
                 samples,
                 space_is_open_override=space_is_open_override,
             )
-            await self._rename_if_needed(channel, summary.space)
+            await self._rename_if_needed(channel, summary)
 
             message = await self._find_message(channel)
             state_key = f"{image_state_key}:{summary.space}:{summary.last_motion}"
@@ -132,10 +133,22 @@ class StatusChannelReconciler:
                 },
             )
 
-    async def _rename_if_needed(self, channel: Any, space: str) -> None:
+    async def _rename_if_needed(
+        self,
+        channel: Any,
+        summary: SynopticStatusSummary,
+    ) -> None:
         if not self.rename_channel:
             return
-        desired_name = STATUS_CHANNEL_NAMES.get(space, STATUS_CHANNEL_NAMES["Unknown"])
+        if summary.space == "Open":
+            name_key = "Open"
+        elif summary.space == "Closed" and summary.motion_active is True:
+            name_key = "ClosedActive"
+        elif summary.space == "Closed" and summary.motion_active is False:
+            name_key = "ClosedInactive"
+        else:
+            name_key = "Unknown"
+        desired_name = STATUS_CHANNEL_NAMES[name_key]
         if getattr(channel, "name", None) != desired_name:
             await channel.edit(name=desired_name, reason="MAGLab live space status changed")
 

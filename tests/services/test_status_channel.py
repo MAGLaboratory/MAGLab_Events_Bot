@@ -178,7 +178,7 @@ def test_dashboard_formats_latest_general_motion_without_room_name():
     assert "Office" not in description
 
 
-def test_changed_synoptic_state_edits_the_existing_message_and_closes_channel():
+def test_changed_synoptic_state_edits_message_and_marks_closed_inactive():
     bot = StubBot()
     channel = StubChannel(bot.user.id)
     reconciler = StatusChannelReconciler(
@@ -211,7 +211,51 @@ def test_changed_synoptic_state_edits_the_existing_message_and_closes_channel():
     assert len(channel.sent) == 1
     assert len(message.edits) == 1
     assert message.edits[0]["embed"].title == "MAGLab is CLOSED"
-    assert channel.name == "🔴・space-closed"
+    assert channel.name == "🔴・space-closed-and-inactive"
+
+
+def test_closed_channel_name_reports_recent_motion_as_active():
+    bot = StubBot()
+    channel = StubChannel(bot.user.id)
+    reconciler = StatusChannelReconciler(
+        bot,
+        channel_id=123,
+        message_id=None,
+        rename_channel=True,
+        hal_url="https://www.maglaboratory.org/hal",
+    )
+    samples = _samples(**{"Open Switch": 0})
+    samples[last_active_sample_key("Shop Motion")] = GrafanaSample(
+        value=1,
+        sampled_at=datetime.now(timezone.utc),
+    )
+
+    asyncio.run(
+        reconciler.reconcile(
+            StubGuild(channel),
+            samples,
+            b"png",
+            synoptic_image_state_key(samples),
+        )
+    )
+
+    assert channel.name == "🔴・space-closed-but-active"
+
+
+def test_unavailable_status_uses_unknown_channel_name():
+    bot = StubBot()
+    channel = StubChannel(bot.user.id)
+    reconciler = StatusChannelReconciler(
+        bot,
+        channel_id=123,
+        message_id=None,
+        rename_channel=True,
+        hal_url="https://www.maglaboratory.org/hal",
+    )
+
+    asyncio.run(reconciler.reconcile(StubGuild(channel), {}, None, "unknown"))
+
+    assert channel.name == "⚪・space-status-unknown"
 
 
 def test_disabled_reconciler_does_not_touch_discord():

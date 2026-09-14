@@ -89,6 +89,7 @@ class SynopticStatusSummary:
     updated_date: str
     updated_time: str
     last_motion: str
+    motion_active: bool | None
 
 
 def _elements_by_id(root: ElementTree.Element) -> dict[str, ElementTree.Element]:
@@ -376,6 +377,21 @@ def _last_motion_text(
     return _formatted_sample_time(latest.sampled_at)
 
 
+def _recent_motion_state(
+    samples: Mapping[str, GrafanaSample],
+    tech_bad: bool,
+    privacy_enabled: bool,
+    now: datetime,
+) -> bool | None:
+    if tech_bad or privacy_enabled:
+        return None
+    return any(
+        (sample := samples.get(last_active_sample_key(field))) is not None
+        and sample_is_fresh(sample.sampled_at, MOTION_ACTIVE_MINUTES, now)
+        for field in MOTION_SENSORS
+    )
+
+
 def get_synoptic_status_summary(
     samples: Mapping[str, GrafanaSample],
     *,
@@ -402,6 +418,12 @@ def get_synoptic_status_summary(
         updated_date=updated_date,
         updated_time=updated_time,
         last_motion=_last_motion_text(samples, privacy_enabled),
+        motion_active=_recent_motion_state(
+            samples,
+            tech_bad,
+            privacy_enabled,
+            current_time,
+        ),
     )
 
 
