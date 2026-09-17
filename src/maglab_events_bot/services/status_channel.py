@@ -25,11 +25,28 @@ STATUS_CHANNEL_NAMES = {
     "ClosedInactive": "🔴・space-closed-and-inactive",
     "Unknown": "⚪・space-status-unknown",
 }
+STATUS_TITLES = {
+    "Open": "MAGLab is OPEN",
+    "ClosedActive": "MAGLab is CLOSED BUT ACTIVE",
+    "ClosedInactive": "MAGLab is CLOSED AND INACTIVE",
+    "Unknown": "MAGLab status is UNKNOWN",
+}
 STATUS_COLORS = {
     "Open": 0x2ECC40,
-    "Closed": 0xC62828,
+    "ClosedActive": 0xF1C40F,
+    "ClosedInactive": 0xC62828,
     "Unknown": 0x555555,
 }
+
+
+def _status_key(summary: SynopticStatusSummary) -> str:
+    if summary.space == "Open":
+        return "Open"
+    if summary.space == "Closed" and summary.motion_active is True:
+        return "ClosedActive"
+    if summary.space == "Closed" and summary.motion_active is False:
+        return "ClosedInactive"
+    return "Unknown"
 
 
 class StatusChannelReconciler:
@@ -86,7 +103,7 @@ class StatusChannelReconciler:
             await self._rename_if_needed(channel, summary)
 
             message = await self._find_message(channel)
-            state_key = f"{image_state_key}:{summary.space}:{summary.last_motion}"
+            state_key = f"{image_state_key}:{_status_key(summary)}:{summary.last_motion}"
             if message is not None and self._last_state_key == state_key:
                 return
 
@@ -140,15 +157,7 @@ class StatusChannelReconciler:
     ) -> None:
         if not self.rename_channel:
             return
-        if summary.space == "Open":
-            name_key = "Open"
-        elif summary.space == "Closed" and summary.motion_active is True:
-            name_key = "ClosedActive"
-        elif summary.space == "Closed" and summary.motion_active is False:
-            name_key = "ClosedInactive"
-        else:
-            name_key = "Unknown"
-        desired_name = STATUS_CHANNEL_NAMES[name_key]
+        desired_name = STATUS_CHANNEL_NAMES[_status_key(summary)]
         if getattr(channel, "name", None) != desired_name:
             await channel.edit(name=desired_name, reason="MAGLab live space status changed")
 
@@ -224,7 +233,7 @@ class StatusChannelReconciler:
         summary: SynopticStatusSummary,
         image_bytes: bytes | None,
     ) -> discord.Embed:
-        status = summary.space.upper()
+        status_key = _status_key(summary)
         updated_time = self._without_timezone(summary.updated_time)
         last_motion = self._without_timezone(summary.last_motion)
         description_lines = [
@@ -235,10 +244,10 @@ class StatusChannelReconciler:
             f"Last Motion: **{last_motion}**",
         ]
         embed = discord.Embed(
-            title=f"MAGLab is {status}",
+            title=STATUS_TITLES[status_key],
             url=self.hal_url,
             description="\n".join(description_lines),
-            color=STATUS_COLORS.get(summary.space, STATUS_COLORS["Unknown"]),
+            color=STATUS_COLORS[status_key],
         )
         if image_bytes is not None:
             embed.set_image(url=f"attachment://{STATUS_IMAGE_FILENAME}")
