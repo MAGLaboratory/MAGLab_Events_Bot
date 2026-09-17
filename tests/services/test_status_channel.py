@@ -239,7 +239,7 @@ def test_closed_channel_name_reports_recent_motion_as_active():
         )
     )
 
-    assert channel.name == "🔴・space-closed-but-active"
+    assert channel.name == "🟡・space-closed-but-active"
 
 
 def test_unavailable_status_uses_unknown_channel_name():

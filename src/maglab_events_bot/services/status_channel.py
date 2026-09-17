@@ -21,7 +21,7 @@ STATUS_MESSAGE_MARKER = "MAGLab live status"
 STATUS_IMAGE_FILENAME = "maglab-status.png"
 STATUS_CHANNEL_NAMES = {
     "Open": "🟢・space-open",
-    "ClosedActive": "🔴・space-closed-but-active",
+    "ClosedActive": "🟡・space-closed-but-active",
     "ClosedInactive": "🔴・space-closed-and-inactive",
     "Unknown": "⚪・space-status-unknown",
 }
