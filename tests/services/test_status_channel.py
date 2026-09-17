@@ -216,7 +216,7 @@ def test_changed_synoptic_state_edits_message_and_marks_closed_inactive():
     message = channel.sent[0][0]
     assert len(channel.sent) == 1
     assert len(message.edits) == 1
-    assert message.edits[0]["embed"].title == "MAGLab is CLOSED AND INACTIVE"
+    assert message.edits[0]["embed"].title == "MAGLab is CLOSED and INACTIVE"
     assert channel.name == "🔴・space-closed-and-inactive"
 
 
@@ -246,7 +246,7 @@ def test_closed_channel_name_reports_recent_motion_as_active():
     )
 
     assert channel.name == "🟡・space-closed-but-active"
-    assert channel.sent[0][1]["embed"].title == "MAGLab is CLOSED BUT ACTIVE"
+    assert channel.sent[0][1]["embed"].title == "MAGLab is CLOSED but ACTIVE"
     assert channel.sent[0][1]["embed"].color.value == 0xF1C40F
 
 
@@ -299,7 +299,7 @@ def test_message_updates_when_motion_expires_without_image_change(monkeypatch):
     message = channel.sent[0][0]
     assert len(channel.sent) == 1
     assert len(message.edits) == 1
-    assert message.edits[0]["embed"].title == "MAGLab is CLOSED AND INACTIVE"
+    assert message.edits[0]["embed"].title == "MAGLab is CLOSED and INACTIVE"
     assert channel.renames == [
         "🟡・space-closed-but-active",
         "🔴・space-closed-and-inactive",

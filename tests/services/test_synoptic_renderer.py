@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from xml.etree import ElementTree
 
-from maglab_events_bot.services.grafana import GrafanaSample
+from maglab_events_bot.services.grafana import GrafanaSample, last_active_sample_key
 from maglab_events_bot.services.synoptic import (
     SYNOPTIC_FIELDS,
     render_synoptic_svg,
@@ -85,6 +85,35 @@ def test_calendar_override_forces_only_space_status_open():
     assert _text(elements["Space_Openness"]) == "Open"
     assert "SpaceOpen" in _text(elements["Discord-Safe-Area-Summary"])
     assert elements["Front-Door_Closed"].get("visibility") == "visible"
+
+
+def test_closed_space_label_fits_active_and_inactive_on_two_lines():
+    now = datetime.now(timezone.utc)
+    samples = _samples(now, **{"Open Switch": 0, "Office Motion": 0})
+    samples[last_active_sample_key("Office Motion")] = GrafanaSample(
+        value=1,
+        sampled_at=now - timedelta(minutes=5),
+    )
+
+    _, active = _by_id(render_synoptic_svg(samples, now=now))
+
+    assert _text(active["Space_Space"]) == "Space CLOSED"
+    assert active["Space_Closed"].get("style") == "fill:#c62828"
+    assert _text(active["Space_Openness"]) == "but ACTIVE"
+    assert active["Space_Openness"].get("y") == "160"
+    assert "font-size:40px" in active["Space_Openness"].get("style", "")
+    assert "fill:#946200" in active["Space_Openness"].get("style", "")
+
+    no_recent_motion = _samples(now, **{"Open Switch": 0, "Office Motion": 0})
+    _, inactive = _by_id(render_synoptic_svg(no_recent_motion, now=now))
+
+    assert _text(inactive["Space_Space"]) == "Space CLOSED"
+    assert _text(inactive["Space_Openness"]) == "and INACTIVE"
+    assert "fill:#c62828" in inactive["Space_Openness"].get("style", "")
+    assert synoptic_image_state_key(samples, now=now) != synoptic_image_state_key(
+        no_recent_motion,
+        now=now,
+    )
 
 
 def test_render_marks_entire_view_failed_when_latest_sample_is_stale():

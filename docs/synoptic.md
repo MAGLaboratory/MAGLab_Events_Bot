@@ -30,6 +30,7 @@ the display conditions below.
 | Privacy | `Privacy_Switch = 1` masks door and motion activity |
 | Doors | Open when the binary field is `1`; closed when `0` |
 | Motion | Active when the binary field is `1` and its sample is no more than 20 minutes old |
+| Closed activity label | `CLOSED but ACTIVE` when any positive motion sample is within 20 minutes; otherwise `CLOSED and INACTIVE` when motion data is available |
 | Temperatures | Grafana millidegrees Celsius divided by 1000 and rounded to whole degrees |
 | Failure rendering | Unknown status, red failure marks, and `XX°C` temperatures |
 

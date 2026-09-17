@@ -188,13 +188,36 @@ def _render_openness(
     elements: Mapping[str, ElementTree.Element],
     samples: Mapping[str, GrafanaSample],
     tech_bad: bool,
+    privacy_enabled: bool,
     now: datetime,
     space_is_open_override: bool | None,
 ) -> None:
     floor, color, label = _space_state(samples, tech_bad, now, space_is_open_override)
     _set_style(elements, "Space-Floor", "fill", floor)
     _set_style(elements, "Space_Openness", "fill", color)
-    _set_text(elements, "Space_Openness", label)
+    motion_active = _recent_motion_state(samples, tech_bad, privacy_enabled, now)
+    if label == "Closed" and motion_active is not None:
+        space_heading = elements["Space_Space"]
+        space_heading.text = ""
+        next(iter(space_heading)).tail = ""
+        ElementTree.SubElement(
+            space_heading,
+            f"{{{SVG_NAMESPACE}}}tspan",
+            {"id": "Space_Closed", "style": f"fill:{CLOSED_COLOR}"},
+        ).text = " CLOSED"
+        _set_style(
+            elements,
+            "Space_Openness",
+            "fill",
+            "#946200" if motion_active else CLOSED_COLOR,
+        )
+        _set_text(
+            elements,
+            "Space_Openness",
+            "but ACTIVE" if motion_active else "and INACTIVE",
+        )
+    else:
+        _set_text(elements, "Space_Openness", label)
 
 
 def _render_doors(
@@ -438,10 +461,16 @@ def synoptic_image_state_key(
     current_time = now or datetime.now(timezone.utc)
     tech_bad = _is_tech_bad(samples, current_time)
     privacy_enabled = _active_binary(samples, "Privacy_Switch", now=current_time)
+    space_label = _space_state(samples, tech_bad, current_time, space_is_open_override)[2]
     visible_state: list[object] = [
         tech_bad,
         privacy_enabled,
-        _space_state(samples, tech_bad, current_time, space_is_open_override)[2],
+        space_label,
+        (
+            _recent_motion_state(samples, tech_bad, privacy_enabled, current_time)
+            if space_label == "Closed"
+            else None
+        ),
     ]
     visible_state.extend(
         _door_state(samples, field, tech_bad, privacy_enabled)[0] for field in DOORS
@@ -562,6 +591,7 @@ def render_synoptic_svg(
         elements,
         samples,
         tech_bad,
+        privacy_enabled,
         current_time,
         space_is_open_override,
     )

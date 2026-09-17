@@ -27,8 +27,8 @@ STATUS_CHANNEL_NAMES = {
 }
 STATUS_TITLES = {
     "Open": "MAGLab is OPEN",
-    "ClosedActive": "MAGLab is CLOSED BUT ACTIVE",
-    "ClosedInactive": "MAGLab is CLOSED AND INACTIVE",
+    "ClosedActive": "MAGLab is CLOSED but ACTIVE",
+    "ClosedInactive": "MAGLab is CLOSED and INACTIVE",
     "Unknown": "MAGLab status is UNKNOWN",
 }
 STATUS_COLORS = {
