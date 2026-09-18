@@ -161,6 +161,12 @@ def _active_binary(
     return coerce_grafana_bool(sample.value) is True
 
 
+def privacy_switch_is_on(samples: Mapping[str, GrafanaSample]) -> bool:
+    """Whether the privacy switch must mask public-facing sensor status."""
+
+    return _active_binary(samples, "Privacy_Switch")
+
+
 def _temperature_text(sample: GrafanaSample | None) -> str:
     if sample is None or not isinstance(sample.value, (int, float)):
         return "XX°C"
@@ -172,9 +178,12 @@ def _temperature_text(sample: GrafanaSample | None) -> str:
 def _space_state(
     samples: Mapping[str, GrafanaSample],
     tech_bad: bool,
+    privacy_enabled: bool,
     now: datetime,
     space_is_open_override: bool | None = None,
 ) -> Tuple[str, str, str]:
+    if privacy_enabled:
+        return "#e0e0d5", CLOSED_COLOR, "Closed"
     if space_is_open_override is True:
         return "#ffffff", OPEN_COLOR, "Open"
     if tech_bad:
@@ -192,7 +201,9 @@ def _render_openness(
     now: datetime,
     space_is_open_override: bool | None,
 ) -> None:
-    floor, color, label = _space_state(samples, tech_bad, now, space_is_open_override)
+    floor, color, label = _space_state(
+        samples, tech_bad, privacy_enabled, now, space_is_open_override
+    )
     _set_style(elements, "Space-Floor", "fill", floor)
     _set_style(elements, "Space_Openness", "fill", color)
     motion_active = _recent_motion_state(samples, tech_bad, privacy_enabled, now)
@@ -233,12 +244,13 @@ def _render_doors(
             open_ids = (f"{prefix}_Open-0", f"{prefix}_Open-1")
         else:
             open_ids = (f"{prefix}_Open",)
+        failure_visible = tech_bad and not privacy_enabled
         for open_id in open_ids:
-            _set_visibility(elements, open_id, not tech_bad and is_open)
+            _set_visibility(elements, open_id, not failure_visible and is_open)
             _set_style(elements, open_id, "stroke", OPEN_COLOR)
-        _set_visibility(elements, f"{prefix}_Closed", not tech_bad and not is_open)
+        _set_visibility(elements, f"{prefix}_Closed", not failure_visible and not is_open)
         _set_style(elements, f"{prefix}_Closed", "stroke", CLOSED_COLOR)
-        _set_visibility(elements, f"{prefix}_Fail", tech_bad)
+        _set_visibility(elements, f"{prefix}_Fail", failure_visible)
 
 
 def _render_motion(
@@ -255,13 +267,14 @@ def _render_motion(
             MOTION_ACTIVE_MINUTES,
             now,
         )
-        _set_visibility(elements, f"{prefix}-Motion_Motion", not tech_bad and active)
-        _set_visibility(elements, f"{prefix}-Motion_Fail", tech_bad)
+        failure_visible = tech_bad and not privacy_enabled
+        _set_visibility(elements, f"{prefix}-Motion_Motion", not failure_visible and active)
+        _set_visibility(elements, f"{prefix}-Motion_Fail", failure_visible)
         _set_style(
             elements,
             f"{prefix}-Motion_Enclosure",
             "stroke",
-            "#ff0000" if tech_bad else "#000000",
+            "#ff0000" if failure_visible else "#000000",
         )
 
 
@@ -359,9 +372,11 @@ def _door_state(
     tech_bad: bool,
     privacy_enabled: bool,
 ) -> Tuple[str, str]:
+    if privacy_enabled:
+        return "Closed", CLOSED_COLOR
     if tech_bad:
         return "Unknown", UNKNOWN_COLOR
-    if not privacy_enabled and _active_binary(samples, field):
+    if _active_binary(samples, field):
         return "Open", OPEN_COLOR
     return "Closed", CLOSED_COLOR
 
@@ -388,7 +403,7 @@ def _last_motion_text(
     privacy_enabled: bool,
 ) -> str:
     if privacy_enabled:
-        return "Unavailable"
+        return "No motion"
     motion_samples = [
         sample
         for field in MOTION_SENSORS
@@ -406,7 +421,9 @@ def _recent_motion_state(
     privacy_enabled: bool,
     now: datetime,
 ) -> bool | None:
-    if tech_bad or privacy_enabled:
+    if privacy_enabled:
+        return False
+    if tech_bad:
         return None
     return any(
         (sample := samples.get(last_active_sample_key(field))) is not None
@@ -425,10 +442,12 @@ def get_synoptic_status_summary(
 
     current_time = now or datetime.now(timezone.utc)
     tech_bad = _is_tech_bad(samples, current_time)
-    privacy_enabled = _active_binary(samples, "Privacy_Switch", now=current_time)
+    privacy_enabled = privacy_switch_is_on(samples)
     updated_date, updated_time = _last_updated_text(samples)
     return SynopticStatusSummary(
-        space=_space_state(samples, tech_bad, current_time, space_is_open_override)[2],
+        space=_space_state(
+            samples, tech_bad, privacy_enabled, current_time, space_is_open_override
+        )[2],
         front_door=_door_state(samples, "Front Door", tech_bad, privacy_enabled)[0],
         pod_bay_door=_door_state(samples, "Pod Bay Door", tech_bad, privacy_enabled)[0],
         temperatures=tuple(
@@ -460,8 +479,10 @@ def synoptic_image_state_key(
 
     current_time = now or datetime.now(timezone.utc)
     tech_bad = _is_tech_bad(samples, current_time)
-    privacy_enabled = _active_binary(samples, "Privacy_Switch", now=current_time)
-    space_label = _space_state(samples, tech_bad, current_time, space_is_open_override)[2]
+    privacy_enabled = privacy_switch_is_on(samples)
+    space_label = _space_state(
+        samples, tech_bad, privacy_enabled, current_time, space_is_open_override
+    )[2]
     visible_state: list[object] = [
         tech_bad,
         privacy_enabled,
@@ -507,6 +528,7 @@ def _append_safe_area_summary(
     floor_color, space_color, space_label = _space_state(
         samples,
         tech_bad,
+        privacy_enabled,
         now,
         space_is_open_override,
     )
@@ -585,7 +607,7 @@ def render_synoptic_svg(
 
     current_time = now or datetime.now(timezone.utc)
     tech_bad = _is_tech_bad(samples, current_time)
-    privacy_enabled = _active_binary(samples, "Privacy_Switch", now=current_time)
+    privacy_enabled = privacy_switch_is_on(samples)
 
     _render_openness(
         elements,

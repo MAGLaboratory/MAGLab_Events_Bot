@@ -29,6 +29,7 @@ from maglab_events_bot.services.status_channel import StatusChannelReconciler
 from maglab_events_bot.services.synoptic import (
     MOTION_SENSORS,
     SYNOPTIC_FIELDS,
+    privacy_switch_is_on,
     synoptic_image_state_key,
 )
 from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
@@ -142,12 +143,16 @@ class OpenStatusCog(commands.Cog):
             self.settings.grafana_open_switch_field,
             self.settings.grafana_max_sample_age_minutes,
         )
+        privacy_enabled = privacy_switch_is_on(grafana_samples or {})
+        if privacy_enabled:
+            grafana_is_open = False
         calendar_forces_space_open = await has_active_non_fragment_event(
             guild,
             fragment=self.we_are_fragment,
             excluded_names=REMOTE_ONLY_EVENT_NAMES,
             events=discord_events,
         )
+        calendar_forces_space_open = calendar_forces_space_open and not privacy_enabled
         image_bytes = await get_synoptic_image_bytes_async(
             grafana_samples or {},
             space_is_open_override=True if calendar_forces_space_open else None,

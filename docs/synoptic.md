@@ -27,7 +27,7 @@ the display conditions below.
 | --- | --- |
 | Whole view | Technical failure when the newest sensor update is older than 15 minutes |
 | Space status | Open when `Open Switch` is `1` and recent, or while an in-person calendar event is active |
-| Privacy | `Privacy_Switch = 1` masks door and motion activity |
+| Privacy | `Privacy_Switch = 1` takes precedence over the open switch and calendar events: public-facing status is closed and inactive, doors are closed, and motion is hidden |
 | Doors | Open when the binary field is `1`; closed when `0` |
 | Motion | Active when the binary field is `1` and its sample is no more than 20 minutes old |
 | Closed activity label | `CLOSED but ACTIVE` when any positive motion sample is within 20 minutes; otherwise `CLOSED and INACTIVE` when motion data is available |

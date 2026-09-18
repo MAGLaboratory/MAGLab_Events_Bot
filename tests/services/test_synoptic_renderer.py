@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 from maglab_events_bot.services.grafana import GrafanaSample, last_active_sample_key
 from maglab_events_bot.services.synoptic import (
     SYNOPTIC_FIELDS,
+    get_synoptic_status_summary,
     render_synoptic_svg,
     synoptic_image_state_key,
 )
@@ -63,12 +64,48 @@ def test_render_applies_open_door_motion_and_temperature_conditions():
 
 def test_render_privacy_masks_door_and_motion_activity():
     now = datetime.now(timezone.utc)
+    samples = _samples(
+        now,
+        Privacy_Switch=1,
+        **{"Open Switch": 1, "Front Door": 1, "Pod Bay Door": 1, "Office Motion": 1},
+    )
+    samples[last_active_sample_key("Office Motion")] = GrafanaSample(value=1, sampled_at=now)
 
-    _, elements = _by_id(render_synoptic_svg(_samples(now, Privacy_Switch=1), now=now))
+    svg = render_synoptic_svg(samples, now=now, space_is_open_override=True)
+    _, elements = _by_id(svg)
 
+    assert _text(elements["Space_Space"]) == "Space CLOSED"
+    assert _text(elements["Space_Openness"]) == "and INACTIVE"
+    assert "fill:#e0e0d5" in elements["Space-Floor"].get("style", "")
     assert elements["Front-Door_Open"].get("visibility") == "hidden"
     assert elements["Front-Door_Closed"].get("visibility") == "visible"
+    assert elements["Pod-Bay-Door_Open-0"].get("visibility") == "hidden"
+    assert elements["Pod-Bay-Door_Closed"].get("visibility") == "visible"
     assert elements["Office-Motion_Motion"].get("visibility") == "hidden"
+    assert "SpaceClosedPod Bay DoorClosedFront DoorClosed" in _text(
+        elements["Discord-Safe-Area-Summary"]
+    )
+    assert "privacy" not in svg.decode().casefold()
+
+
+def test_privacy_still_renders_closed_when_other_samples_are_stale():
+    now = datetime.now(timezone.utc)
+    samples = _samples(now - timedelta(minutes=16), Privacy_Switch=1)
+
+    _, elements = _by_id(render_synoptic_svg(samples, now=now))
+    summary = get_synoptic_status_summary(samples, now=now, space_is_open_override=True)
+
+    assert _text(elements["Space_Openness"]) == "and INACTIVE"
+    assert elements["Front-Door_Closed"].get("visibility") == "visible"
+    assert elements["Front-Door_Fail"].get("visibility") == "hidden"
+    assert elements["Office-Motion_Fail"].get("visibility") == "hidden"
+    assert (summary.space, summary.front_door, summary.pod_bay_door) == (
+        "Closed",
+        "Closed",
+        "Closed",
+    )
+    assert summary.motion_active is False
+    assert summary.last_motion == "No motion"
 
 
 def test_calendar_override_forces_only_space_status_open():

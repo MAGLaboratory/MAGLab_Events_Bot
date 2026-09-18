@@ -15,13 +15,10 @@ from maglab_events_bot.config import get_settings
 from maglab_events_bot.models.events import CalendarEvent, CancelledCalendarEvent
 from maglab_events_bot.services.calendar import CalendarFetcher
 from maglab_events_bot.services.discord_api import (
-    SynopticImageCache,
     apply_uid_marker,
-    enforce_single_synoptic_image,
     find_matching_discord_event,
     prune_orphaned_events,
 )
-from maglab_events_bot.tasks.synoptic import get_synoptic_image_bytes_async
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +33,6 @@ class CalendarSyncCog(commands.Cog):
         self.interval_hours = self.settings.calendar_sync_interval_hours
         self.allow_fragments = ("We are",)
         self.fetcher = CalendarFetcher()
-        if not hasattr(bot, "synoptic_cache"):
-            bot.synoptic_cache = SynopticImageCache()  # type: ignore[attr-defined]
-        self._synoptic_cache = bot.synoptic_cache  # type: ignore[attr-defined]
         if not hasattr(bot, "reconciliation_lock"):
             bot.reconciliation_lock = asyncio.Lock()  # type: ignore[attr-defined]
         self._reconciliation_lock = bot.reconciliation_lock  # type: ignore[attr-defined]
@@ -99,21 +93,12 @@ class CalendarSyncCog(commands.Cog):
 
         allowed_uids = {event.uid for event in events} | {event.instance_uid for event in events}
         calendar_keys = self._build_calendar_keys(events)
-        existing_events = await prune_orphaned_events(
+        await prune_orphaned_events(
             guild,
             calendar_keys,
             allowed_uids=allowed_uids,
             timezone_name=self.settings.timezone,
             allow_fragments=self.allow_fragments,
-            events=existing_events,
-        )
-
-        image_bytes = await get_synoptic_image_bytes_async()
-        await enforce_single_synoptic_image(
-            guild,
-            image_bytes,
-            self.settings.timezone,
-            cache=self._synoptic_cache,
             events=existing_events,
         )
 

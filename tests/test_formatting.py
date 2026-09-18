@@ -19,6 +19,21 @@ def test_format_hal_sensor_table_outputs_table() -> None:
     assert "```" in result
 
 
+def test_format_hal_sensor_table_hides_privacy_sensor() -> None:
+    result = format_hal_sensor_table(
+        status_text="We are OPEN",
+        sensors=[
+            HalSensorReading(name="Privacy Switch", status="On", last_update_display="Just now"),
+            HalSensorReading(name="Shop Motion", status="No motion", last_update_display="Just now"),
+        ],
+        scraped_at_display="2026-09-17 10:00",
+        source_url="https://example.com",
+    )
+
+    assert "privacy" not in result.casefold()
+    assert "Shop Motion" in result
+
+
 def test_description_cleaning_strips_markup() -> None:
     dirty = "<b>Hello</b> &amp; welcome"
     cleaned = clean_description(dirty)

@@ -22,6 +22,7 @@ def format_hal_sensor_table(
     sensor_rows = [
         {"Sensor": sensor.name, "Status": sensor.status, "Last Update": sensor.last_update_display}
         for sensor in sensors
+        if "privacy" not in sensor.name.casefold()
     ]
     table_string = "No sensor data available."
     if sensor_rows:

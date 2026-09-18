@@ -267,6 +267,41 @@ def test_unavailable_status_uses_unknown_channel_name():
     assert channel.sent[0][1]["embed"].title == "MAGLab status is UNKNOWN"
 
 
+def test_privacy_forces_closed_inactive_dashboard_and_hides_motion():
+    bot = StubBot()
+    channel = StubChannel(bot.user.id)
+    reconciler = StatusChannelReconciler(
+        bot,
+        channel_id=123,
+        message_id=None,
+        rename_channel=True,
+        hal_url="https://www.maglaboratory.org/hal",
+    )
+    samples = _samples(**{"Privacy_Switch": 1, "Front Door": 1, "Pod Bay Door": 1})
+    samples[last_active_sample_key("Shop Motion")] = GrafanaSample(
+        value=1,
+        sampled_at=datetime.now(timezone.utc),
+    )
+
+    asyncio.run(
+        reconciler.reconcile(
+            StubGuild(channel),
+            samples,
+            b"png",
+            synoptic_image_state_key(samples, space_is_open_override=True),
+            space_is_open_override=True,
+        )
+    )
+
+    embed = channel.sent[0][1]["embed"]
+    assert channel.name == "🔴・space-closed-and-inactive"
+    assert embed.title == "MAGLab is CLOSED and INACTIVE"
+    assert "Pod Bay Door: **Closed**" in embed.description
+    assert "Front Door: **Closed**" in embed.description
+    assert "Last Motion: **No motion**" in embed.description
+    assert "privacy" not in f"{channel.name} {embed.title} {embed.description}".casefold()
+
+
 def test_message_updates_when_motion_expires_without_image_change(monkeypatch):
     bot = StubBot()
     channel = StubChannel(bot.user.id)

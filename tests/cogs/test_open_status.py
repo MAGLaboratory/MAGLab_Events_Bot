@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 
 import pytest
 
@@ -7,6 +8,7 @@ import maglab_events_bot.config as config_module
 from maglab_events_bot.cogs.open_status import OpenStatusCog
 from maglab_events_bot.config import get_settings
 from maglab_events_bot.services.discord_api import SynopticImageCache
+from maglab_events_bot.services.grafana import GrafanaSample
 
 
 class DummySession:
@@ -196,3 +198,46 @@ def test_active_calendar_event_overrides_closed_switch_for_banner(monkeypatch):
 
     assert rendered_with_override
     assert bot.guild.fetch_count == 1
+
+
+def test_privacy_closes_open_event_and_suppresses_calendar_override(monkeypatch):
+    bot = PollingBot()
+    cog = OpenStatusCog(bot=bot)
+    cog._http_client = DummySession()  # type: ignore[assignment]
+    samples = {"Privacy_Switch": GrafanaSample(1, datetime.now(timezone.utc))}
+    deleted = False
+
+    async def fake_grafana(**_kwargs):
+        return samples
+
+    async def fake_active_event(*_args, **_kwargs):
+        return True
+
+    async def fake_image(_samples, *, space_is_open_override, serve_cached_on_failure):
+        assert space_is_open_override is None
+        assert serve_cached_on_failure is False
+        return b"image"
+
+    async def fake_hal(*_args, **_kwargs):
+        raise AssertionError("Privacy must not create an open-status event")
+
+    async def fake_delete(_guild, fragment, **_kwargs):
+        nonlocal deleted
+        assert fragment == "We are"
+        deleted = True
+        return []
+
+    async def fake_enforce(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(open_status_module, "fetch_grafana_sensor_samples", fake_grafana)
+    monkeypatch.setattr(open_status_module, "get_grafana_open_status", lambda *_args: True)
+    monkeypatch.setattr(open_status_module, "has_active_non_fragment_event", fake_active_event)
+    monkeypatch.setattr(open_status_module, "get_synoptic_image_bytes_async", fake_image)
+    monkeypatch.setattr(open_status_module, "fetch_hal_status", fake_hal)
+    monkeypatch.setattr(open_status_module, "delete_events_by_name_fragment", fake_delete)
+    monkeypatch.setattr(open_status_module, "enforce_single_synoptic_image", fake_enforce)
+
+    asyncio.run(cog.poll_hal_status.coro(cog))
+
+    assert deleted

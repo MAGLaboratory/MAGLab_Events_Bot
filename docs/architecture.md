@@ -2,7 +2,7 @@
 
 ## Components
 - **Discord Bot (`maglab_events_bot.bot`)** – central entry point that wires Discord intents and loads cogs.
-- **Open Status Cog (`maglab_events_bot.cogs.open_status`)** – polls Grafana's live open switch and keeps the "We are" scheduled event current.
+- **Open Status Cog (`maglab_events_bot.cogs.open_status`)** – polls Grafana's live sensors and owns the public status, channel name, and synoptic event image.
 - **Calendar Sync Cog (`maglab_events_bot.cogs.calendar_sync`)** – reconciles Google Calendar ICS feeds with Discord scheduled events.
 - **Services Layer** – pure functions/classes for external integrations:
   - `services.hal` scrapes HAL status and formats sensor readings.
@@ -17,7 +17,7 @@
 1. Background loop fires (open status every few minutes, calendar hourly).
 2. Cohesive service fetches external data (Grafana, HAL sensor details, or ICS feed).
 3. Models layer normalises domain objects (`HalStatus`, `CalendarEvent`).
-4. Discord service applies changes: creates/updates/deletes events, enforces single synoptic image policy.
+4. Discord service applies changes: creates/updates/deletes events; only the live Grafana poll enforces the single synoptic image policy, so calendar sync cannot re-upload a stale image.
 5. Logging is centralised and emitted via rotating file + console.
 
 ## Extension Points
