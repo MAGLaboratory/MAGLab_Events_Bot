@@ -89,7 +89,6 @@ class SynopticStatusSummary:
     updated_date: str
     updated_time: str
     last_motion: str
-    motion_active: bool | None
 
 
 def _elements_by_id(root: ElementTree.Element) -> dict[str, ElementTree.Element]:
@@ -206,29 +205,7 @@ def _render_openness(
     )
     _set_style(elements, "Space-Floor", "fill", floor)
     _set_style(elements, "Space_Openness", "fill", color)
-    motion_active = _recent_motion_state(samples, tech_bad, privacy_enabled, now)
-    if label == "Closed" and motion_active is not None:
-        space_heading = elements["Space_Space"]
-        space_heading.text = ""
-        next(iter(space_heading)).tail = ""
-        ElementTree.SubElement(
-            space_heading,
-            f"{{{SVG_NAMESPACE}}}tspan",
-            {"id": "Space_Closed", "style": f"fill:{CLOSED_COLOR}"},
-        ).text = " CLOSED"
-        _set_style(
-            elements,
-            "Space_Openness",
-            "fill",
-            "#946200" if motion_active else CLOSED_COLOR,
-        )
-        _set_text(
-            elements,
-            "Space_Openness",
-            "but ACTIVE" if motion_active else "and INACTIVE",
-        )
-    else:
-        _set_text(elements, "Space_Openness", label)
+    _set_text(elements, "Space_Openness", label)
 
 
 def _render_doors(
@@ -415,23 +392,6 @@ def _last_motion_text(
     return _formatted_sample_time(latest.sampled_at)
 
 
-def _recent_motion_state(
-    samples: Mapping[str, GrafanaSample],
-    tech_bad: bool,
-    privacy_enabled: bool,
-    now: datetime,
-) -> bool | None:
-    if privacy_enabled:
-        return False
-    if tech_bad:
-        return None
-    return any(
-        (sample := samples.get(last_active_sample_key(field))) is not None
-        and sample_is_fresh(sample.sampled_at, MOTION_ACTIVE_MINUTES, now)
-        for field in MOTION_SENSORS
-    )
-
-
 def get_synoptic_status_summary(
     samples: Mapping[str, GrafanaSample],
     *,
@@ -460,12 +420,6 @@ def get_synoptic_status_summary(
         updated_date=updated_date,
         updated_time=updated_time,
         last_motion=_last_motion_text(samples, privacy_enabled),
-        motion_active=_recent_motion_state(
-            samples,
-            tech_bad,
-            privacy_enabled,
-            current_time,
-        ),
     )
 
 
@@ -487,11 +441,6 @@ def synoptic_image_state_key(
         tech_bad,
         privacy_enabled,
         space_label,
-        (
-            _recent_motion_state(samples, tech_bad, privacy_enabled, current_time)
-            if space_label == "Closed"
-            else None
-        ),
     ]
     visible_state.extend(
         _door_state(samples, field, tech_bad, privacy_enabled)[0] for field in DOORS

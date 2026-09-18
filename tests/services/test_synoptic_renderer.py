@@ -74,8 +74,8 @@ def test_render_privacy_masks_door_and_motion_activity():
     svg = render_synoptic_svg(samples, now=now, space_is_open_override=True)
     _, elements = _by_id(svg)
 
-    assert _text(elements["Space_Space"]) == "Space CLOSED"
-    assert _text(elements["Space_Openness"]) == "and INACTIVE"
+    assert _text(elements["Space_Space"]) == "Space"
+    assert _text(elements["Space_Openness"]) == "Closed"
     assert "fill:#e0e0d5" in elements["Space-Floor"].get("style", "")
     assert elements["Front-Door_Open"].get("visibility") == "hidden"
     assert elements["Front-Door_Closed"].get("visibility") == "visible"
@@ -95,7 +95,7 @@ def test_privacy_still_renders_closed_when_other_samples_are_stale():
     _, elements = _by_id(render_synoptic_svg(samples, now=now))
     summary = get_synoptic_status_summary(samples, now=now, space_is_open_override=True)
 
-    assert _text(elements["Space_Openness"]) == "and INACTIVE"
+    assert _text(elements["Space_Openness"]) == "Closed"
     assert elements["Front-Door_Closed"].get("visibility") == "visible"
     assert elements["Front-Door_Fail"].get("visibility") == "hidden"
     assert elements["Office-Motion_Fail"].get("visibility") == "hidden"
@@ -104,7 +104,6 @@ def test_privacy_still_renders_closed_when_other_samples_are_stale():
         "Closed",
         "Closed",
     )
-    assert summary.motion_active is False
     assert summary.last_motion == "No motion"
 
 
@@ -124,7 +123,7 @@ def test_calendar_override_forces_only_space_status_open():
     assert elements["Front-Door_Closed"].get("visibility") == "visible"
 
 
-def test_closed_space_label_fits_active_and_inactive_on_two_lines():
+def test_closed_space_label_is_unchanged_by_recent_motion():
     now = datetime.now(timezone.utc)
     samples = _samples(now, **{"Open Switch": 0, "Office Motion": 0})
     samples[last_active_sample_key("Office Motion")] = GrafanaSample(
@@ -134,20 +133,18 @@ def test_closed_space_label_fits_active_and_inactive_on_two_lines():
 
     _, active = _by_id(render_synoptic_svg(samples, now=now))
 
-    assert _text(active["Space_Space"]) == "Space CLOSED"
-    assert active["Space_Closed"].get("style") == "fill:#c62828"
-    assert _text(active["Space_Openness"]) == "but ACTIVE"
+    assert _text(active["Space_Space"]) == "Space"
+    assert _text(active["Space_Openness"]) == "Closed"
     assert active["Space_Openness"].get("y") == "160"
     assert "font-size:40px" in active["Space_Openness"].get("style", "")
-    assert "fill:#946200" in active["Space_Openness"].get("style", "")
+    assert "fill:#c62828" in active["Space_Openness"].get("style", "")
 
     no_recent_motion = _samples(now, **{"Open Switch": 0, "Office Motion": 0})
     _, inactive = _by_id(render_synoptic_svg(no_recent_motion, now=now))
 
-    assert _text(inactive["Space_Space"]) == "Space CLOSED"
-    assert _text(inactive["Space_Openness"]) == "and INACTIVE"
-    assert "fill:#c62828" in inactive["Space_Openness"].get("style", "")
-    assert synoptic_image_state_key(samples, now=now) != synoptic_image_state_key(
+    assert _text(inactive["Space_Space"]) == "Space"
+    assert _text(inactive["Space_Openness"]) == "Closed"
+    assert synoptic_image_state_key(samples, now=now) == synoptic_image_state_key(
         no_recent_motion,
         now=now,
     )

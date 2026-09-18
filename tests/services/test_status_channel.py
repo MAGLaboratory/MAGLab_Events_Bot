@@ -1,14 +1,11 @@
 import asyncio
-from dataclasses import replace
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from maglab_events_bot.services import status_channel as status_channel_module
 from maglab_events_bot.services.grafana import GrafanaSample, last_active_sample_key
 from maglab_events_bot.services.status_channel import StatusChannelReconciler
 from maglab_events_bot.services.synoptic import (
     SYNOPTIC_FIELDS,
-    get_synoptic_status_summary,
     synoptic_image_state_key,
 )
 
@@ -184,7 +181,7 @@ def test_dashboard_formats_latest_general_motion_without_room_name():
     assert "Office" not in description
 
 
-def test_changed_synoptic_state_edits_message_and_marks_closed_inactive():
+def test_changed_synoptic_state_edits_message_and_marks_closed():
     bot = StubBot()
     channel = StubChannel(bot.user.id)
     reconciler = StatusChannelReconciler(
@@ -216,11 +213,11 @@ def test_changed_synoptic_state_edits_message_and_marks_closed_inactive():
     message = channel.sent[0][0]
     assert len(channel.sent) == 1
     assert len(message.edits) == 1
-    assert message.edits[0]["embed"].title == "MAGLab is CLOSED and INACTIVE"
-    assert channel.name == "🔴・space-closed-and-inactive"
+    assert message.edits[0]["embed"].title == "MAGLab is CLOSED"
+    assert channel.name == "🔴・space-closed"
 
 
-def test_closed_channel_name_reports_recent_motion_as_active():
+def test_recent_motion_does_not_change_closed_status():
     bot = StubBot()
     channel = StubChannel(bot.user.id)
     reconciler = StatusChannelReconciler(
@@ -245,9 +242,9 @@ def test_closed_channel_name_reports_recent_motion_as_active():
         )
     )
 
-    assert channel.name == "🟡・space-closed-but-active"
-    assert channel.sent[0][1]["embed"].title == "MAGLab is CLOSED but ACTIVE"
-    assert channel.sent[0][1]["embed"].color.value == 0xF1C40F
+    assert channel.name == "🔴・space-closed"
+    assert channel.sent[0][1]["embed"].title == "MAGLab is CLOSED"
+    assert channel.sent[0][1]["embed"].color.value == 0xC62828
 
 
 def test_unavailable_status_uses_unknown_channel_name():
@@ -267,7 +264,7 @@ def test_unavailable_status_uses_unknown_channel_name():
     assert channel.sent[0][1]["embed"].title == "MAGLab status is UNKNOWN"
 
 
-def test_privacy_forces_closed_inactive_dashboard_and_hides_motion():
+def test_privacy_forces_closed_dashboard_and_hides_motion():
     bot = StubBot()
     channel = StubChannel(bot.user.id)
     reconciler = StatusChannelReconciler(
@@ -294,51 +291,12 @@ def test_privacy_forces_closed_inactive_dashboard_and_hides_motion():
     )
 
     embed = channel.sent[0][1]["embed"]
-    assert channel.name == "🔴・space-closed-and-inactive"
-    assert embed.title == "MAGLab is CLOSED and INACTIVE"
+    assert channel.name == "🔴・space-closed"
+    assert embed.title == "MAGLab is CLOSED"
     assert "Pod Bay Door: **Closed**" in embed.description
     assert "Front Door: **Closed**" in embed.description
     assert "Last Motion: **No motion**" in embed.description
     assert "privacy" not in f"{channel.name} {embed.title} {embed.description}".casefold()
-
-
-def test_message_updates_when_motion_expires_without_image_change(monkeypatch):
-    bot = StubBot()
-    channel = StubChannel(bot.user.id)
-    reconciler = StatusChannelReconciler(
-        bot,
-        channel_id=123,
-        message_id=None,
-        rename_channel=True,
-        hal_url="https://www.maglaboratory.org/hal",
-    )
-    samples = _samples(**{"Open Switch": 0})
-    active_summary = replace(
-        get_synoptic_status_summary(samples),
-        motion_active=True,
-        last_motion="9/16/26 1:00 PM PDT",
-    )
-    summaries = iter((active_summary, replace(active_summary, motion_active=False)))
-    monkeypatch.setattr(
-        status_channel_module,
-        "get_synoptic_status_summary",
-        lambda *_args, **_kwargs: next(summaries),
-    )
-
-    async def run():
-        await reconciler.reconcile(StubGuild(channel), samples, b"png", "same-image")
-        await reconciler.reconcile(StubGuild(channel), samples, b"png", "same-image")
-
-    asyncio.run(run())
-
-    message = channel.sent[0][0]
-    assert len(channel.sent) == 1
-    assert len(message.edits) == 1
-    assert message.edits[0]["embed"].title == "MAGLab is CLOSED and INACTIVE"
-    assert channel.renames == [
-        "🟡・space-closed-but-active",
-        "🔴・space-closed-and-inactive",
-    ]
 
 
 def test_disabled_reconciler_does_not_touch_discord():

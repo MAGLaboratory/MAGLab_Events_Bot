@@ -21,32 +21,23 @@ STATUS_MESSAGE_MARKER = "MAGLab live status"
 STATUS_IMAGE_FILENAME = "maglab-status.png"
 STATUS_CHANNEL_NAMES = {
     "Open": "🟢・space-open",
-    "ClosedActive": "🟡・space-closed-but-active",
-    "ClosedInactive": "🔴・space-closed-and-inactive",
+    "Closed": "🔴・space-closed",
     "Unknown": "⚪・space-status-unknown",
 }
 STATUS_TITLES = {
     "Open": "MAGLab is OPEN",
-    "ClosedActive": "MAGLab is CLOSED but ACTIVE",
-    "ClosedInactive": "MAGLab is CLOSED and INACTIVE",
+    "Closed": "MAGLab is CLOSED",
     "Unknown": "MAGLab status is UNKNOWN",
 }
 STATUS_COLORS = {
     "Open": 0x2ECC40,
-    "ClosedActive": 0xF1C40F,
-    "ClosedInactive": 0xC62828,
+    "Closed": 0xC62828,
     "Unknown": 0x555555,
 }
 
 
 def _status_key(summary: SynopticStatusSummary) -> str:
-    if summary.space == "Open":
-        return "Open"
-    if summary.space == "Closed" and summary.motion_active is True:
-        return "ClosedActive"
-    if summary.space == "Closed" and summary.motion_active is False:
-        return "ClosedInactive"
-    return "Unknown"
+    return summary.space if summary.space in {"Open", "Closed"} else "Unknown"
 
 
 class StatusChannelReconciler:
