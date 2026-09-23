@@ -161,9 +161,8 @@ def test_active_calendar_event_overrides_closed_switch_for_banner(monkeypatch):
     async def fake_grafana(**_kwargs):
         return {}
 
-    async def fake_active_event(_guild, *, fragment, excluded_names, events):
+    async def fake_active_event(_guild, *, fragment, events):
         assert fragment == "We are"
-        assert excluded_names == open_status_module.REMOTE_ONLY_EVENT_NAMES
         assert events == []
         return True
 

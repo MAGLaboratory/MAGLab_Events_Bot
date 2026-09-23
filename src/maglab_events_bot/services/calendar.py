@@ -41,11 +41,13 @@ class CalendarFetcher:
         *,
         sync_horizon_days: int,
         timezone_name: str,
+        window_start: Optional[pendulum.DateTime] = None,
+        strict: bool = False,
     ) -> Tuple[List[CalendarEvent], List[CancelledCalendarEvent]]:
         events: List[CalendarEvent] = []
         cancellations: List[CancelledCalendarEvent] = []
 
-        now_utc = pendulum.now("UTC")
+        now_utc = window_start.in_timezone("UTC") if window_start else pendulum.now("UTC")
         future_window = now_utc.add(days=sync_horizon_days)
         tz = pendulum.timezone(timezone_name)
 
@@ -65,8 +67,12 @@ class CalendarFetcher:
                 summary["canceled"] += len(feed_cancellations)
             except requests.RequestException as exc:
                 logger.warning("calendar.fetch_error", extra={"url": url, "error": str(exc)})
+                if strict:
+                    raise
             except Exception:  # pylint: disable=broad-except
                 logger.exception("calendar.ingest_failure", extra={"url": url})
+                if strict:
+                    raise
         logger.info(
             "calendar.sync_summary",
             extra={
@@ -143,6 +149,15 @@ class CalendarFetcher:
             rrule_field = component.get("rrule")
             if rrule_field:
                 rrule_str = self._adjust_rrule_for_utc(rrule_field.to_ical().decode("utf-8"), start)
+                recurrence_parts = dict(
+                    part.split("=", 1) for part in rrule_str.upper().split(";") if "=" in part
+                )
+                weekly_pattern = (
+                    recurrence_parts.get("FREQ") in {"DAILY", "WEEKLY"}
+                    and recurrence_parts.get("INTERVAL", "1") == "1"
+                    and "COUNT" not in recurrence_parts
+                    and "UNTIL" not in recurrence_parts
+                )
                 try:
                     rule = rrulestr(rrule_str, dtstart=start)
                     occurrences = rule.between(
@@ -268,6 +283,7 @@ class CalendarFetcher:
                                 start_time=ex_start_local.in_timezone("UTC"),
                                 end_time=ex_end_local.in_timezone("UTC"),
                                 location=ex_location,
+                                weekly_pattern=False,
                             )
                         )
                         continue
@@ -294,6 +310,7 @@ class CalendarFetcher:
                             start_time=occ_start.in_timezone("UTC"),
                             end_time=occ_end.in_timezone("UTC"),
                             location=location,
+                            weekly_pattern=weekly_pattern,
                         )
                     )
 
@@ -398,6 +415,7 @@ class CalendarFetcher:
                                     start_time=ex_start_local.in_timezone("UTC"),
                                     end_time=ex_end_local.in_timezone("UTC"),
                                     location=ex_location,
+                                    weekly_pattern=False,
                                 )
                             )
                             continue
@@ -410,6 +428,7 @@ class CalendarFetcher:
                                 start_time=occ_start.in_timezone("UTC"),
                                 end_time=occ_end.in_timezone("UTC"),
                                 location=location,
+                                weekly_pattern=weekly_pattern,
                             )
                         )
             else:

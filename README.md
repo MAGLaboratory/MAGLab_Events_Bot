@@ -5,6 +5,7 @@ Unified Discord bot that keeps MAG Laboratory's scheduled events aligned with re
 - Publishes Grafana's live open-switch status as a rolling "We are" event.
 - Enforces a single synoptic status image across all scheduled events.
 - Optionally maintains a single pinned live-status dashboard in a dedicated channel.
+- Can preview Google Business Profile hours derived from the same calendar feeds.
 
 ![image](https://github.com/user-attachments/assets/d533bfe2-d30d-4550-8d32-40458fe55b72)
 
@@ -74,6 +75,12 @@ poetry run maglab-events-bot health-check
 ```
 
 It pings the HAL page and reads the live Grafana open switch once, failing fast if either is unreachable, unauthorized, or the switch sample is stale. Fix connectivity issues (VPN, `/etc/hosts`, credentials, TLS trust) until this command reports success.
+
+### Business Profile hours preview
+
+Run `poetry run maglab-events-bot preview-business-hours` to inspect a JSON hours plan. Indefinitely repeating daily or weekly events set regular weekly hours on any day. One-off and finite/monthly/alternating-week repeats become date-specific special hours. Events with the word `online` in the title, any title containing `cancel`, and `We are` status events never contribute. The plan covers the next 21 local dates and uses only the configured calendar feeds, never Grafana.
+
+To publish, first obtain approved Business Profile API access and an owner/manager OAuth refresh token with the `business.manage` scope. Set `GB_PROFILE_LOCATION`, `GB_OAUTH_CLIENT_ID`, `GB_OAUTH_CLIENT_SECRET`, and `GB_OAUTH_REFRESH_TOKEN` in `.env`, then run `poetry run maglab-events-bot sync-business-hours --apply`. The command reads existing special hours, preserves entries outside its 21-day window, validates the update with Google, then writes only the regular/special hours fields. It refuses to publish if there are no recurring weekday hours. Run it periodically (for example, daily) only after reviewing the preview output.
 
 ## Development
 - Run all checks: `poetry run nox`

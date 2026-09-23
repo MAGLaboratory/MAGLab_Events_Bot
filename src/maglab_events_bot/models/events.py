@@ -41,6 +41,7 @@ class CalendarEvent:
     start_time: pendulum.DateTime
     end_time: pendulum.DateTime
     location: str
+    weekly_pattern: bool = False
 
     @property
     def instance_uid(self) -> str:

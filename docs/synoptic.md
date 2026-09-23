@@ -38,7 +38,7 @@ stored locally in `data/static/maglab_synoptic_template.svg`, and Python applies
 conditions before rasterizing it. The output is 800×320 pixels (a 5:2 Discord event-banner ratio)
 with a view box selected to retain the full floor plan without stretching it.
 
-The recurring `Public Business Meeting` is remote-only and is excluded from the calendar override;
+Events with the word `online` in the title are remote-only and are excluded from the calendar override;
 during that event the Space status continues to follow the Grafana `Open Switch` exclusively.
 
 ## Discord cropping

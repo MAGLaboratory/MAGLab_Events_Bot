@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import (
     Callable,
-    Collection,
     Coroutine,
     Dict,
     Iterable,
@@ -24,6 +23,7 @@ import discord
 import pendulum
 
 from maglab_events_bot.models.events import CalendarEvent, CancelledCalendarEvent
+from maglab_events_bot.services.event_rules import is_public_in_person_event
 
 logger = logging.getLogger(__name__)
 
@@ -252,19 +252,17 @@ async def has_active_non_fragment_event(
     guild: discord.Guild,
     *,
     fragment: str,
-    excluded_names: Collection[str] = (),
     events: Optional[Sequence[discord.ScheduledEvent]] = None,
 ) -> bool:
     relevant_events = list(events) if events is not None else await fetch_relevant_events(guild)
     now = pendulum.now("UTC")
-    excluded_names_normalized = {name.strip().casefold() for name in excluded_names}
     for event in relevant_events:
         start = _to_utc_datetime(event.start_time)
         end = _to_utc_datetime(event.end_time)
         if start is None or end is None:
             continue
         event_name = (event.name or "").strip()
-        if event_name.casefold() in excluded_names_normalized:
+        if not is_public_in_person_event(event_name):
             continue
         if start <= now <= end and fragment.casefold() not in event_name.casefold():
             logger.info("Active non-fragment event found: '%s'", event.name)

@@ -61,6 +61,7 @@ def test_fetch_events_parses_single_event():
     assert event.location == "MAG Laboratory"
     assert event.start_time == start
     assert event.end_time == end
+    assert event.weekly_pattern is False
 
 
 def test_fetch_events_handles_all_day_and_duration():
@@ -134,6 +135,7 @@ def test_fetch_events_expands_recurring_with_cancellation():
 
     # Expect two events (one cancelled occurrence removed)
     assert len(events) == 2
+    assert all(not event.weekly_pattern for event in events)
     assert len(cancellations) == 1
     cancellation = cancellations[0]
     assert cancellation.uid == "test-recur"
@@ -141,6 +143,33 @@ def test_fetch_events_expands_recurring_with_cancellation():
     assert cancellation.start_time == cancelled_start
     assert cancellation.end_time == cancelled_start.add(hours=1)
     assert cancellation.location == "MAG Laboratory"
+
+
+def test_indefinite_weekly_event_can_define_regular_hours():
+    start = pendulum.now("UTC").add(days=1).replace(second=0, microsecond=0)
+    ics = dedent(
+        f"""
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        BEGIN:VEVENT
+        UID:test-weekly
+        DTSTART:{_format_datetime(start)}
+        DTEND:{_format_datetime(start.add(hours=1))}
+        SUMMARY:Weekly Workshop
+        RRULE:FREQ=WEEKLY
+        END:VEVENT
+        END:VCALENDAR
+        """
+    )
+
+    events, _ = asyncio.run(
+        CalendarFetcher(session=DummySession(ics)).fetch_events(
+            ["dummy://weekly"], sync_horizon_days=15, timezone_name="America/Los_Angeles"
+        )
+    )
+
+    assert events
+    assert all(event.weekly_pattern for event in events)
 
 
 def test_fetch_events_emits_single_event_cancellation():
@@ -240,7 +269,7 @@ def test_fetch_events_uses_exception_start_time():
         DTEND:{_format_datetime(end)}
         SUMMARY:Workshop Night
         LOCATION:MAG Laboratory
-        RRULE:FREQ=DAILY;COUNT=2
+        RRULE:FREQ=WEEKLY
         END:VEVENT
         BEGIN:VEVENT
         UID:test-exception
@@ -258,7 +287,7 @@ def test_fetch_events_uses_exception_start_time():
     events, cancellations = asyncio.run(
         fetcher.fetch_events(
             ["dummy://exception"],
-            sync_horizon_days=7,
+            sync_horizon_days=13,
             timezone_name="America/Los_Angeles",
         )
     )
@@ -269,6 +298,8 @@ def test_fetch_events_uses_exception_start_time():
     moved_event = next(e for e in events if e.start_time == moved_start)
     assert moved_event.end_time == moved_end
     assert moved_event.name == "Workshop Night (Moved)"
+    assert moved_event.weekly_pattern is False
+    assert next(e for e in events if e.start_time != moved_start).weekly_pattern is True
 
 
 def test_fetch_events_includes_events_overlap_window():

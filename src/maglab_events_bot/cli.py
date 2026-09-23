@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import logging
 import sys
 from pathlib import Path
+from typing import cast
 
 import pendulum
 
 from maglab_events_bot.bot import main as run_bot
 from maglab_events_bot.config import get_settings
 from maglab_events_bot.logging import configure_logging
+from maglab_events_bot.services.business_hours import build_business_hours_plan
+from maglab_events_bot.services.business_profile import publish_business_hours
+from maglab_events_bot.services.calendar import CalendarFetcher
 from maglab_events_bot.services.grafana import (
     fetch_grafana_open_status,
     fetch_grafana_sensor_samples,
@@ -42,6 +47,18 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "health-check",
         help="Ping HAL and Grafana once to verify connectivity before running the bot",
+    )
+
+    subparsers.add_parser(
+        "preview-business-hours",
+        help="Preview calendar-derived Google Business Profile hours without publishing",
+    )
+    sync_hours_parser = subparsers.add_parser(
+        "sync-business-hours",
+        help="Preview or publish calendar-derived Google Business Profile hours",
+    )
+    sync_hours_parser.add_argument(
+        "--apply", action="store_true", help="Validate and publish the calculated hours"
     )
 
     return parser
@@ -131,6 +148,57 @@ async def _run_generate_synoptic(output_path: Path) -> int:
     return 0
 
 
+async def _run_preview_business_hours(*, apply: bool = False) -> int:
+    settings = get_settings()
+    if apply and not all(
+        (
+            settings.gb_profile_location,
+            settings.gb_oauth_client_id,
+            settings.gb_oauth_client_secret,
+            settings.gb_oauth_refresh_token,
+        )
+    ):
+        print("Business Profile location and OAuth credentials are required", file=sys.stderr)
+        return 1
+    timezone = pendulum.timezone(settings.timezone)
+    today = pendulum.now(timezone).start_of("day")
+    try:
+        events, _ = await CalendarFetcher().fetch_events(
+            settings.get_ics_urls(),
+            sync_horizon_days=28,
+            timezone_name=settings.timezone,
+            window_start=today,
+            strict=True,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.exception("business_hours.calendar_fetch_failed")
+        return 1
+    plan = build_business_hours_plan(
+        events,
+        timezone_name=settings.timezone,
+        first_date=today.date(),
+        last_date=today.add(days=20).date(),
+    )
+    print(json.dumps(plan.as_location_patch(), indent=2))
+    if apply:
+        try:
+            await asyncio.to_thread(
+                publish_business_hours,
+                plan,
+                first_date=today.date(),
+                last_date=today.add(days=20).date(),
+                location=cast(str, settings.gb_profile_location),
+                client_id=cast(str, settings.gb_oauth_client_id),
+                client_secret=cast(str, settings.gb_oauth_client_secret),
+                refresh_token=cast(str, settings.gb_oauth_refresh_token),
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("business_hours.publish_failed")
+            return 1
+        print("Business Profile hours published")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -144,6 +212,10 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(_run_generate_synoptic(output_path))
     if args.command == "health-check":
         return asyncio.run(_run_health_check())
+    if args.command == "preview-business-hours":
+        return asyncio.run(_run_preview_business_hours())
+    if args.command == "sync-business-hours":
+        return asyncio.run(_run_preview_business_hours(apply=args.apply))
 
     parser.print_help()
     return 1

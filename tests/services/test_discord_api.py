@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 import discord
 import pendulum
+import pytest
 
 from maglab_events_bot.models.events import CalendarEvent
 from maglab_events_bot.services import discord_api
@@ -46,11 +47,21 @@ class StubGuild:
         self.id = guild_id
 
 
-def test_active_event_can_exclude_remote_only_event(monkeypatch):
+@pytest.mark.parametrize(
+    "title",
+    [
+        "[Online] Public Business Meeting",
+        "[ONLINE] Public Business Meeting",
+        "[ online ] Planning Meeting",
+        "Online Public Business Meeting",
+        "Planning Meeting (online)",
+    ],
+)
+def test_online_event_does_not_count_as_active_event(monkeypatch, title):
     now = pendulum.now("UTC")
     remote_event = StubEvent(
         1,
-        "Public Business Meeting",
+        title,
         now.subtract(minutes=10),
         now.add(minutes=50),
     )
@@ -62,17 +73,50 @@ def test_active_event_can_exclude_remote_only_event(monkeypatch):
 
     assert (
         asyncio.run(
+            discord_api.has_active_non_fragment_event(StubGuild(), fragment="We are")
+        )
+        is False
+    )
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "[Cancelled] Open House",
+        "(CANCEL) Open House",
+        "~~canceled~~ Open House",
+        "_CaNcElLeD_ Open House",
+        "Open House - CANCELLED",
+        "Cancellation notice",
+    ],
+)
+def test_cancelled_title_does_not_count_as_active_event(title):
+    now = pendulum.now("UTC")
+    event = StubEvent(1, title, now.subtract(minutes=10), now.add(minutes=50))
+
+    assert (
+        asyncio.run(
             discord_api.has_active_non_fragment_event(
                 StubGuild(),
                 fragment="We are",
-                excluded_names={"public business meeting"},
+                events=[event],
             )
         )
         is False
     )
-    assert (
-        asyncio.run(discord_api.has_active_non_fragment_event(StubGuild(), fragment="We are"))
-        is True
+
+
+def test_cancelled_title_does_not_hide_another_active_event():
+    now = pendulum.now("UTC")
+    canceled = StubEvent(1, "[Cancelled] Open House", now.subtract(minutes=10), now.add(minutes=50))
+    open_event = StubEvent(2, "Workshop", now.subtract(minutes=10), now.add(minutes=50))
+
+    assert asyncio.run(
+        discord_api.has_active_non_fragment_event(
+            StubGuild(),
+            fragment="We are",
+            events=[canceled, open_event],
+        )
     )
 
 

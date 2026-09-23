@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     sync_days: int = Field(7, ge=1, alias="SYNC_DAYS")
     calendar_sync_interval_hours: int = Field(1, ge=1, alias="CALENDAR_SYNC_INTERVAL_HOURS")
 
+    gb_profile_location: Union[str, None] = Field(None, alias="GB_PROFILE_LOCATION")
+    gb_oauth_client_id: Union[str, None] = Field(None, alias="GB_OAUTH_CLIENT_ID")
+    gb_oauth_client_secret: Union[str, None] = Field(None, alias="GB_OAUTH_CLIENT_SECRET")
+    gb_oauth_refresh_token: Union[str, None] = Field(None, alias="GB_OAUTH_REFRESH_TOKEN")
+
     timezone: str = Field("America/Los_Angeles", alias="TIMEZONE")
 
     synoptic_output_path: Path = Field(

@@ -37,7 +37,6 @@ from maglab_events_bot.utils.formatting import format_hal_sensor_table
 from maglab_events_bot.utils.http import build_aiohttp_client
 
 logger = logging.getLogger(__name__)
-REMOTE_ONLY_EVENT_NAMES = frozenset({"Public Business Meeting"})
 
 
 class OpenStatusCog(commands.Cog):
@@ -149,7 +148,6 @@ class OpenStatusCog(commands.Cog):
         calendar_forces_space_open = await has_active_non_fragment_event(
             guild,
             fragment=self.we_are_fragment,
-            excluded_names=REMOTE_ONLY_EVENT_NAMES,
             events=discord_events,
         )
         calendar_forces_space_open = calendar_forces_space_open and not privacy_enabled
