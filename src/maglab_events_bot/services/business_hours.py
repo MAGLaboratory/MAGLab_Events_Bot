@@ -73,53 +73,55 @@ def build_business_hours_plan(
     for event in events:
         if not is_public_in_person_event(event.name):
             continue
-        start = event.start_time.in_timezone(timezone)
-        end = event.end_time.in_timezone(timezone)
-        if end <= start:
+        event_start = event.start_time.in_timezone(timezone)
+        event_end = event.end_time.in_timezone(timezone)
+        if event_end <= event_start:
             continue
-        cursor = start
-        while cursor < end:
+        cursor = event_start
+        while cursor < event_end:
             midnight = cursor.start_of("day").add(days=1)
-            segment_end = min(end, midnight)
-            day = cursor.date()
+            segment_end = min(event_end, midnight)
+            event_day = cursor.date()
             start_minute = cursor.hour * 60 + cursor.minute
-            end_minute = 1440 if segment_end == midnight else segment_end.hour * 60 + segment_end.minute
+            end_minute = (
+                1440 if segment_end == midnight else segment_end.hour * 60 + segment_end.minute
+            )
             if end_minute > start_minute:
                 if event.weekly_pattern:
-                    weekly[day.weekday()].append((start_minute, end_minute))
-                if first_date <= day <= last_date:
-                    actual[day].append((start_minute, end_minute))
+                    weekly[event_day.weekday()].append((start_minute, end_minute))
+                if first_date <= event_day <= last_date:
+                    actual[event_day].append((start_minute, end_minute))
             cursor = segment_end
 
     baseline = {weekday: _merge(intervals) for weekday, intervals in weekly.items()}
     regular_periods = [
         {
             "openDay": _DAYS[weekday],
-            "openTime": _time_of_day(start),
+            "openTime": _time_of_day(start_minute),
             "closeDay": _DAYS[weekday],
-            "closeTime": _time_of_day(end),
+            "closeTime": _time_of_day(end_minute),
         }
         for weekday in range(7)
-        for start, end in baseline.get(weekday, [])
+        for start_minute, end_minute in baseline.get(weekday, [])
     ]
 
     special_periods: list[dict] = []
-    day = first_date
-    while day <= last_date:
-        expected = baseline.get(day.weekday(), [])
-        observed = _merge(actual.get(day, []))
+    current_date = first_date
+    while current_date <= last_date:
+        expected = baseline.get(current_date.weekday(), [])
+        observed = _merge(actual.get(current_date, []))
         if observed != expected:
             if not observed:
-                special_periods.append({"startDate": _google_date(day), "closed": True})
+                special_periods.append({"startDate": _google_date(current_date), "closed": True})
             else:
-                for start, end in observed:
+                for start_minute, end_minute in observed:
                     special_periods.append(
                         {
-                            "startDate": _google_date(day),
-                            "openTime": _time_of_day(start),
-                            "closeTime": _time_of_day(end),
+                            "startDate": _google_date(current_date),
+                            "openTime": _time_of_day(start_minute),
+                            "closeTime": _time_of_day(end_minute),
                         }
                     )
-        day += timedelta(days=1)
+        current_date += timedelta(days=1)
 
     return BusinessHoursPlan(regular_periods=regular_periods, special_periods=special_periods)

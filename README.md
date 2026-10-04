@@ -50,6 +50,11 @@ Supporting resources live in `docs/` (architecture, operations, calendar mapping
 | `ICS_URLS` | Comma-separated Google Calendar ICS feeds | default public calendars |
 | `SYNC_DAYS` | Number of future days to sync | `7` |
 | `CALENDAR_SYNC_INTERVAL_HOURS` | Calendar sync cadence | `1` |
+| `BUSINESS_HOURS_SYNC_ENABLED` | Reconcile calendar-derived hours to Google Business Profile on each calendar sync | `false` |
+| `BUSINESS_HOURS_HORIZON_DAYS` | Rolling special-hours window managed from the calendar | `60` |
+| `GB_PROFILE_LOCATION` | Business Profile resource name such as `locations/12345` | none |
+| `GB_OAUTH_CLIENT_ID` / `GB_OAUTH_CLIENT_SECRET` | OAuth client used for Business Profile access | none |
+| `GB_OAUTH_REFRESH_TOKEN` | Offline Business Profile authorization token | none |
 | `TIMEZONE` | Display timezone | `America/Los_Angeles` |
 | `GRAFANA_BASE_URL` | Base URL for Grafana (needs intranet reachability) | `https://jane.maglab` |
 | `GRAFANA_DATASOURCE_ID` | Numeric ID of the InfluxDB datasource | `1` |
@@ -78,9 +83,11 @@ It pings the HAL page and reads the live Grafana open switch once, failing fast 
 
 ### Business Profile hours preview
 
-Run `poetry run maglab-events-bot preview-business-hours` to inspect a JSON hours plan. Indefinitely repeating daily or weekly events set regular weekly hours on any day. One-off and finite/monthly/alternating-week repeats become date-specific special hours. Events with the word `online` in the title, any title containing `cancel`, and `We are` status events never contribute. The plan covers the next 21 local dates and uses only the configured calendar feeds, never Grafana.
+Run `poetry run maglab-events-bot preview-business-hours` to inspect a JSON hours plan. Indefinitely repeating daily or weekly events set regular weekly hours on any day. One-off and finite/monthly/alternating-week repeats become date-specific special hours. Events with the word `online` in the title, any title containing `cancel`, and `We are` status events never contribute. The plan uses the configured rolling horizon (60 days by default) and only the configured calendar feeds, never Grafana.
 
-To publish, first obtain approved Business Profile API access and an owner/manager OAuth refresh token with the `business.manage` scope. Set `GB_PROFILE_LOCATION`, `GB_OAUTH_CLIENT_ID`, `GB_OAUTH_CLIENT_SECRET`, and `GB_OAUTH_REFRESH_TOKEN` in `.env`, then run `poetry run maglab-events-bot sync-business-hours --apply`. The command reads existing special hours, preserves entries outside its 21-day window, validates the update with Google, then writes only the regular/special hours fields. It refuses to publish if there are no recurring weekday hours. Run it periodically (for example, daily) only after reviewing the preview output.
+To publish, first obtain approved Business Profile API access and an owner/manager OAuth refresh token with the `business.manage` scope. Set `GB_PROFILE_LOCATION`, `GB_OAUTH_CLIENT_ID`, `GB_OAUTH_CLIENT_SECRET`, and `GB_OAUTH_REFRESH_TOKEN` in `.env`, then run `poetry run maglab-events-bot sync-business-hours --apply`. The command reads existing special hours, preserves entries outside its managed window, validates the update with Google, and writes only changed regular/special hours. It refuses to publish if there are no recurring regular hours.
+
+After confirming the manual preview and first update, set `BUSINESS_HOURS_SYNC_ENABLED=true`. The bot then reconciles Business Profile hours during the existing hourly calendar cycle. It performs one read when nothing changed and only validates/publishes when the normalized schedule differs. Calendar ingestion is strict while publishing is enabled: if any feed fails, neither Google hours nor Discord events are reconciled from a partial snapshot. Google failures are isolated so Discord reconciliation can still continue when the complete calendar snapshot is available.
 
 ## Development
 - Run all checks: `poetry run nox`

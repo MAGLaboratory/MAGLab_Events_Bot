@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, Optional, Sequence, cast
 
 import discord
 import pendulum
@@ -13,6 +13,8 @@ from discord.ext import commands, tasks
 
 from maglab_events_bot.config import get_settings
 from maglab_events_bot.models.events import CalendarEvent, CancelledCalendarEvent
+from maglab_events_bot.services.business_hours import build_business_hours_plan
+from maglab_events_bot.services.business_profile import publish_business_hours
 from maglab_events_bot.services.calendar import CalendarFetcher
 from maglab_events_bot.services.discord_api import (
     apply_uid_marker,
@@ -75,17 +77,43 @@ class CalendarSyncCog(commands.Cog):
                     "error": str(exc),
                 },
             )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("calendar.sync_failed", extra={"guild_id": self.settings.guild_id})
 
     async def _sync_calendar_events_once(self) -> None:
+        now_local = pendulum.now(self.timezone)
+        business_sync_enabled = self.settings.business_hours_sync_enabled
+        fetch_horizon_days = max(
+            self.settings.sync_days,
+            self.settings.business_hours_horizon_days if business_sync_enabled else 0,
+        )
+        all_events, all_cancellations = await self.fetcher.fetch_events(
+            self.settings.get_ics_urls(),
+            sync_horizon_days=fetch_horizon_days,
+            timezone_name=self.settings.timezone,
+            window_start=now_local.start_of("day") if business_sync_enabled else None,
+            strict=business_sync_enabled,
+        )
+        if business_sync_enabled:
+            await self._sync_business_profile_hours(all_events, now_local=now_local)
+
         guild = await self._get_guild()
         if not guild:
             return
 
-        events, cancellations = await self.fetcher.fetch_events(
-            self.settings.get_ics_urls(),
-            sync_horizon_days=self.settings.sync_days,
-            timezone_name=self.settings.timezone,
-        )
+        discord_window_start = now_local.in_timezone("UTC")
+        discord_window_end = discord_window_start.add(days=self.settings.sync_days)
+        events = [
+            event
+            for event in all_events
+            if event.end_time >= discord_window_start and event.start_time <= discord_window_end
+        ]
+        cancellations = [
+            cancellation
+            for cancellation in all_cancellations
+            if cancellation.end_time >= discord_window_start
+            and cancellation.start_time <= discord_window_end
+        ]
         existing_events = await guild.fetch_scheduled_events()
 
         existing_events = await self._process_events(guild, existing_events, events)
@@ -109,6 +137,53 @@ class CalendarSyncCog(commands.Cog):
                 "events": len(events),
                 "cancellations": len(cancellations),
             },
+        )
+
+    async def _sync_business_profile_hours(
+        self,
+        events: Sequence[CalendarEvent],
+        *,
+        now_local: pendulum.DateTime,
+    ) -> None:
+        credentials = (
+            self.settings.gb_profile_location,
+            self.settings.gb_oauth_client_id,
+            self.settings.gb_oauth_client_secret,
+            self.settings.gb_oauth_refresh_token,
+        )
+        if not all(credentials):
+            logger.error("business_hours.sync_credentials_missing")
+            return
+
+        first_date = now_local.date()
+        last_date = now_local.add(days=self.settings.business_hours_horizon_days - 1).date()
+        try:
+            plan = build_business_hours_plan(
+                events,
+                timezone_name=self.settings.timezone,
+                first_date=first_date,
+                last_date=last_date,
+            )
+            changed = await asyncio.to_thread(
+                publish_business_hours,
+                plan,
+                first_date=first_date,
+                last_date=last_date,
+                location=cast(str, self.settings.gb_profile_location),
+                client_id=cast(str, self.settings.gb_oauth_client_id),
+                client_secret=cast(str, self.settings.gb_oauth_client_secret),
+                refresh_token=cast(str, self.settings.gb_oauth_refresh_token),
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception(
+                "business_hours.sync_failed",
+                extra={"first_date": str(first_date), "last_date": str(last_date)},
+            )
+            return
+
+        logger.info(
+            "business_hours.sync_published" if changed else "business_hours.sync_unchanged",
+            extra={"first_date": str(first_date), "last_date": str(last_date)},
         )
 
     @sync_calendar_events.before_loop

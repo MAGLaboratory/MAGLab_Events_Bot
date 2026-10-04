@@ -3,11 +3,13 @@
 ## Components
 - **Discord Bot (`maglab_events_bot.bot`)** – central entry point that wires Discord intents and loads cogs.
 - **Open Status Cog (`maglab_events_bot.cogs.open_status`)** – polls Grafana's live sensors and owns the public status, channel name, and synoptic event image.
-- **Calendar Sync Cog (`maglab_events_bot.cogs.calendar_sync`)** – reconciles Google Calendar ICS feeds with Discord scheduled events.
+- **Calendar Sync Cog (`maglab_events_bot.cogs.calendar_sync`)** – reconciles one normalized Google Calendar snapshot with Discord scheduled events and, when enabled, Google Business Profile hours.
 - **Services Layer** – pure functions/classes for external integrations:
   - `services.hal` scrapes HAL status and formats sensor readings.
   - `services.grafana` reads the authoritative open-switch value through Grafana's InfluxDB datasource proxy.
   - `services.calendar` expands ICS feeds, recurrences, and cancellations.
+  - `services.business_hours` converts normalized events into regular and date-specific hours.
+  - `services.business_profile` reads, compares, validates, and publishes changed Business Profile hours.
   - `services.synoptic` applies the upstream HAL conditions to live Grafana samples and renders a local SVG template to an 800×320 Discord banner.
   - `services.discord_api` wraps Discord scheduled-event operations.
 - **Utilities** – shared helpers for HTTP sessions and formatting.
@@ -17,7 +19,7 @@
 1. Background loop fires (open status every few minutes, calendar hourly).
 2. Cohesive service fetches external data (Grafana, HAL sensor details, or ICS feed).
 3. Models layer normalises domain objects (`HalStatus`, `CalendarEvent`).
-4. Discord service applies changes: creates/updates/deletes events; only the live Grafana poll enforces the single synoptic image policy, so calendar sync cannot re-upload a stale image.
+4. Discord service applies event changes. When enabled, Business Profile reconciliation independently updates changed hours from the same complete calendar snapshot. Only the live Grafana poll enforces the single synoptic image policy, so calendar sync cannot re-upload a stale image.
 5. Logging is centralised and emitted via rotating file + console.
 
 ## Extension Points

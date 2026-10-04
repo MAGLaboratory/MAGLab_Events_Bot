@@ -51,6 +51,14 @@ def test_status_channel_is_optional_and_reads_ids(monkeypatch):
     assert settings.status_channel_rename is False
 
 
+def test_business_hours_sync_defaults_are_safe(monkeypatch):
+    monkeypatch.setenv("DISCORD_TOKEN", "dummy-token")
+    settings = get_settings()
+
+    assert settings.business_hours_sync_enabled is False
+    assert settings.business_hours_horizon_days == 60
+
+
 def test_missing_token_raises_validation_error(monkeypatch):
     monkeypatch.delenv("DISCORD_TOKEN", raising=False)
     with pytest.raises(ValidationError):

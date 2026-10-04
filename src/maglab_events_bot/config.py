@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     gb_oauth_client_id: Union[str, None] = Field(None, alias="GB_OAUTH_CLIENT_ID")
     gb_oauth_client_secret: Union[str, None] = Field(None, alias="GB_OAUTH_CLIENT_SECRET")
     gb_oauth_refresh_token: Union[str, None] = Field(None, alias="GB_OAUTH_REFRESH_TOKEN")
+    business_hours_sync_enabled: bool = Field(False, alias="BUSINESS_HOURS_SYNC_ENABLED")
+    business_hours_horizon_days: int = Field(
+        60,
+        ge=14,
+        le=365,
+        alias="BUSINESS_HOURS_HORIZON_DAYS",
+    )
 
     timezone: str = Field("America/Los_Angeles", alias="TIMEZONE")
 

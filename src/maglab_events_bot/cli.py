@@ -162,10 +162,11 @@ async def _run_preview_business_hours(*, apply: bool = False) -> int:
         return 1
     timezone = pendulum.timezone(settings.timezone)
     today = pendulum.now(timezone).start_of("day")
+    horizon_days = settings.business_hours_horizon_days
     try:
         events, _ = await CalendarFetcher().fetch_events(
             settings.get_ics_urls(),
-            sync_horizon_days=28,
+            sync_horizon_days=horizon_days,
             timezone_name=settings.timezone,
             window_start=today,
             strict=True,
@@ -177,16 +178,16 @@ async def _run_preview_business_hours(*, apply: bool = False) -> int:
         events,
         timezone_name=settings.timezone,
         first_date=today.date(),
-        last_date=today.add(days=20).date(),
+        last_date=today.add(days=horizon_days - 1).date(),
     )
     print(json.dumps(plan.as_location_patch(), indent=2))
     if apply:
         try:
-            await asyncio.to_thread(
+            changed = await asyncio.to_thread(
                 publish_business_hours,
                 plan,
                 first_date=today.date(),
-                last_date=today.add(days=20).date(),
+                last_date=today.add(days=horizon_days - 1).date(),
                 location=cast(str, settings.gb_profile_location),
                 client_id=cast(str, settings.gb_oauth_client_id),
                 client_secret=cast(str, settings.gb_oauth_client_secret),
@@ -195,7 +196,7 @@ async def _run_preview_business_hours(*, apply: bool = False) -> int:
         except Exception:  # pylint: disable=broad-except
             logger.exception("business_hours.publish_failed")
             return 1
-        print("Business Profile hours published")
+        print("Business Profile hours published" if changed else "Business Profile hours unchanged")
     return 0
 
 
